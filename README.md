@@ -1,10 +1,19 @@
 # dltoolkit
-Collection of deep learning code based on the excellent book ["Deep Learning for Computer Vision"](https://www.pyimagesearch.com/deep-learning-computer-vision-python-book/) by PyImageSearch.
+---
+Collection of deep learning code.
 
-# Dependencies
-Key Python modules:
+# Getting Started
+---
+- Download/clone the repository to a local machine
+- Add the full path to the repository to the `PYTHONPATH` environment variable (if running code from the terminal)
+- Install prequisite packages (see below)
+
+## Prerequisites
+Install the Python packages listed below:
 
 - scikit-learn
+- scikit-image
+- OpenCV3
 - NumPy
 - Keras
 - Tensorflow
@@ -12,10 +21,17 @@ Key Python modules:
 
 All code is written in Python 3.6.3 using PyCharm Professional 2017.3.
 
-# Datasets
-A number of simple examples use data sets provided with the book. Most examples use the usual suspects like MNIST, CIFAR-10 etc., which are downloaded using sklearn.datasets or keras.datasets.
+## Running the Examples
+To run a simple example simply use:
 
-# Folders
+`python mnist_lenet.py -d <path to the animals dat set>`
+
+## Datasets
+---
+A number of simple examples use data sets provided with the book, most notably the `animals` data set, which is a subset of Kaggle's Dogs vs Cats data set. Most examples use the usual suspects like MNIST, CIFAR-10 etc., which are downloaded using sklearn.datasets or keras.datasets.
+
+## Folder Structure
+---
 The root folder contains source code for more elaborate examples, currently only one:
 
 - kaggle_cats_and_dogs.py: Kaggle's Dogs vs Cats competition (https://www.kaggle.com/c/dogs-vs-cats)
@@ -35,3 +51,7 @@ The folders below are not included on GitHub due to their (potential) size and/o
 - data: contains data sets that came with the book
 - output: JSON files, plots etc. created by the examples
 - savedmodels: saved Keras models
+
+# Acknowledgments
+---
+Code is based on the excellent book ["Deep Learning for Computer Vision"](https://www.pyimagesearch.com/deep-learning-computer-vision-python-book/) by PyImageSearch.
