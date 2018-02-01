@@ -1,10 +1,9 @@
-"""Image preprocessing functions
-"""
+"""Resize an image"""
 import cv2
 
 
 class ResizePreprocessor:
-    """Preprocess an image
+    """Resize an image to a new height, width and interpolation method
 
     Attributes:
         width: new width of the image

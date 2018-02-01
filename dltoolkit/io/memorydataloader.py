@@ -5,7 +5,7 @@ import cv2
 import os
 
 
-class DataLoader:
+class MemoryDataLoader:
     """Loads images using full image paths
 
     Attributes:
@@ -19,7 +19,7 @@ class DataLoader:
             self.preprocessors = preprocessors
 
     def load(self, imagePaths, verbose=-1):
-        """Load the data set, both images and their labels, returning two lists in memory
+        """Load the data set, both images and their labels, returning two lists *in memory*
 
         :param imagePaths: list holding the full path to each image. Each image is stored in a subfolder
         with the name of the class the image belongs to:

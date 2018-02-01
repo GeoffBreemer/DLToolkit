@@ -16,11 +16,13 @@ class LeNetNN:
         """Build a LeNet network using Keras"""
         model = Sequential()
 
+        # Set the input shape
         if K.image_data_format() == "channels_first":
             inputShape = (img_channels, img_height, img_width)
         else:
             inputShape = (img_height, img_width, img_channels)
 
+        # Create the model
         model.add(Conv2D(20, (5, 5), padding="same", input_shape=inputShape))
         model.add(Activation("relu"))
         model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))

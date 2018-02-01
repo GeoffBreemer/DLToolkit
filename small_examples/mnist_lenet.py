@@ -1,3 +1,4 @@
+"""MNIST classification using Keras, Stochastic Gradient Descent and LeNet"""
 from dltoolkit.nn import LeNetNN
 from keras.models import load_model
 from keras.optimizers import SGD

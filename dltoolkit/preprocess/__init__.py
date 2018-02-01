@@ -1,6 +1,6 @@
 # import the necessary packages
-from .resizeimage import ResizePreprocessor
+from .resize import ResizePreprocessor
 from .imagetoarray import ImageToArrayPreprocessor
-from .resizeimageaspectratio import ResizeWithAspectRatioPreprocessor
+from .resizewithaspectratio import ResizeWithAspectRatioPreprocessor
 from .subtractmeans import SubtractMeansPreprocessor
-from .imagepatch import PatchPreprocessor
+from .patch import PatchPreprocessor

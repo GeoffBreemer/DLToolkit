@@ -1,3 +1,4 @@
+"""Simple CIFAR-10 classification using Keras, Stochastic Gradient Descent and a simple 2-layer FF NN"""
 from sklearn.preprocessing import LabelBinarizer      # one-hot encode
 from sklearn.metrics import classification_report
 from keras.models import Sequential
@@ -8,7 +9,7 @@ from keras.datasets import cifar10
 import matplotlib.pyplot as plt
 import numpy as np
 
-# Consants
+# Constants
 LEARNING_RATE = 0.01
 NUM_EPOCH = 100
 BATCH_SIZE = 32
@@ -20,24 +21,24 @@ BATCH_SIZE = 32
 X_train = X_train.astype("float") / 255.0
 X_test = X_test.astype("float") / 255.0
 
-# Flatten
+# Flatten from (# of records, 32, 32, 3) to (# of records, 32*32*3)
 X_train = X_train.reshape((X_train.shape[0], -1))
 X_test = X_test.reshape((X_test.shape[0], -1))
 image_shape = X_train.shape[1]
 
 # Binarize labels
-lb = LabelBinarizer()
-Y_train = lb.fit_transform(Y_train)
-Y_test = lb.transform(Y_test)
+lab_bin = LabelBinarizer()
+Y_train = lab_bin.fit_transform(Y_train)
+Y_test = lab_bin.transform(Y_test)
 names = ["plane", "car", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
 
-# Build NN
+# Build the NN: two fully-connected layers
 model = Sequential()
 model.add(Dense(1024, input_shape=(image_shape, ), activation="relu"))
 model.add(Dense(512, activation="relu"))
 model.add(Dense(10, activation="softmax"))
 
-# Train the NN
+# Train the NN using SGD and cross-entropy loss
 sgd = SGD(LEARNING_RATE)
 model.compile(loss="categorical_crossentropy", optimizer=sgd, metrics=["accuracy"])
 hist = model.fit(X_train, Y_train, validation_data=(X_test, Y_test), epochs=NUM_EPOCH, batch_size=BATCH_SIZE)

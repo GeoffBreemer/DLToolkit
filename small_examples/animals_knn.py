@@ -4,7 +4,7 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
 from dltoolkit.preprocess import ResizePreprocessor
-from dltoolkit.io import DataLoader
+from dltoolkit.io import MemoryDataLoader
 from imutils import paths
 import argparse
 
@@ -20,15 +20,15 @@ imagePaths = list(paths.list_images(args["dataset"]))
 
 # Load the images, resizing each to 32x32 pixels upon loading
 proc = ResizePreprocessor(32, 32)
-dl = DataLoader(preprocessors=[proc])
+dl = MemoryDataLoader(preprocessors=[proc])
 (X, Y) = dl.load(imagePaths, verbose=500)
 
 # Reshape the features from (# of records, 32, 32, 3) to (# of records, 32*32*3=3072)
 X = X.reshape(-1, 3072)
 
 # Encode the labels from strings to integers
-lenc = LabelEncoder()
-Y = lenc.fit_transform(Y)
+lbl_enc = LabelEncoder()
+Y = lbl_enc.fit_transform(Y)
 
 # Split into a training and test set
 (X_train, X_test, Y_train, Y_test) = train_test_split(X, Y, test_size=0.25, random_state=42)
@@ -38,4 +38,4 @@ knn = KNeighborsClassifier(n_neighbors=args["neighbours"], n_jobs=args["jobs"])
 knn.fit(X_train, Y_train)
 
 # Make predictions on the test set and print the results to the console
-print(classification_report(Y_test, knn.predict(X_test), target_names=lenc.classes_))
+print(classification_report(Y_test, knn.predict(X_test), target_names=lbl_enc.classes_))
