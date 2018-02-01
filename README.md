@@ -1,9 +1,7 @@
 # dltoolkit
----
 Collection of deep learning code.
 
 # Getting Started
----
 - Download/clone the repository to a local machine
 - Add the full path to the repository to the `PYTHONPATH` environment variable (if running code from the terminal)
 - Install prequisite packages (see below)
@@ -26,12 +24,10 @@ To run a simple example simply use:
 
 `python mnist_lenet.py -d <path to the animals dat set>`
 
-## Datasets
----
+# Datasets
 A number of simple examples use data sets provided with the book, most notably the `animals` data set, which is a subset of Kaggle's Dogs vs Cats data set. Most examples use the usual suspects like MNIST, CIFAR-10 etc., which are downloaded using sklearn.datasets or keras.datasets.
 
-## Folder Structure
----
+# Folder Structure
 The root folder contains source code for more elaborate examples, currently only one:
 
 - kaggle_cats_and_dogs.py: Kaggle's Dogs vs Cats competition (https://www.kaggle.com/c/dogs-vs-cats)
@@ -53,5 +49,4 @@ The folders below are not included on GitHub due to their (potential) size and/o
 - savedmodels: saved Keras models
 
 # Acknowledgments
----
 Code is based on the excellent book ["Deep Learning for Computer Vision"](https://www.pyimagesearch.com/deep-learning-computer-vision-python-book/) by PyImageSearch.
