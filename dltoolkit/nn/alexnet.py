@@ -11,6 +11,7 @@ ALEX_IMG_WIDTH = 227
 ALEX_IMG_HEIGHT = 227
 ALEX_IMG_CHANNELS = 3
 
+# Constants
 DROPOUT_PERC1 = 0.25
 DROPOUT_PERC2 = 0.5
 L2_REG_DEFAULT = 0.0002
@@ -19,17 +20,17 @@ class AlexNetNN:
     @staticmethod
     def build_model(img_width, img_height, img_channels, num_classes, reg=L2_REG_DEFAULT):
         # Set the input shape
-        inputShape = (img_height, img_width, img_channels)
+        input_shape = (img_height, img_width, img_channels)
         channel_dim = -1
 
         if K.image_data_format() == "channels_first":
-            inputShape = (img_channels, img_height, img_width)
+            input_shape = (img_channels, img_height, img_width)
             channel_dim = 1
 
         # Create the model
         model = Sequential()
 
-        model.add(Conv2D(96, (11, 11), strides=(4, 4), padding="same", input_shape=inputShape,
+        model.add(Conv2D(96, (11, 11), strides=(4, 4), padding="same", input_shape=input_shape,
                          kernel_regularizer=l2(reg)))
         model.add(Activation("relu"))
         model.add(BatchNormalization(axis=channel_dim))

@@ -1,6 +1,6 @@
-# import the necessary packages
+"""Various classes used to preprocess images"""
 from .resize import ResizePreprocessor
-from .imagetoarray import ImageToArrayPreprocessor
+from .imgtoarray import ImgToArrayPreprocessor
 from .resizewithaspectratio import ResizeWithAspectRatioPreprocessor
 from .subtractmeans import SubtractMeansPreprocessor
 from .patch import PatchPreprocessor

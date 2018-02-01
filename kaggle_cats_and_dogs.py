@@ -4,7 +4,7 @@ matplotlib.use("Agg")
 
 from settings import settings_cats_and_dogs as settings
 
-from dltoolkit.preprocess import ResizeWithAspectRatioPreprocessor, ImageToArrayPreprocessor, ResizePreprocessor, PatchPreprocessor, SubtractMeansPreprocessor
+from dltoolkit.preprocess import ResizeWithAspectRatioPreprocessor, ImgToArrayPreprocessor, ResizePreprocessor, PatchPreprocessor, SubtractMeansPreprocessor
 from dltoolkit.io import HDF5Generator, HDF5Writer
 from dltoolkit.nn import alexnet, AlexNetNN
 from dltoolkit.utils import TrainingMonitor, ranked_accuracy
@@ -118,7 +118,7 @@ def train_alexnet(model):
     rpre = ResizePreprocessor(alexnet.ALEX_IMG_WIDTH, alexnet.ALEX_IMG_HEIGHT)
     patchpre = PatchPreprocessor(alexnet.ALEX_IMG_WIDTH, alexnet.ALEX_IMG_HEIGHT)
     meanpre = SubtractMeansPreprocessor(means["R"], means["G"], means["B"])
-    itapre = ImageToArrayPreprocessor()
+    itapre = ImgToArrayPreprocessor()
 
     # Init data generators
     train_gen = HDF5Generator(settings.TRAIN_SET_HFD5_PATH, batchsize=settings.BATCH_SIZE, augment=aug,
@@ -164,7 +164,7 @@ def evaluate_model():
     # Init preprocessors
     rpre = ResizePreprocessor(alexnet.ALEX_IMG_WIDTH, alexnet.ALEX_IMG_HEIGHT)
     meanpre = SubtractMeansPreprocessor(means["R"], means["G"], means["B"])
-    itapre = ImageToArrayPreprocessor()
+    itapre = ImgToArrayPreprocessor()
 
     # Load the saved model
     model = load_model(settings.MODEL_PATH)

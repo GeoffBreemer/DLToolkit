@@ -2,7 +2,7 @@
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
-from dltoolkit.preprocess import ResizePreprocessor, ImageToArrayPreprocessor, NormalisePreprocessor
+from dltoolkit.preprocess import ResizePreprocessor, ImgToArrayPreprocessor, NormalisePreprocessor
 from dltoolkit.io import MemoryDataLoader
 from dltoolkit.nn import ShallowNetNN
 from keras.optimizers import SGD
@@ -28,7 +28,7 @@ imagePaths = list(paths.list_images(args["dataset"]))
 
 # Load the images, resizing each to 32x32 pixels upon loading
 resize_pre = ResizePreprocessor(32, 32)
-itoarr_pre = ImageToArrayPreprocessor()
+itoarr_pre = ImgToArrayPreprocessor()
 norm_pre = NormalisePreprocessor()
 
 dl = MemoryDataLoader(preprocessors=[resize_pre, itoarr_pre, norm_pre])

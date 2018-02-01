@@ -1,16 +1,11 @@
-"""Normalise an image"""
-import cv2
+"""Scale pixel intensities to be bin the range [0, 1]"""
 
 
 class NormalisePreprocessor:
-    """Normalise an image to be between 0 and 1"""
     def preprocess(self, image):
-        """Preprocess the image by normalising the data
-
-        :param N/A
-
+        """
+        Preprocess the image by normalising the data
+        :param image: image date
         :return: normalised image data
-
-        :raises: N/A
         """
         return image.astype("float") / 255.0

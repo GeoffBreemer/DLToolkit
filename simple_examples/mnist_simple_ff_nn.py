@@ -36,6 +36,7 @@ model.add(Dense(10, activation="softmax"))
 sgd = SGD(lr=LEARNING_RATE)
 model.compile(loss="categorical_crossentropy", optimizer=sgd, metrics=["accuracy"])
 hist = model.fit(X_train, Y_train, validation_data=(X_test, Y_test), epochs=NUM_EPOCH, batch_size=BATCH_SIZE)
+# note: the test data set should NOT be used for validation_data, but rather a true validation set should be used
 
 # Make predictions on the test set
 Y_pred = model.predict(X_test, batch_size=BATCH_SIZE)

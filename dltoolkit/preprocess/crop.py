@@ -1,16 +1,28 @@
-"""Create five crops (center plus four corners) of an image, optionally with the horizontal flips"""
+"""Create five crops (center plus four corners) of an image, optionally including horizontal flips"""
 import cv2
 import numpy as np
 
 
 class CropPreprocessor:
     def __init__(self, img_width, img_height, flip_horiz=True, inter=cv2.INTER_AREA):
+        """
+        Initialise the class
+        :param img_width: desired image width
+        :param img_height: desired image height
+        :param flip_horiz: whether horizontal flips are also required
+        :param inter: desired interpoliation method
+        """
         self.img_width = img_width
         self.img_height = img_height
         self.flip_horiz = flip_horiz
         self.inter = inter
 
     def preprocess(self, image):
+        """
+        Perform patch extraction
+        :param image: image data
+        :return: NumPy array containing the crops
+        """
         crops = []
 
         (height, width) = image.shape[:2]

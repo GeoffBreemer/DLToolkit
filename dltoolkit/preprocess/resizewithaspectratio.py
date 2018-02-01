@@ -1,16 +1,26 @@
-"""Resize an image while maintaining its aspect ratio, cropping the image if/when required
-"""
+"""Resize an image while maintaining its aspect ratio, cropping the image if/when required"""
 import cv2
 import imutils
 
 
 class ResizeWithAspectRatioPreprocessor:
     def __init__(self, width, height, inter=cv2.INTER_AREA):
+        """
+        Initialise the class
+        :param width: desired image width
+        :param height: desired image height
+        :param inter: desired interpolation method
+        """
         self.width = width
         self.height = height
         self.inter = inter
 
     def preprocess(self, image):
+        """
+        Perform the resize operation
+        :param image: image data
+        :return: resized image data
+        """
         (height, width) = image.shape[:2]
         cropWidth = 0
         cropHeight = 0

@@ -60,6 +60,7 @@ else:
     model = LeNetNN.build_model(img_width=IMG_DIM, img_height=IMG_DIM, img_channels=IMG_CHN, num_classes=NUM_CLASSES)
     model.compile(loss="categorical_crossentropy", optimizer=sgd, metrics=["accuracy"])
     hist = model.fit(X_train, Y_train, validation_data=(X_test, Y_test), batch_size=BATCH_SIZE, epochs=NUM_EPOCH, verbose=1)
+    # note: the test data set should NOT be used for validation_data, but rather a true validation set should be used
 
     # Save the trained model
     model.save(MODEL_PATH + "mnist_lenet.model")
@@ -77,15 +78,15 @@ else:
     plt.legend()
     plt.show()
 
-# Predict on the test set
+# Predict on the test set and print the results
 Y_pred = model.predict(X_test, batch_size=BATCH_SIZE)
 print(classification_report(Y_test.argmax(axis=1),
                             Y_pred.argmax(axis=1),
                             target_names=[str(x) for x in lb.classes_]))
 
-# Visualise a few test images
-for i in range(10):
-    image = X_test[i]
+# Visualise a few random test images
+idxs = np.random.randint(0, len(X_test), size=(10,))
+for (i, image) in enumerate(X_test[idxs]):
+    print("Image {} is a {} predicted to be a {}".format(i+1, Y_test[idxs[i]].argmax( axis=0), Y_pred[idxs[i]].argmax(axis=0)))
     cv2.imshow("Image", image)
-    print("Image {} is a {} predicted to be a {}".format(i, Y_test[i].argmax(axis=0), Y_pred[i].argmax(axis=0)))
     cv2.waitKey(0)
