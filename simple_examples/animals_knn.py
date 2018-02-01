@@ -8,6 +8,8 @@ from dltoolkit.io import MemoryDataLoader
 from imutils import paths
 import argparse
 
+RANDOM_STATE = 122177
+
 # Check script arguments
 ap = argparse.ArgumentParser(description="Apply k-NN to animal images.")
 ap.add_argument("-d", "--dataset", required=True, help="path to the data set")
@@ -31,7 +33,7 @@ lbl_enc = LabelEncoder()
 Y = lbl_enc.fit_transform(Y)
 
 # Split into a training and test set
-(X_train, X_test, Y_train, Y_test) = train_test_split(X, Y, test_size=0.25, random_state=42)
+(X_train, X_test, Y_train, Y_test) = train_test_split(X, Y, test_size=0.25, random_state=RANDOM_STATE)
 
 # Fit a k-NN classifier on training set
 knn = KNeighborsClassifier(n_neighbors=args["neighbours"], n_jobs=args["jobs"])

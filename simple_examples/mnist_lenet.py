@@ -9,6 +9,7 @@ from sklearn import datasets
 import matplotlib.pyplot as plt
 import numpy as np
 import argparse
+import cv2
 
 # Constants
 LEARNING_RATE = 0.01
@@ -32,33 +33,36 @@ def str2bool(v):
 
 ap = argparse.ArgumentParser()
 ap.add_argument("-l", "--load", type=str2bool, nargs='?',
-                const=True, required=False, help="Set to True to load trained model")
+                const=True, required=False, help="Set to True to load a previously trained model")
 args = vars(ap.parse_args())
 
 # Load dataset, assume channels_last
 dataset = datasets.fetch_mldata("MNIST Original")
-X = dataset.data
+X = dataset.data / 255.0
 Y = dataset.target
 X = X.reshape(X.shape[0], IMG_DIM, IMG_DIM, IMG_CHN)
 
-# Split and encode labels
-(X_train, X_test, Y_train, Y_test) = train_test_split(X / 255.0, Y.astype("int"), test_size=TEST_PROP, random_state=RANDOM_STATE)
+# Split the data set and one-hot encode the labels
+(X_train, X_test, Y_train, Y_test) = train_test_split(X, Y.astype("int"), test_size=TEST_PROP, random_state=RANDOM_STATE)
 lb = LabelBinarizer()
 Y_train = lb.fit_transform(Y_train)
 Y_test = lb.transform(Y_test)
 
 # Fit the model or load the saved one
 if args["load"] == True:       # use: --load=true
-    model = load_model(MODEL_PATH + "lenet_mnist")
+    print("Loading previously trained model")
+    model = load_model(MODEL_PATH + "mnist_lenet.model")
 else:
-    # Setup and fit the model
+    print("Training the model")
+
+    # Setup and train the model
     sgd = SGD(lr=LEARNING_RATE)
-    model = LeNetNN.build_model(IMG_DIM, IMG_DIM, IMG_CHN, num_classes=NUM_CLASSES)
+    model = LeNetNN.build_model(img_width=IMG_DIM, img_height=IMG_DIM, img_channels=IMG_CHN, num_classes=NUM_CLASSES)
     model.compile(loss="categorical_crossentropy", optimizer=sgd, metrics=["accuracy"])
     hist = model.fit(X_train, Y_train, validation_data=(X_test, Y_test), batch_size=BATCH_SIZE, epochs=NUM_EPOCH, verbose=1)
 
-    # Save model
-    model.save(MODEL_PATH + "lenet_mnist")
+    # Save the trained model
+    model.save(MODEL_PATH + "mnist_lenet.model")
 
     # Plot results
     plt.style.use("ggplot")
@@ -73,9 +77,15 @@ else:
     plt.legend()
     plt.show()
 
-# Predict
+# Predict on the test set
 Y_pred = model.predict(X_test, batch_size=BATCH_SIZE)
 print(classification_report(Y_test.argmax(axis=1),
                             Y_pred.argmax(axis=1),
                             target_names=[str(x) for x in lb.classes_]))
 
+# Visualise a few test images
+for i in range(10):
+    image = X_test[i]
+    cv2.imshow("Image", image)
+    print("Image {} is a {} predicted to be a {}".format(i, Y_test[i].argmax(axis=0), Y_pred[i].argmax(axis=0)))
+    cv2.waitKey(0)

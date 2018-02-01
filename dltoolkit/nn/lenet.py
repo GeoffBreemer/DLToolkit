@@ -1,9 +1,4 @@
 """LeNet NN architecture built using Keras"""
-# from keras.models import Sequential
-# from keras.layers import Conv2D, MaxPooling2D
-# from keras.layers import Activation, Dense, Flatten
-# from keras import backend as K
-
 from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D
 from keras.layers import Activation, Dense, Flatten
