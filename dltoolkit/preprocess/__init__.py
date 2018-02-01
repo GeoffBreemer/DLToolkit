@@ -5,3 +5,4 @@ from .resizewithaspectratio import ResizeWithAspectRatioPreprocessor
 from .subtractmeans import SubtractMeansPreprocessor
 from .patch import PatchPreprocessor
 from .normalise import NormalisePreprocessor
+from .crop import CropPreprocessor
