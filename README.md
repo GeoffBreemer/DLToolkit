@@ -7,7 +7,7 @@ Collection of deep learning code. Nothing spectacular, just my personal list of 
 - Install prequisite packages (see below)
 
 ### Prerequisites
-Install the Python packages listed below:
+Install the Python packages listed below and any packages they may depend on:
 
 - scikit-learn
 - scikit-image
@@ -16,6 +16,7 @@ Install the Python packages listed below:
 - Keras
 - Tensorflow
 - HDF5
+- graphviz
 - matplotlib
 - imutils (https://github.com/jrosebr1/imutils)
 
