@@ -15,6 +15,8 @@ Install the Python packages listed below:
 - NumPy
 - Keras
 - Tensorflow
+- HDF5
+- matplotlib
 - imutils (https://github.com/jrosebr1/imutils)
 
 All code is written in Python 3.6.3 using PyCharm Professional 2017.3.
