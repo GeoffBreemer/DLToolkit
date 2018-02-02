@@ -45,4 +45,4 @@ def plot_history(hist, epochs, show=True, save_path=None):
 
 def save_model_architecture(model, save_path, show_shapes=True):
     """Save the model architecture to disk"""
-    plot_model(model, to_file=save_path, show_shapes=show_shapes)
+    plot_model(model, to_file=save_path + "_architecture.png", show_shapes=show_shapes)

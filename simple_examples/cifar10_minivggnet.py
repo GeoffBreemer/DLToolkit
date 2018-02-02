@@ -11,7 +11,7 @@ from keras.utils import to_categorical
 from keras.models import load_model
 from keras.callbacks import ModelCheckpoint
 from sklearn.metrics import classification_report
-import argparse
+import argparse, datetime
 import numpy as np
 import cv2
 
@@ -21,12 +21,14 @@ NUM_EPOCH = 40
 BATCH_SIZE = 64
 MOMENTUM = 0.9
 LR_DECAY = 0.01 / NUM_EPOCH
-MODEL_PATH = "../savedmodels/"
-OUTPUT_PATH = "../output/"
-MODEL_NAME = "cifar10_minivggnet.model"
+
 NUM_CLASSES = 10
 IMG_WIDTH = 32
 IMG_HEIGHT = 32
+
+MODEL_PATH = "../savedmodels/"
+OUTPUT_PATH = "../output/"
+MODEL_NAME = "cifar10_minivggnet"
 
 # Parse arguments
 ap = argparse.ArgumentParser()
@@ -48,7 +50,7 @@ Y_test = to_categorical(Y_test, NUM_CLASSES)
 # Fit the model or load the saved one
 if args["load"]:
     print("Loading previously trained model")
-    model = load_model(MODEL_PATH + MODEL_NAME)
+    model = load_model(MODEL_PATH + MODEL_NAME + ".model")
 else:
     print("Training the model")
 
@@ -58,7 +60,7 @@ else:
     model.compile(loss="categorical_crossentropy", optimizer=opt, metrics=["accuracy"])
 
     # Setup the callback to save only the weights resulting in the lowest validation loss
-    checkpoint = ModelCheckpoint(MODEL_PATH + MODEL_NAME, monitor="val_loss", mode="min", save_best_only=True, verbose=1)
+    checkpoint = ModelCheckpoint(MODEL_PATH + MODEL_NAME + ".model", monitor="val_loss", mode="min", save_best_only=True, verbose=1)
     callbacks = [checkpoint]
 
     # Train the network
@@ -71,7 +73,11 @@ else:
     # note: the test data set should NOT be used for validation_data, but rather a true validation set should be used
 
     # Plot the training results
-    plot_history(hist, NUM_EPOCH)
+    current_dt = datetime.datetime.now()
+    plot_history(hist, NUM_EPOCH, show=False, save_path=OUTPUT_PATH + MODEL_NAME + "training_{}_{}.png".format(
+        current_dt.strftime("%Y%m%d"),
+        current_dt.strftime("%H%M%S")
+    ))
 
 # Make predictions on the test set and print the results to the console
 Y_pred = model.predict(X_test, batch_size=BATCH_SIZE)
@@ -88,4 +94,4 @@ for (i, image) in enumerate(X_test[idxs]):
     cv2.waitKey(0)
 
 # Save the model architecture to disk
-save_model_architecture(model, OUTPUT_PATH+"/cifar10_minivggnet.png")
+save_model_architecture(model, OUTPUT_PATH + MODEL_NAME)

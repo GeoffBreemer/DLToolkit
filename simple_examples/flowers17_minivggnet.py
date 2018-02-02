@@ -13,22 +13,24 @@ from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelBinarizer
 from imutils import paths
-import argparse, os
+import argparse, datetime
 import numpy as np
 import cv2
 
 # Constants
-IMG_WIDTH = 64
-IMG_HEIGHT = 64
 LEARNING_RATE = 0.01
 NUM_EPOCH = 50
 BATCH_SIZE = 64
 MOMENTUM = 0.9
 LR_DECAY = 0.01 / NUM_EPOCH
 RANDOM_STATE = 122177
+
+IMG_WIDTH = 64
+IMG_HEIGHT = 64
+
 MODEL_PATH = "../savedmodels/"
 OUTPUT_PATH = "../output/"
-MODEL_NAME = "flowers17_minivggnet.model"
+MODEL_NAME = "flowers17_minivggnet"
 
 # Parse arguments
 ap = argparse.ArgumentParser()
@@ -53,7 +55,7 @@ Y_test= LabelBinarizer().fit_transform(Y_test)
 # Fit the model or load the saved one
 if args["load"]:
     print("Loading previously trained model")
-    model = load_model(MODEL_PATH + MODEL_NAME)
+    model = load_model(MODEL_PATH + MODEL_NAME + ".model")
 else:
     print("Training the model")
 
@@ -63,12 +65,11 @@ else:
     model.compile(loss="categorical_crossentropy", optimizer=opt, metrics=["accuracy"])
 
     # Setup the callback to save only the weights resulting in the lowest validation loss
-    checkpoint = ModelCheckpoint(MODEL_PATH + MODEL_NAME,
+    checkpoint = ModelCheckpoint(MODEL_PATH + MODEL_NAME + ".model",
                                  monitor="val_loss",
                                  mode="min",
                                  save_best_only=True,
-                                 verbose=1)
-    callbacks = [checkpoint]
+                                 verbose=2)
 
     # Train the network
     hist = model.fit(X_train, Y_train,
@@ -76,11 +77,15 @@ else:
                      epochs=NUM_EPOCH,
                      validation_data=(X_test, Y_test),
                      verbose=2,
-                     callbacks=callbacks)
+                     callbacks=[checkpoint])
     # note: the test data set should NOT be used for validation_data, but rather a true validation set should be used
 
-    # Plot the training results
-    plot_history(hist, NUM_EPOCH)
+    # Plot the training and validation results
+    current_dt = datetime.datetime.now()
+    plot_history(hist, NUM_EPOCH, show=False, save_path=OUTPUT_PATH + MODEL_NAME + "training_{}_{}.png".format(
+        current_dt.strftime("%Y%m%d"),
+        current_dt.strftime("%H%M%S")
+    ))
 
 # Make predictions on the test set and print the results to the console
 Y_pred = model.predict(X_test, batch_size=BATCH_SIZE)
@@ -97,4 +102,4 @@ for (i, image) in enumerate(X_test[idxs]):
     cv2.waitKey(0)
 
 # Save the model architecture to disk
-save_model_architecture(model, OUTPUT_PATH+"/flowers17_minivggnet.png")
+save_model_architecture(model, OUTPUT_PATH + MODEL_NAME)
