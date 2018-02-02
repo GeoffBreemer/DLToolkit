@@ -22,19 +22,20 @@ class ResizeWithAspectRatioPreprocessor:
         :return: resized image data
         """
         (height, width) = image.shape[:2]
-        cropWidth = 0
-        cropHeight = 0
+        crop_width = 0
+        crop_height = 0
 
         # Determine whether to crop the height or width
         if width < height:
             image = imutils.resize(image, width=self.width, inter=self.inter)
-            cropHeight = int((image.shape[0] - self.height)/2.0)
+            crop_height = int((image.shape[0] - self.height)/2.0)
         else:
             image = imutils.resize(image, height=self.height, inter=self.inter)
-            cropWidth = int((image.shape[1] - self.width)/2.0)
+            crop_width = int((image.shape[1] - self.width)/2.0)
 
         # Crop the image
         (height, width) = image.shape[:2]
-        image = image[cropHeight:height - cropHeight, cropWidth:width - cropWidth]
+        image = image[crop_height:height - crop_height, crop_width:width - crop_width]
 
+        # Finally resize
         return cv2.resize(image, (self.width, self.height), interpolation=self.inter)

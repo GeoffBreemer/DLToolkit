@@ -10,7 +10,7 @@ class CropPreprocessor:
         :param img_width: desired image width
         :param img_height: desired image height
         :param flip_horiz: whether horizontal flips are also required
-        :param inter: desired interpoliation method
+        :param inter: desired interpolation method
         """
         self.img_width = img_width
         self.img_height = img_height
@@ -36,9 +36,9 @@ class CropPreprocessor:
         ]
 
         # Get the center crop
-        cropWidth = int(0.5 * (width - self.img_width))
-        cropHeight = int(0.5, (height - self.img_height))
-        corners.append([cropWidth, cropHeight, width - cropWidth, height - cropHeight])
+        crop_width = int(0.5 * (width - self.img_width))
+        crop_height = int(0.5, (height - self.img_height))
+        corners.append([crop_width, crop_height, width - crop_width, height - crop_height])
 
         # Get the corner crops
         for (x_start, y_start, x_end, y_end) in corners:

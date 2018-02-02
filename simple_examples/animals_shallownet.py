@@ -15,10 +15,11 @@ import cv2
 
 # Constants
 LEARNING_RATE = 0.005
-NUM_EPOCH = 100
+NUM_EPOCH = 10
 BATCH_SIZE = 32
 RANDOM_STATE = 122177
 NUM_CLASSES = 3
+OUTPUT_PATH = "../output/"
 
 # Check script arguments
 ap = argparse.ArgumentParser(description="Apply ShallowNet to animal images.")
@@ -56,7 +57,7 @@ preds = model.predict(X_test, batch_size=BATCH_SIZE)
 print(classification_report(Y_test.argmax(axis=-1), preds.argmax(axis=1), target_names=ANIMALS_CLASSES))
 
 # Plot the training results
-plot_history(hist, NUM_EPOCH)
+plot_history(hist, NUM_EPOCH, True, OUTPUT_PATH+"animals_shallownet.png")
 
 # Visualise a few random images (could be training and/or test images)
 imagePaths = np.array(list(paths.list_images(args["dataset"])))

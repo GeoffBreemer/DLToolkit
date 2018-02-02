@@ -6,24 +6,20 @@ from keras.layers import Activation, Dense, Flatten, Dropout
 from keras import backend as K
 
 # miniVGG Net architecture parameters
-MINIVGGNET_IMG_WIDTH = 32
-MINIVGGNET_IMG_HEIGHT = 32
 MINIVGGNET_IMG_CHANNELS = 3
-MINIVGGNET_NUM_CLASSES = 10
-
 MINIVGGNET_DROPOUT_PERC1 = 0.25
 MINIVGGNET_DROPOUT_PERC2 = 0.5
 
 
 class MiniVGGNN:
     @staticmethod
-    def build_model():
+    def build_model(img_width, img_height, num_classes):
         # Set the input shape
-        input_shape = (MINIVGGNET_IMG_HEIGHT, MINIVGGNET_IMG_WIDTH, MINIVGGNET_IMG_CHANNELS)
+        input_shape = (img_height, img_width, MINIVGGNET_IMG_CHANNELS)
         channel_dim = -1
 
         if K.image_data_format() == "channels_first":
-            input_shape = (MINIVGGNET_IMG_CHANNELS, MINIVGGNET_IMG_HEIGHT, MINIVGGNET_IMG_WIDTH)
+            input_shape = (MINIVGGNET_IMG_CHANNELS, img_height, img_width)
             channel_dim = 1
 
         # Create the model
@@ -52,6 +48,6 @@ class MiniVGGNN:
         model.add(BatchNormalization())
         model.add(Dropout(MINIVGGNET_DROPOUT_PERC2))
 
-        model.add(Dense(MINIVGGNET_NUM_CLASSES, activation="softmax"))
+        model.add(Dense(num_classes, activation="softmax"))
 
         return model

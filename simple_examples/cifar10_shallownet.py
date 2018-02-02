@@ -18,6 +18,7 @@ NUM_EPOCH = 40
 BATCH_SIZE = 32
 NUM_CLASSES = 10
 MODEL_PATH = "../savedmodels/"
+OUTPUT_PATH = "../output/"
 
 # Parse arguments
 ap = argparse.ArgumentParser()
