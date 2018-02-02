@@ -24,7 +24,7 @@ To run a simple example simply use:
 
 `python mnist_lenet.py -d <path to the animals dat set>`
 
-Alternatively run each example from your IDE. Except for the `animals` data set, all data sets will be downloaded first if they are not yet available on the local machine.
+Alternatively, run each example from your IDE. Except for the `animals` data set, all data sets will be downloaded first if they are not yet available on the local machine.
 
 ## Datasets
 A number of simple examples use data sets provided with the book, most notably the `animals` data set, which is a subset of Kaggle's Dogs vs Cats data set. Most examples use the usual suspects like MNIST, CIFAR-10 etc., which are downloaded using sklearn.datasets or keras.datasets.

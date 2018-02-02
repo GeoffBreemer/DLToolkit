@@ -1,7 +1,7 @@
 """NN architecture based on NVIDIA's paper: https://arxiv.org/abs/1604.07316"""
 from keras.models import Sequential
 from keras import backend as K
-from keras.layers.convolutional import Convolution2D
+from keras.layers.convolutional import Conv2D
 from keras.layers.core import SpatialDropout2D
 from keras.layers import Dense, Dropout, Flatten, Lambda
 
@@ -37,23 +37,23 @@ class NVIDIA_NN:
             Lambda(NVIDIA_NN.normalize),
 
             # Conv1
-            Convolution2D(24, 5, 5, border_mode='valid', activation='elu', subsample=(2, 2), init="he_normal"),
+            Conv2D(24, 5, 5, border_mode='valid', activation='elu', subsample=(2, 2), init="he_normal"),
             SpatialDropout2D(0.2),
 
             # Conv2
-            Convolution2D(36, 5, 5, border_mode='valid', activation='elu', subsample=(2, 2), init="he_normal"),
+            Conv2D(36, 5, 5, border_mode='valid', activation='elu', subsample=(2, 2), init="he_normal"),
             SpatialDropout2D(0.2),
 
             # Conv3
-            Convolution2D(48, 5, 5, border_mode='valid', activation='elu', subsample=(2, 2), init="he_normal"),
+            Conv2D(48, 5, 5, border_mode='valid', activation='elu', subsample=(2, 2), init="he_normal"),
             SpatialDropout2D(0.2),
 
             # Conv4
-            Convolution2D(64, 3, 3, border_mode='valid', activation='elu', init="he_normal"),
+            Conv2D(64, 3, 3, border_mode='valid', activation='elu', init="he_normal"),
             SpatialDropout2D(0.2),
 
             # Conv5
-            Convolution2D(64, 3, 3, border_mode='valid', activation='elu', init="he_normal"),
+            Conv2D(64, 3, 3, border_mode='valid', activation='elu', init="he_normal"),
             SpatialDropout2D(0.2),
 
             # FC1

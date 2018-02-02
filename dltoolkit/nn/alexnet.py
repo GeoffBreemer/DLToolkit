@@ -6,7 +6,7 @@ from keras.layers import Activation, Dense, Flatten, Dropout
 from keras.regularizers import l2
 from keras import backend as K
 
-# AlexNet parameters
+# AlexNet architecture parameters
 ALEX_IMG_WIDTH = 227
 ALEX_IMG_HEIGHT = 227
 ALEX_IMG_CHANNELS = 3
