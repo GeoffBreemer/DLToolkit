@@ -1,4 +1,4 @@
-"""Generic utility functions"""
+"""Generic utility functions and constants"""
 from keras.utils import plot_model
 import argparse, datetime
 import numpy as np
@@ -9,6 +9,7 @@ ANIMALS_CLASS_NAMES = ["cats", "dogs", "panda"]
 FLOWERS17_CLASS_NAMES = ["bluebell", "buttercup", "coltsfoot", "cowslip", "crocus", "daffodil", "daisy", "dandelion",
                      "fritillary", "iris", "lilyvalley", "pansy", "snowdrop", "sunflower", "tigerlily",
                      "tulip", "windflower"]
+
 
 def str2bool(v):
     """Attempt to convert a string to a boolean"""
@@ -56,5 +57,5 @@ def plot_history(hist, epochs, show=True, save_path=None, time_stamp=False):
 
 
 def save_model_architecture(model, save_path, show_shapes=True):
-    """Save the model architecture to disk"""
+    """Save a picture of the model architecture to disk"""
     plot_model(model, to_file=save_path + "_architecture.png", show_shapes=show_shapes)
