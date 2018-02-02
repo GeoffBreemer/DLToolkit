@@ -1,6 +1,5 @@
-"""Simple CIFAR-10 classification using Keras, Stochastic Gradient Descent and a simple 2-layer FF NN"""
-from dltoolkit.nn import CIFAR10_CLASSES
-from dltoolkit.utils import plot_history
+"""Simple CIFAR-10 classification using Keras, Stochastic Gradient Descent and a simple 2-layer FF NN (no Conv) """
+from dltoolkit.utils import plot_history, CIFAR10_CLASS_NAMES
 from sklearn.preprocessing import LabelBinarizer      # one-hot encode
 from sklearn.metrics import classification_report
 from keras.models import Sequential
@@ -44,7 +43,7 @@ hist = model.fit(X_train, Y_train, validation_data=(X_test, Y_test), epochs=NUM_
 
 # Make predictions
 Y_pred = model.predict(X_test, batch_size=BATCH_SIZE)
-print(classification_report(Y_test.argmax(axis=1), Y_pred.argmax(axis=1), target_names=CIFAR10_CLASSES))
+print(classification_report(Y_test.argmax(axis=1), Y_pred.argmax(axis=1), target_names=CIFAR10_CLASS_NAMES))
 
 # Plot loss and accuracy
 plot_history(hist, NUM_EPOCH)

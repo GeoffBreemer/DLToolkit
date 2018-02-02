@@ -1,9 +1,14 @@
 """Generic utility functions"""
 from keras.utils import plot_model
-import argparse
+import argparse, datetime
 import numpy as np
 import matplotlib.pyplot as plt
 
+CIFAR10_CLASS_NAMES = ["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
+ANIMALS_CLASS_NAMES = ["cats", "dogs", "panda"]
+FLOWERS17_CLASS_NAMES = ["bluebell", "buttercup", "coltsfoot", "cowslip", "crocus", "daffodil", "daisy", "dandelion",
+                     "fritillary", "iris", "lilyvalley", "pansy", "snowdrop", "sunflower", "tigerlily",
+                     "tulip", "windflower"]
 
 def str2bool(v):
     """Attempt to convert a string to a boolean"""
@@ -15,7 +20,7 @@ def str2bool(v):
         raise argparse.ArgumentTypeError('Boolean value expected.')
 
 
-def plot_history(hist, epochs, show=True, save_path=None):
+def plot_history(hist, epochs, show=True, save_path=None, time_stamp=False):
     """
     Plot Keras training results to a figure and display and/or save it
     :param hist: a Keras History object
@@ -38,6 +43,13 @@ def plot_history(hist, epochs, show=True, save_path=None):
         plt.show()
 
     if save_path is not None:
+        save_path = save_path + "_training"
+        if time_stamp:
+            current_dt = datetime.datetime.now()
+            save_path = save_path + "_{}_{}".format(current_dt.strftime("%Y%m%d"),
+            current_dt.strftime("%H%M%S"))
+
+        save_path = save_path + ".png"
         plt.savefig(save_path)
 
     plt.close()

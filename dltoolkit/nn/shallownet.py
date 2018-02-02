@@ -1,29 +1,32 @@
-"""ShallowNet (just a single FC layer) NN architecture built using Keras"""
+"""ShallowNet (just a single Conv layer) NN architecture built using Keras"""
 from keras.models import Sequential
-from keras.layers import Conv2D
-from keras.layers import Dense, Flatten
+from keras.layers import Conv2D, Dense, Flatten
 from keras import backend as K
+from .base_nn import BaseNN
 
-# ShallowNet architecture parameters
-SHALLOWNET_IMG_WIDTH = 32
-SHALLOWNET_IMG_HEIGHT = 32
-SHALLOWNET_IMG_CHANNELS = 3
 
-class ShallowNetNN:
-    @staticmethod
-    def build_model(num_classes):
+class ShallowNetNN(BaseNN):
+    _title = "shallownet"
+    _img_width = 32
+    _img_height = 32
+    _img_channels = 3
+
+    def __init__(self, num_classes):
+        self._num_classes = num_classes
+
+    def build_model(self):
         # Set the input shape
         if K.image_data_format() == "channels_first":
-            input_shape = (SHALLOWNET_IMG_CHANNELS, SHALLOWNET_IMG_HEIGHT, SHALLOWNET_IMG_WIDTH)
+            input_shape = (self._img_channels, self._img_height, self._img_width)
         else:
-            input_shape = (SHALLOWNET_IMG_HEIGHT, SHALLOWNET_IMG_WIDTH, SHALLOWNET_IMG_CHANNELS)
+            input_shape = (self._img_height, self._img_width, self._img_channels)
 
         # Create the model
-        model = Sequential()
+        self._model = Sequential()
 
-        model.add(Conv2D(32, (3, 3), padding="same", input_shape=input_shape, activation="relu"))
+        self._model.add(Conv2D(32, (3, 3), padding="same", input_shape=input_shape, activation="relu"))
 
-        model.add(Flatten())
-        model.add(Dense(num_classes, activation="softmax"))
+        self._model.add(Flatten())
+        self._model.add(Dense(self._num_classes, activation="softmax"))
 
-        return model
+        return self._model

@@ -4,9 +4,10 @@ from keras import backend as K
 from keras.layers.convolutional import Conv2D
 from keras.layers.core import SpatialDropout2D
 from keras.layers import Dense, Dropout, Flatten, Lambda
+from .base_nn import BaseNN
 
 
-class NVIDIA_NN:
+class NVIDIA_NN(BaseNN):
     @staticmethod
     def normalize(image):
         '''Normalize the image to be between -0.5 and 0.5'''

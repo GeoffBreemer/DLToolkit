@@ -1,41 +1,42 @@
 """LeNet NN architecture built using Keras"""
 from keras.models import Sequential
-from keras.layers import Conv2D, MaxPooling2D, MaxPool2D
-from keras.layers import Dense, Flatten
+from keras.layers import Conv2D, MaxPool2D, Dense, Flatten
 from keras import backend as K
-
-# LeNet architecture parameters
-LENET_IMG_WIDTH = 28
-LENET_IMG_HEIGHT = 28
-LENET_IMG_CHANNELS = 1
-LENET_NUM_CLASSES = 10
+from .base_nn import BaseNN
 
 
-class LeNetNN:
-    @staticmethod
-    def build_model():
+class LeNetNN(BaseNN):
+    _title = "lenet"
+    _img_width = 28
+    _img_height = 28
+    _img_channels = 1
+
+    def __init__(self, num_classes):
+        self._num_classes = num_classes
+
+    def build_model(self):
         # Set the input shape
         if K.image_data_format() == "channels_first":
-            input_shape = (LENET_IMG_CHANNELS, LENET_IMG_HEIGHT, LENET_IMG_WIDTH)
+            input_shape = (self._img_channels, self._img_height, self._img_height)
         else:
-            input_shape = (LENET_IMG_HEIGHT, LENET_IMG_WIDTH, LENET_IMG_CHANNELS)
+            input_shape = (self._img_height, self._img_width, self._img_channels)
 
         # Create the model
-        model = Sequential()
+        self._model = Sequential()
 
         # First conv layer
-        model.add(Conv2D(20, (5, 5), padding="same", input_shape=input_shape, activation="relu"))
-        model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+        self._model.add(Conv2D(20, (5, 5), padding="same", input_shape=input_shape, activation="relu"))
+        self._model.add(MaxPool2D(pool_size=(2, 2), strides=(2, 2)))
 
         # Second conv layer
-        model.add(Conv2D(50, (5, 5), padding="same", activation="relu"))
-        model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+        self._model.add(Conv2D(50, (5, 5), padding="same", activation="relu"))
+        self._model.add(MaxPool2D(pool_size=(2, 2), strides=(2, 2)))
 
         # FC layer
-        model.add(Flatten())
-        model.add(Dense(500, activation="relu"))
+        self._model.add(Flatten())
+        self._model.add(Dense(500, activation="relu"))
 
         # Softmax classifier
-        model.add(Dense(LENET_NUM_CLASSES, activation="softmax"))
+        self._model.add(Dense(self._num_classes, activation="softmax"))
 
-        return model
+        return self._model
