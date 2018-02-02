@@ -88,11 +88,11 @@ else:
 
     # Train the network
     hist = nnarch.model.fit(X_train, Y_train,
-                     batch_size=BATCH_SIZE,
-                     epochs=NUM_EPOCH,
-                     validation_data=(X_test, Y_test),
-                     verbose=2,
-                     callbacks=[checkpoint])
+                            batch_size=BATCH_SIZE,
+                            epochs=NUM_EPOCH,
+                            validation_data=(X_test, Y_test),
+                            verbose=2,
+                            callbacks=[checkpoint])
     # note: the test data set should NOT be used for validation_data, but rather a true validation set should be used
 
     # Plot the training results

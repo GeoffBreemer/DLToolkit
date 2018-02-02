@@ -1,11 +1,13 @@
 """Simple CIFAR-10 classification using Keras, Stochastic Gradient Descent and a simple 2-layer FF NN (no Conv) """
 from dltoolkit.utils import plot_history, CIFAR10_CLASS_NAMES
-from sklearn.preprocessing import LabelBinarizer      # one-hot encode
-from sklearn.metrics import classification_report
+
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.optimizers import SGD
 from keras.datasets import cifar10
+
+from sklearn.preprocessing import LabelBinarizer      # one-hot encode
+from sklearn.metrics import classification_report
 
 # Constants
 LEARNING_RATE = 0.01

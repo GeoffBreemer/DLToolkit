@@ -3,12 +3,14 @@ from dltoolkit.preprocess import ResizePreprocessor, ImgToArrayPreprocessor, Nor
 from dltoolkit.io import MemoryDataLoader
 from dltoolkit.nn import ShallowNetNN
 from dltoolkit.utils import plot_history, ANIMALS_CLASS_NAMES
+
 from keras.optimizers import SGD
+
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
-from imutils import paths
 
+from imutils import paths
 import argparse
 import numpy as np
 import cv2
