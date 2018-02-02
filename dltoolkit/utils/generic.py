@@ -3,7 +3,6 @@ import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 
-
 def str2bool(v):
     """Determine whether a string means True or False"""
     if v.lower() in ('yes', 'true', 't', 'y', '1'):

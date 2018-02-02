@@ -1,13 +1,12 @@
 """Simple CIFAR-10 classification using Keras, Stochastic Gradient Descent and a simple 2-layer FF NN"""
+from dltoolkit.nn import CIFAR10_CLASSES
+from dltoolkit.utils import plot_history
 from sklearn.preprocessing import LabelBinarizer      # one-hot encode
 from sklearn.metrics import classification_report
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.optimizers import SGD
 from keras.datasets import cifar10
-
-import matplotlib.pyplot as plt
-import numpy as np
 
 # Constants
 LEARNING_RATE = 0.01
@@ -30,7 +29,6 @@ image_shape = X_train.shape[1]
 lab_bin = LabelBinarizer()
 Y_train = lab_bin.fit_transform(Y_train)
 Y_test = lab_bin.transform(Y_test)
-names = ["plane", "car", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
 
 # Build the NN: two fully-connected layers
 model = Sequential()
@@ -46,17 +44,7 @@ hist = model.fit(X_train, Y_train, validation_data=(X_test, Y_test), epochs=NUM_
 
 # Make predictions
 Y_pred = model.predict(X_test, batch_size=BATCH_SIZE)
-print(classification_report(Y_test.argmax(axis=1), Y_pred.argmax(axis=1), target_names=names))
+print(classification_report(Y_test.argmax(axis=1), Y_pred.argmax(axis=1), target_names=CIFAR10_CLASSES))
 
 # Plot loss and accuracy
-plt.style.use("ggplot")
-plt.figure()
-plt.plot(np.arange(0, NUM_EPOCH), hist.history["loss"], label="Training loss")
-plt.plot(np.arange(0, NUM_EPOCH), hist.history["val_loss"], label="Validation loss")
-plt.plot(np.arange(0, NUM_EPOCH), hist.history["acc"], label="Training accuracy")
-plt.plot(np.arange(0, NUM_EPOCH), hist.history["val_acc"], label="Validation accuracy")
-plt.title("Loss and accuracy")
-plt.xlabel("Epoch")
-plt.ylabel("Loss/accuracy")
-plt.legend()
-plt.show()
+plot_history(hist, NUM_EPOCH)

@@ -12,7 +12,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
 from sklearn import datasets
 
-import matplotlib.pyplot as plt
 import numpy as np
 import argparse
 import cv2
@@ -71,7 +70,7 @@ else:
 Y_pred = model.predict(X_test, batch_size=BATCH_SIZE)
 print(classification_report(Y_test.argmax(axis=1),
                             Y_pred.argmax(axis=1),
-                            target_names=[str(x) for x in range(10)]))
+                            target_names=[str(x) for x in range(lenet.LENET_NUM_CLASSES)]))
 
 # Visualise a few random test images, increase the size for better visualisation
 idxs = np.random.randint(0, len(X_test), size=(10,))
