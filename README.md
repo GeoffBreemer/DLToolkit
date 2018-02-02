@@ -1,5 +1,5 @@
 # Project: dltoolkit
-Collection of deep learning code. Nothing spectacular, just my personal list of useful functions, classess etc. 
+Collection of deep learning code. Nothing spectacular, just my personal list of useful functions, classes etc. 
 
 ## Getting Started
 - Download/clone the repository to a local machine
