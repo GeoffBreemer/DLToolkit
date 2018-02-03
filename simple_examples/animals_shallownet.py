@@ -45,7 +45,7 @@ dl = MemoryDataLoader(preprocessors=[resize_pre, itoarr_pre, norm_pre])
 
 # One-hot encode the labels
 Y_train = LabelBinarizer().fit_transform(Y_train)
-Y_test= LabelBinarizer().fit_transform(Y_test)
+Y_test= LabelBinarizer().transform(Y_test)
 
 # Initialise the NN and optimiser
 opt = SGD(lr=LEARNING_RATE)

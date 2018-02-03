@@ -1,33 +1,38 @@
 """Base class for all neural network architectures"""
-import abc
+from abc import ABC, abstractmethod
 
-class BaseNN(abc.ABC):
-    # Title of the neural network
+class BaseNN(ABC):
     _title = ""
-
     @property
     def title(self):
+        # A brief title of the neural network that can be used for logging purposes
         return self._title
 
-    # The Keras model
     _model = None
-
     @property
     def model(self):
+        # The Keras model
         return self._model
 
     @model.setter
     def model(self, model):
         self._model = model
 
-    # Shape of the input image
-    _img_width = 0
-    _img_height = 0
-    _img_channels = 0
+    # Input shape dimensions
+    _img_width = -1
+    _img_height = -1
+    _img_channels = -1
 
     # Number of classes to classify
-    _num_classes = 0
+    _num_classes = -1
 
-    @abc.abstractmethod
+    @abstractmethod
     def build_model(self):
+        """Build the Keras network and assign it to _model"""
         pass
+
+    def __str__(self):
+        return self._title + " architecture, input shape: {} x {} x {}, {} classes".format(self._img_width,
+                                                                                           self._img_height,
+                                                                                           self._img_channels,
+                                                                                           self._num_classes)

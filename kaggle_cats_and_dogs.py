@@ -1,4 +1,9 @@
 """Train AlexNet on the Kaggle Cats & Dogs data set"""
+import json
+import os
+import numpy as np
+import progressbar
+import cv2
 import matplotlib
 matplotlib.use("Agg")
 
@@ -6,27 +11,23 @@ from settings import settings_cats_and_dogs as settings
 
 from dltoolkit.preprocess import ResizeWithAspectRatioPreprocessor, ImgToArrayPreprocessor, ResizePreprocessor, PatchPreprocessor, SubtractMeansPreprocessor
 from dltoolkit.io import HDF5Generator, HDF5Writer
-from dltoolkit.nn import alexnet, AlexNetNN
-from dltoolkit.utils import TrainingMonitor, ranked_accuracy
+from dltoolkit.nn import AlexNetNN
+from dltoolkit.utils import TrainingMonitor, ranked_accuracy, save_model_architecture
 
 from keras.preprocessing.image import ImageDataGenerator
 from keras.optimizers import Adam
-from keras.utils import plot_model, print_summary
+from keras.utils import print_summary
 from keras.callbacks import ModelCheckpoint
 from keras.models import load_model
 
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 
-import json
-import os
-import numpy as np
-import progressbar
-import cv2
 
 TRAIN_SET = "TRAIN_SET"
 VAL_SET = "VAL_SET"
 TEST_SET = "TEST_SET"
+
 
 def create_hdf5():
     """Convert the data set to HDF5 format"""
@@ -69,7 +70,7 @@ def create_hdf5():
         widgets = ["Creating HFD5 database ", progressbar.Percentage(), " ", progressbar.Bar(), " ", progressbar.ETA()]
         pbar = progressbar.ProgressBar(maxval=len(paths), widgets=widgets).start()
 
-        # Preprocess each image and write to hfd5. Keep track of mean RGB values for the trainng sett
+        # Preprocess each image and write to hfd5. Keep track of mean RGB values for the training set
         for (i, (path, label)) in enumerate(zip(paths, labels)):
             image = cv2.imread(path)
             image = aspect_process.preprocess(image)
@@ -96,9 +97,7 @@ def create_hdf5():
 def create_model():
     """Create and compile the AlexNet model"""
     opt = Adam(lr=settings.ADAM_LR)
-    model = AlexNetNN.build_model(img_width=alexnet.ALEX_IMG_WIDTH, img_height=alexnet.ALEX_IMG_HEIGHT,
-                                  img_channels=alexnet.ALEX_IMG_CHANNELS,
-                                  num_classes=settings.NUM_CLASSES, reg=settings.REG_RATE)
+    model = AlexNetNN(num_classes=settings.NUM_CLASSES).build_model()
     model.compile(loss="binary_crossentropy", optimizer=opt, metrics=["accuracy"])
 
     return model
@@ -115,35 +114,36 @@ def train_alexnet(model):
     means = json.loads(open(settings.RGB_MEANS_PATH).read())
 
     # Init preprocessors
-    rpre = ResizePreprocessor(alexnet.ALEX_IMG_WIDTH, alexnet.ALEX_IMG_HEIGHT)
-    patchpre = PatchPreprocessor(alexnet.ALEX_IMG_WIDTH, alexnet.ALEX_IMG_HEIGHT)
-    meanpre = SubtractMeansPreprocessor(means["R"], means["G"], means["B"])
-    itapre = ImgToArrayPreprocessor()
+    res_pre = ResizePreprocessor(AlexNetNN._img_width, AlexNetNN._img_height)
+    patch_pre = PatchPreprocessor(AlexNetNN._img_width, AlexNetNN._img_height)
+    mean_pre = SubtractMeansPreprocessor(means["R"], means["G"], means["B"])
+    itoa_pre = ImgToArrayPreprocessor()
 
     # Init data generators
     train_gen = HDF5Generator(settings.TRAIN_SET_HFD5_PATH, batchsize=settings.BATCH_SIZE, augment=aug,
-                              preprocessors=[patchpre, meanpre, itapre], num_classes=settings.NUM_CLASSES)
+                              preprocessors=[patch_pre, mean_pre, itoa_pre], num_classes=settings.NUM_CLASSES)
 
     val_gen = HDF5Generator(settings.VAL_SET_HFD5_PATH, batchsize=settings.BATCH_SIZE, augment=aug,
-                            preprocessors=[rpre, meanpre, itapre], num_classes=settings.NUM_CLASSES)
+                            preprocessors=[res_pre, mean_pre, itoa_pre], num_classes=settings.NUM_CLASSES)
 
     # Train the model
     path = os.path.sep.join([settings.OUTPUT_PATH, "{}.png".format(os.getpid())])
     callbacks = [TrainingMonitor(fig_path=path, json_path=settings.HISTORY_PATH),
-                 ModelCheckpoint(settings.MODEL_PATH, monitor="val_loss", save_best_only=True, verbose=1)
-                 ]
+                 ModelCheckpoint(settings.MODEL_PATH, monitor="val_loss", mode="min", save_best_only=True, verbose=1)]
 
+    print("--> Training the model...")
     model.fit_generator(train_gen.generator(),
-                        steps_per_epoch=train_gen.num_images // settings.BATCH_SIZE,
+                        steps_per_epoch=train_gen._num_images // settings.BATCH_SIZE,
                         validation_data=val_gen.generator(),
-                        validation_steps=val_gen.num_images // settings.BATCH_SIZE,
+                        validation_steps=val_gen._num_images // settings.BATCH_SIZE,
                         epochs=settings.NUM_EPOCHS,
                         max_queue_size=settings.BATCH_SIZE * 2,
                         callbacks=callbacks,
                         verbose=1)
 
     # Save the last model
-    # model.save(settings.MODEL_PATH, overwrite=True)
+    print("--> Saving the trained model...")
+    model.save(settings.MODEL_PATH, overwrite=True)
 
     train_gen.close()
     val_gen.close()
@@ -154,32 +154,34 @@ def visualise_model(model):
     print_summary(model)
 
     # Write the diagram to disc
-    plot_model(model, settings.OUTPUT_PATH + "/modelvis.png", show_layer_names=True, show_shapes=True)
+    save_model_architecture(model, settings.OUTPUT_PATH + "/catsdogs_alexnet", show_shapes=True)
 
 
 def evaluate_model():
+    """test the model on the unseen test set"""
     # Load RGB means
     means = json.loads(open(settings.RGB_MEANS_PATH).read())
 
     # Init preprocessors
-    rpre = ResizePreprocessor(alexnet.ALEX_IMG_WIDTH, alexnet.ALEX_IMG_HEIGHT)
-    meanpre = SubtractMeansPreprocessor(means["R"], means["G"], means["B"])
-    itapre = ImgToArrayPreprocessor()
+    res_pre = ResizePreprocessor(AlexNetNN._img_width, AlexNetNN._img_height)
+    mean_pre = SubtractMeansPreprocessor(means["R"], means["G"], means["B"])
+    itoa_pre = ImgToArrayPreprocessor()
 
     # Load the saved model
     model = load_model(settings.MODEL_PATH)
 
     # Create the data generator
     test_gen = HDF5Generator(settings.TEST_SET_HFD5_PATH, batchsize=settings.BATCH_SIZE,
-                             preprocessors=[rpre, meanpre, itapre], num_classes=settings.NUM_CLASSES)
+                             preprocessors=[res_pre, mean_pre, itoa_pre], num_classes=settings.NUM_CLASSES)
 
     # Make predictions
+    print("--> Evaluating the model...")
     predictions = model.predict_generator(test_gen.generator(),
-                                          steps=test_gen.num_images // settings.BATCH_SIZE,
+                                          steps=test_gen._num_images // settings.BATCH_SIZE,
                                           max_queue_size=settings.BATCH_SIZE * 2)
 
     # Print results
-    (rank1, _) = ranked_accuracy(predictions, test_gen.db["labels"])
+    (rank1, _) = ranked_accuracy(predictions, test_gen._db["Y"])
     print("Accuracy: {:.2f}%".format(rank1 * 100))
 
     test_gen.close()
@@ -190,13 +192,13 @@ if __name__ == "__main__":
     # create_hdf5()
 
     # Create the model
-    model = create_model()
+    # model = create_model()
 
-    # Visualise it
-    visualise_model(model)
+    # Visualise the model
+    # visualise_model(model)
 
-    # Train it
-    train_alexnet(model)
+    # Train the model on the training and validation sets
+    # train_alexnet(model)
 
-    # Evaluate it
+    # Evaluate it on the test set
     evaluate_model()

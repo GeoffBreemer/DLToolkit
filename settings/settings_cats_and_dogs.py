@@ -3,7 +3,7 @@ DATA_PATH = "data/kaggle_cats_and_dogs/train"       # Path to the original data 
 MODEL_PATH = "savedmodels/alexnet.model"            # Path to the saved model
 OUTPUT_PATH = "output"                              # Path to where other output is saved
 HISTORY_PATH = OUTPUT_PATH + "/history.json"        # Path to the training history JSON file
-RGB_MEANS_PATH = OUTPUT_PATH + "/rgb_means.json"            # Path to the mean RGB values
+RGB_MEANS_PATH = OUTPUT_PATH + "/cats_dogs_alexnet_rgb_means.json"            # Path to the mean RGB values
 
 TRAIN_SET_HFD5_PATH = "data/kaggle_cats_and_dogs/hfd5/train.hfd5"   # Path to the training HDF5 dataset
 VAL_SET_HFD5_PATH = "data/kaggle_cats_and_dogs/hfd5/val.hfd5"       # Path to the validation HDF5 dataset

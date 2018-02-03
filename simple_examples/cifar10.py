@@ -9,7 +9,8 @@ To load a saved model use:
 """
 from dltoolkit.nn import MiniVGGNN, ShallowNetNN
 from dltoolkit.preprocess import NormalisePreprocessor
-from dltoolkit.utils import plot_history, str2bool, save_model_architecture, CIFAR10_CLASS_NAMES
+from dltoolkit.utils import plot_history, str2bool, save_model_architecture, CIFAR10_CLASS_NAMES,\
+    visualise_results, model_performance
 
 from keras.optimizers import SGD
 from keras.datasets import cifar10
@@ -17,11 +18,7 @@ from keras.utils import to_categorical
 from keras.models import load_model
 from keras.callbacks import ModelCheckpoint
 
-from sklearn.metrics import classification_report
-
 import argparse
-import numpy as np
-import cv2
 
 # Constants
 LEARNING_RATE = 0.01
@@ -77,6 +74,8 @@ else:
     # Initialise the NN and optimiser
     opt = SGD(lr=LEARNING_RATE, momentum=MOMENTUM, decay=LR_DECAY, nesterov=True)
     nnarch.build_model()
+
+    # The VGG16 that comes with Keras has already been trained on ImageNet, only the custom FC needs to be trained
     nnarch.model.compile(loss="categorical_crossentropy", optimizer=opt, metrics=["accuracy"])
 
     # Setup the callback to save only the weights resulting in the lowest validation loss
@@ -99,18 +98,10 @@ else:
     plot_history(hist, NUM_EPOCH, show=False, save_path=OUTPUT_PATH + MODEL_NAME, time_stamp=True)
 
 # Make predictions on the test set and print the results to the console
-Y_pred = nnarch.model.predict(X_test, batch_size=BATCH_SIZE)
-print(classification_report(Y_test.argmax(axis=-1), Y_pred.argmax(axis=1), target_names=CIFAR10_CLASS_NAMES))
+Y_pred = model_performance(nnarch, X_test, Y_test, CIFAR10_CLASS_NAMES, BATCH_SIZE)
 
 # Visualise a few random test images, increase the size for better visualisation
-idxs = np.random.randint(0, len(X_test), size=(10,))
-for (i, image) in enumerate(X_test[idxs]):
-    print("Image {} is a {} predicted to be a {}".format(i + 1,
-                                                         CIFAR10_CLASS_NAMES[Y_test[idxs[i]].argmax(axis=0)],
-                                                         CIFAR10_CLASS_NAMES[Y_pred[idxs[i]].argmax(axis=0)]))
-    image = cv2.resize(image, (96, 96), interpolation=cv2.INTER_LINEAR)
-    cv2.imshow("Image", image)
-    cv2.waitKey(0)
+visualise_results(X_test, Y_test, Y_pred, CIFAR10_CLASS_NAMES)
 
 # Save the model architecture to disk
 save_model_architecture(nnarch.model, OUTPUT_PATH + MODEL_NAME)

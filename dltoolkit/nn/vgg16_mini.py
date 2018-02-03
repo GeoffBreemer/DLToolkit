@@ -1,4 +1,4 @@
-"""Mini (shallower version) of the VGGNet NN architecture built using Keras"""
+"""Mini (shallower version) of the VGG16 NN architecture built using Keras"""
 from keras.models import Sequential
 from keras.layers import BatchNormalization
 from keras.layers import Conv2D, MaxPooling2D, Dense, Flatten, Dropout

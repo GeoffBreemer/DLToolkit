@@ -1,5 +1,5 @@
 """Change the image dimension ordering to "channels_first" or "channels_last". If None is provided use Keras'
-image_data_format setting in ~/.keras/keras.json
+image_data_format setting located in ~/.keras/keras.json
 """
 from keras.preprocessing.image import img_to_array
 

@@ -16,6 +16,6 @@ class PatchPreprocessor:
         """
         Perform patch extraction
         :param image: image data
-        :return: the random patch
+        :return: one random patch
         """
         return extract_patches_2d(image, (self.img_height, self.img_width), max_patches=1)[0]

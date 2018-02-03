@@ -37,5 +37,5 @@ class ResizeWithAspectRatioPreprocessor:
         (height, width) = image.shape[:2]
         image = image[crop_height:height - crop_height, crop_width:width - crop_width]
 
-        # Finally resize
+        # Finally resize\
         return cv2.resize(image, (self.width, self.height), interpolation=self.inter)

@@ -20,7 +20,7 @@ class AlexNetNN(BaseNN):
     _img_channels = 3
 
     def __init__(self, num_classes):
-        self.num_classes = num_classes
+        self._num_classes = num_classes
 
     def build_model(self):
         # Set the input shape

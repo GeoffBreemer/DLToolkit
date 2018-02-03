@@ -10,6 +10,7 @@ class TrainingMonitor(BaseLogger):
         self.fig_path = fig_path
         self.json_path = json_path
         self.start_epoch = start_epoch
+        self.hist = {}
 
     def on_train_begin(self, logs={}):
         self.hist = {}

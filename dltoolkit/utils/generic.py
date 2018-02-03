@@ -1,4 +1,5 @@
 """Generic utility functions and constants"""
+from keras.utils import plot_model
 import argparse
 import numpy as np
 
@@ -31,3 +32,8 @@ def ranked_accuracy(predictions, labels):
     rank5 /= float(len(labels))
 
     return (rank1, rank5)
+
+
+def save_model_architecture(model, save_path, show_shapes=True):
+    """Save a picture of the model architecture to disk"""
+    plot_model(model, to_file=save_path + "_architecture.png", show_shapes=show_shapes)

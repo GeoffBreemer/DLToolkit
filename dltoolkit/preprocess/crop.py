@@ -1,4 +1,4 @@
-"""Create five crops (center plus four corners) of an image, optionally including horizontal flips"""
+"""Create five crops (center plus four corners) of an image, optionally including horizontal flips as well"""
 import cv2
 import numpy as np
 
