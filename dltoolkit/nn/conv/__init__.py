@@ -1,4 +1,5 @@
 """Implementations of various convolutional neural network architectures"""
+from .base_conv_nn import BaseConvNN
 from .alexnet import AlexNetNN
 from .lenet import LeNetNN
 from .nvidia import NVIDIA_NN

@@ -3,10 +3,10 @@ from keras.applications import VGG16
 from keras import backend as K
 from keras.layers import Dense, Flatten, Dropout, Input
 from keras.models import Model
-from dltoolkit.nn.base_nn import BaseNN
+from .base_conv_nn import BaseConvNN
 
 
-class VGG16CustomNN(BaseNN):
+class VGG16CustomNN(BaseConvNN):
     _title = "vgg16"
     _img_width = 224
     _img_height = 224

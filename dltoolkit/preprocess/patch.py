@@ -1,4 +1,8 @@
-"""Extract a random patch of a specific size from an image that may have larger dimensions"""
+"""Extract a random patch of a specific size from an image that may have larger dimensions
+
+Code is based on the excellent book "Deep Learning for Computer Vision" by PyImageSearch available on:
+https://www.pyimagesearch.com/deep-learning-computer-vision-python-book/
+"""
 from sklearn.feature_extraction.image import extract_patches_2d
 
 

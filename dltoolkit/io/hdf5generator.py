@@ -1,4 +1,8 @@
-"""Image generator using a HDF5 file as the source"""
+"""Image generator using a HDF5 file as the source
+
+Code is based on the excellent book "Deep Learning for Computer Vision" by PyImageSearch available on:
+https://www.pyimagesearch.com/deep-learning-computer-vision-python-book/
+"""
 from keras.utils import to_categorical
 import numpy as np
 import h5py
@@ -7,7 +11,7 @@ import h5py
 class HDF5Generator:
     def __init__(self, dbpath, batchsize, preprocessors=None, augment=None, onehot=True,
                  num_classes=2, label_key="Y"):
-        self._batchsize = batchsize
+        self._batch_size = batchsize
         self._preprocessors = preprocessors
         self._augment = augment
         self._onehot = onehot
@@ -18,13 +22,14 @@ class HDF5Generator:
         self._num_images = self._db[label_key].shape[0]
 
     def generator(self, num_epochs=np.inf, feat_key="X", label_key="Y"):
+        """Generate batches of data"""
         epochs = 0
 
         while epochs < num_epochs:
-            for i in np.arange(0, self._num_images, self._batchsize):
+            for i in np.arange(0, self._num_images, self._batch_size):
                 # Get the current batch
-                X = self._db[feat_key][i:i + self._batchsize]
-                Y = self._db[label_key][i:i + self._batchsize]
+                X = self._db[feat_key][i:i + self._batch_size]
+                Y = self._db[label_key][i:i + self._batch_size]
 
                 # One-hot encode
                 if self._onehot:
@@ -44,7 +49,7 @@ class HDF5Generator:
 
                 # Apply augmentation
                 if self._augment is not None:
-                    (X, Y) = next(self._augment.flow(X, Y, batch_size=self._batchsize))
+                    (X, Y) = next(self._augment.flow(X, Y, batch_size=self._batch_size))
 
                 # Return
                 yield (X, Y)

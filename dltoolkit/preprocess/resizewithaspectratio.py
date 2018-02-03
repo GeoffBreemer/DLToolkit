@@ -1,4 +1,8 @@
-"""Resize an image while maintaining its aspect ratio, cropping the image if/when required"""
+"""Resize an image while maintaining its aspect ratio, cropping the image if/when required
+
+Code is based on the excellent book "Deep Learning for Computer Vision" by PyImageSearch available on:
+https://www.pyimagesearch.com/deep-learning-computer-vision-python-book/
+"""
 import cv2
 import imutils
 

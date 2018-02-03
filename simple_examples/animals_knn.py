@@ -1,10 +1,12 @@
 """Animal classification using k-NN (three classes)"""
+from dltoolkit.preprocess import ResizePreprocessor
+from dltoolkit.io import MemoryDataLoader
+
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
-from dltoolkit.preprocess import ResizePreprocessor
-from dltoolkit.io import MemoryDataLoader
+
 from imutils import paths
 import argparse
 

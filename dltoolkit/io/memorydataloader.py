@@ -35,6 +35,7 @@ class MemoryDataLoader:
         Y = []
 
         for (i, imagePath) in enumerate(imagePaths):
+            # Load the image and extrac the label name from the file name
             image = cv2.imread(imagePath)
             label = imagePath.split(os.path.sep)[-2]
 

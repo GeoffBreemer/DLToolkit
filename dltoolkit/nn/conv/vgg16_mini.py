@@ -3,14 +3,14 @@ from keras.models import Sequential
 from keras.layers import BatchNormalization
 from keras.layers import Conv2D, MaxPooling2D, Dense, Flatten, Dropout
 from keras import backend as K
-from dltoolkit.nn.base_nn import BaseNN
+from .base_conv_nn import BaseConvNN
 
 # Architecture parameters
 MINIVGGNET_DROPOUT_PERC1 = 0.25
 MINIVGGNET_DROPOUT_PERC2 = 0.5
 
 
-class MiniVGGNN(BaseNN):
+class MiniVGGNN(BaseConvNN):
     _title = "minivggnet"
 
     def __init__(self, img_width, img_height, img_channels, num_classes):

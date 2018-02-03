@@ -2,10 +2,10 @@
 from keras.models import Sequential
 from keras.layers import Conv2D, Dense, Flatten
 from keras import backend as K
-from dltoolkit.nn.base_nn import BaseNN
+from .base_conv_nn import BaseConvNN
 
 
-class ShallowNetNN(BaseNN):
+class ShallowNetNN(BaseConvNN):
     _title = "shallownet"
     _img_width = 32
     _img_height = 32

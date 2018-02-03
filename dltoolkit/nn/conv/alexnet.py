@@ -5,7 +5,7 @@ from keras.layers import Conv2D, MaxPooling2D
 from keras.layers import Activation, Dense, Flatten, Dropout
 from keras.regularizers import l2
 from keras import backend as K
-from dltoolkit.nn.base_nn import BaseNN
+from .base_conv_nn import BaseConvNN
 
 # AlexNet architecture parameters
 DROPOUT_PERC1 = 0.25
@@ -13,7 +13,7 @@ DROPOUT_PERC2 = 0.5
 L2_REG_DEFAULT = 0.0002
 
 
-class AlexNetNN(BaseNN):
+class AlexNetNN(BaseConvNN):
     _title = "alexnet"
     _img_width = 227
     _img_height = 227

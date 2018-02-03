@@ -2,10 +2,10 @@
 from keras.models import Sequential
 from keras.layers import Conv2D, MaxPool2D, Dense, Flatten
 from keras import backend as K
-from dltoolkit.nn.base_nn import BaseNN
+from .base_conv_nn import BaseConvNN
 
 
-class LeNetNN(BaseNN):
+class LeNetNN(BaseConvNN):
     _title = "lenet"
     _img_width = 28
     _img_height = 28

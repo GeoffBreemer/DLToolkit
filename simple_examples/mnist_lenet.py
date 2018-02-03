@@ -2,7 +2,7 @@
 To load a saved model use:
     --load=true
 """
-from dltoolkit.nn import LeNetNN
+from dltoolkit.nn.conv import LeNetNN
 from dltoolkit.preprocess import NormalisePreprocessor
 from dltoolkit.utils import str2bool, plot_history
 

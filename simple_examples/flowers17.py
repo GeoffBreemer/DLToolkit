@@ -1,11 +1,15 @@
 """Simple CIFAR-10 classification using MiniVGGNet or VGG16 with a custom FC layer and pre-trained on
 ImageNet and using simple data augmentation for finetuning
+
 Parameters:
     -l=True or -l=False
     -n=MiniVGGNN or -n=VGG16CustomNN
     -d=../data/flowers17
+
+The approach is based on the excellent book "Deep Learning for Computer Vision" by PyImageSearch available on:
+https://www.pyimagesearch.com/deep-learning-computer-vision-python-book/
 """
-from dltoolkit.nn import MiniVGGNN, VGG16CustomNN
+from dltoolkit.nn.conv import MiniVGGNN, VGG16CustomNN
 from dltoolkit.preprocess import NormalisePreprocessor, ResizeWithAspectRatioPreprocessor, ImgToArrayPreprocessor
 from dltoolkit.io import MemoryDataLoader
 from dltoolkit.utils import plot_history, str2bool, save_model_architecture, FLOWERS17_CLASS_NAMES,\
