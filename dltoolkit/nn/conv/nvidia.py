@@ -4,7 +4,7 @@ from keras import backend as K
 from keras.layers.convolutional import Conv2D
 from keras.layers.core import SpatialDropout2D
 from keras.layers import Dense, Dropout, Flatten, Lambda
-from .base_nn import BaseNN
+from dltoolkit.nn.base_nn import BaseNN
 
 
 class NVIDIA_NN(BaseNN):

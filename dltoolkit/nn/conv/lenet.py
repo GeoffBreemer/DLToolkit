@@ -2,7 +2,7 @@
 from keras.models import Sequential
 from keras.layers import Conv2D, MaxPool2D, Dense, Flatten
 from keras import backend as K
-from .base_nn import BaseNN
+from dltoolkit.nn.base_nn import BaseNN
 
 
 class LeNetNN(BaseNN):

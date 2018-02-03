@@ -3,7 +3,7 @@ from keras.applications import VGG16
 from keras import backend as K
 from keras.layers import Dense, Flatten, Dropout, Input
 from keras.models import Model
-from .base_nn import BaseNN
+from dltoolkit.nn.base_nn import BaseNN
 
 
 class VGG16CustomNN(BaseNN):

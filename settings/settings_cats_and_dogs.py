@@ -20,7 +20,7 @@ IMG_DIM_HEIGHT = 256                                # Image height to resize all
 IMG_CHANNELS = 3                                    # Expected number of channels
 
 # Training parameters
-NUM_EPOCHS = 1          # 70
+NUM_EPOCHS = 15          # 70
 BATCH_SIZE = 256
 ADAM_LR = 1e-3
 REG_RATE = 0.0002

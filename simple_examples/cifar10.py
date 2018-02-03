@@ -7,7 +7,7 @@ Specify the conv neural net to use using its class name:
 To load a saved model use:
     --load=true
 """
-from dltoolkit.nn import MiniVGGNN, ShallowNetNN
+from dltoolkit.nn.conv import MiniVGGNN, ShallowNetNN
 from dltoolkit.preprocess import NormalisePreprocessor
 from dltoolkit.utils import plot_history, str2bool, save_model_architecture, CIFAR10_CLASS_NAMES,\
     visualise_results, model_performance

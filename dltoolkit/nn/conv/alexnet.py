@@ -5,7 +5,7 @@ from keras.layers import Conv2D, MaxPooling2D
 from keras.layers import Activation, Dense, Flatten, Dropout
 from keras.regularizers import l2
 from keras import backend as K
-from .base_nn import BaseNN
+from dltoolkit.nn.base_nn import BaseNN
 
 # AlexNet architecture parameters
 DROPOUT_PERC1 = 0.25

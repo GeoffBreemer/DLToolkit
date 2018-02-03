@@ -189,16 +189,16 @@ def evaluate_model():
 
 if __name__ == "__main__":
     # Convert the Kaggle dataset to HDF5 format
-    # create_hdf5()
+    create_hdf5()
 
     # Create the model
-    # model = create_model()
+    model = create_model()
 
     # Visualise the model
-    # visualise_model(model)
+    visualise_model(model)
 
     # Train the model on the training and validation sets
-    # train_alexnet(model)
+    train_alexnet(model)
 
     # Evaluate it on the test set
     evaluate_model()
