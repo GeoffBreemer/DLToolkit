@@ -1,10 +1,11 @@
 """NN architecture based on NVIDIA's paper: https://arxiv.org/abs/1604.07316"""
+from .base_conv_nn import BaseConvNN
+
 from keras.models import Sequential
 from keras import backend as K
 from keras.layers.convolutional import Conv2D
 from keras.layers.core import SpatialDropout2D
 from keras.layers import Dense, Dropout, Flatten, Lambda
-from .base_conv_nn import BaseConvNN
 
 
 class NVIDIA_NN(BaseConvNN):

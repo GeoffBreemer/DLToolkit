@@ -1,11 +1,12 @@
 """AlexNet NN architecture built using Keras"""
+from .base_conv_nn import BaseConvNN
+
 from keras.models import Sequential
 from keras.layers import BatchNormalization
 from keras.layers import Conv2D, MaxPooling2D
 from keras.layers import Activation, Dense, Flatten, Dropout
 from keras.regularizers import l2
 from keras import backend as K
-from .base_conv_nn import BaseConvNN
 
 # AlexNet architecture parameters
 DROPOUT_PERC1 = 0.25

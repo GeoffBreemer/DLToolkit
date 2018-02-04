@@ -1,8 +1,9 @@
 """LeNet NN architecture built using Keras"""
+from .base_conv_nn import BaseConvNN
+
 from keras.models import Sequential
 from keras.layers import Conv2D, MaxPool2D, Dense, Flatten
 from keras import backend as K
-from .base_conv_nn import BaseConvNN
 
 
 class LeNetNN(BaseConvNN):

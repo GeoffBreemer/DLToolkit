@@ -1,8 +1,9 @@
 """ShallowNet (just a single Conv layer) NN architecture built using Keras"""
+from .base_conv_nn import BaseConvNN
+
 from keras.models import Sequential
 from keras.layers import Conv2D, Dense, Flatten
 from keras import backend as K
-from .base_conv_nn import BaseConvNN
 
 
 class ShallowNetNN(BaseConvNN):

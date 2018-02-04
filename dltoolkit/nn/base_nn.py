@@ -1,4 +1,4 @@
-"""Base class for all neural network architectures"""
+"""Base class for all Keras based neural network architectures"""
 from abc import ABC, abstractmethod
 
 
