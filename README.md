@@ -54,6 +54,9 @@ The folders below contain toolkit specific code, settings for more elaborate exa
 - `dltoolkit`:
   - `io`: classes for loading data sets, converting to HDF5 format etc.
   - `nn`: various neural network architectures built using Keras, to date only a number of convolution neural networks (CNN) have been implemented.
+    - `conv`: convolutional neural network (CNN) architectures for classification tasks
+    - `rnn` : recurrent neural network (RNN) architectures
+    - `segment`:  neural network architectures for segmentation tasks
   - `preprocess`: various image preprocessing utilities (resize, crop etc.).
   - `utils`: various generic utilities.
 - `settings`: settings for more elaborate examples, which are kept separate from the training source code.
