@@ -1,7 +1,7 @@
 """Animal classification using ShallowNet"""
 from dltoolkit.preprocess import ResizePreprocessor, ImgToArrayPreprocessor, NormalisePreprocessor
 from dltoolkit.io import MemoryDataLoader
-from dltoolkit.nn.conv import ShallowNetNN
+from dltoolkit.nn.cnn import ShallowNetNN
 from dltoolkit.utils import plot_history, ANIMALS_CLASS_NAMES
 
 from keras.optimizers import SGD
@@ -21,7 +21,7 @@ NUM_EPOCH = 20
 BATCH_SIZE = 32
 RANDOM_STATE = 122177
 NUM_CLASSES = 3
-OUTPUT_PATH = "../output/"
+OUTPUT_PATH = "../../output/"
 DATASET_NAME = "animals"
 
 # Check script arguments

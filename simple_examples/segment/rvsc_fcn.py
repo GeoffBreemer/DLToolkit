@@ -13,8 +13,8 @@ RANDOM_STATE = 122177
 NUM_EPOCH = 1  # 10
 MINI_BATCH_SIZE = 1
 
-MODEL_PATH = "../savedmodels/"
-OUTPUT_PATH = "../output/"
+MODEL_PATH = "../../savedmodels/"
+OUTPUT_PATH = "../../output/"
 DATASET_NAME = "rvsc"
 
 class Contour(object):
