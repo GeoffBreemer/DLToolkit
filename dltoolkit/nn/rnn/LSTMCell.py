@@ -5,7 +5,7 @@ from dltoolkit.utils.foundation import sigmoid, softmax
 
 class LSTMCell():
     def __init__(self, n_x, n_a, n_y, m):
-        # Initialise the activation state for the next and previous time steps
+        # Initialise the activation and cell value
         self.a_next = None
         self.c_next = None
         self.a_prev = np.random.randn(n_a, m)
@@ -26,7 +26,7 @@ class LSTMCell():
         # Initialise the predictions for the current time step
         self.y_pred = None
 
-        # Concatenate a_prev and xt
+        # Initialise the array that will hold a_prev and xt concatenated (xt is set during the forward pass)
         self.concat = np.empty((n_a + n_x, m))
         self.concat[: n_a, : ] = self.a_prev
 
