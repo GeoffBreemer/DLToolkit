@@ -1,2 +1,2 @@
-from .RNNCell import RNNCell
+from .RNNCell import RNNCell, Activations
 from .LSTMCell import LSTMCell
