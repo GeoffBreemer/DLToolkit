@@ -3,8 +3,9 @@ import numpy as np
 from dltoolkit.utils.foundation import softmax
 from collections import namedtuple
 
-# Simplify passing around of weight matrices
+# Simplify passing around of weights and gradients
 Activations = namedtuple('Activations', 'W_aa W_ax W_ay bias_a bias_y')
+Gradients = namedtuple('BackpropResults', 'd_x d_a_prev d_W_ax d_W_aa d_b_a d_a0')
 
 
 class RNNCell:
@@ -57,7 +58,7 @@ class RNNCell:
         # Compute the gradient with respect to the bias
         d_b_a = np.sum(d_tanh, axis=1, keepdims=True)
 
-        return {"d_x": d_x, "d_a_prev": d_a_prev, "d_W_ax": d_W_ax, "d_W_aa": d_W_aa, "d_b_a": d_b_a}
+        return Gradients(d_x, d_a_prev, d_W_ax, d_W_aa, d_b_a, None)
 
     def get_activations(self):
         return Activations(self.W_aa, self.W_ax, self.W_ay, self.bias_a, self.bias_y)
@@ -84,6 +85,7 @@ if __name__ == '__main__':
     rnn_cell = RNNCell(NUM_FEATURES, NUM_HIDDEN, NUM_OUTPUT, initialize=True)
 
     # Perform a forward pass
+    print("Forward pass:")
     a_next, y_pred, a_prev = rnn_cell.forward_pass(x, a_start)
     print(a_next[4])
     print()
@@ -92,16 +94,17 @@ if __name__ == '__main__':
     print(a_prev[4])
 
     # Perform backprop
+    print("\nBackprop pass:")
     da_next = np.random.randn(5,10)
     gradients = rnn_cell.backprop(da_next)
 
-    print("\nd_xt[1][2] =", gradients["d_x"][1][2])
-    print("d_x.shape =", gradients["d_x"].shape)
-    print("d_a_prev[2][3] =", gradients["d_a_prev"][2][3])
-    print("d_a_prev.shape =", gradients["d_a_prev"].shape)
-    print("d_W_ax[3][1] =", gradients["d_W_ax"][3][1])
-    print("d_W_ax.shape =", gradients["d_W_ax"].shape)
-    print("d_W_aa[1][2] =", gradients["d_W_aa"][1][2])
-    print("d_W_aa.shape =", gradients["d_W_aa"].shape)
-    print("d_b_a[4] =", gradients["d_b_a"][4])
-    print("d_b_a.shape =", gradients["d_b_a"].shape)
+    print("d_x[1][2] =", gradients.d_x[1][2])
+    print("d_x.shape =", gradients.d_x.shape)
+    print("d_a_prev[2][3] =", gradients.d_a_prev[2][3])
+    print("d_a_prev.shape =", gradients.d_a_prev.shape)
+    print("d_W_ax[3][1] =", gradients.d_W_ax[3][1])
+    print("d_W_ax.shape =", gradients.d_W_ax.shape)
+    print("d_W_aa[1][2] =", gradients.d_W_aa[1][2])
+    print("d_W_aa.shape =", gradients.d_W_aa.shape)
+    print("d_b_a[4] =", gradients.d_b_a[4])
+    print("d_b_a.shape =", gradients.d_b_a.shape)

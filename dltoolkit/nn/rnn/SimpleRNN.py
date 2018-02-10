@@ -1,6 +1,6 @@
 """Simple RNN network using RNNCell instances"""
 from dltoolkit.utils.utils_rnn import *
-from dltoolkit.nn.rnn import RNNCell, Activations
+from dltoolkit.nn.rnn import RNNCell, Activations, Gradients
 
 
 class SimpleRNN:
@@ -46,20 +46,20 @@ class SimpleRNN:
         # Return activations and predictions
         return self.a, self.y_pred
 
-    def backprop(self, da):
-        """Perform backprop looping over all time steps"""
+    def backprop(self, d_a):
+        """Perform backprop over the entire network"""
         for t in reversed(range(self.n_time_step)):
-            grads = self.rnn_cells[t].backprop(da[:,:,t] + self.d_a_prevt)
+            grads = self.rnn_cells[t].backprop(d_a[:, :, t] + self.d_a_prevt)
 
-            self.d_x[:, :, t] = grads["d_x"]
-            self.d_W_ax += grads["d_W_ax"]
-            self.d_W_aa += grads["d_W_aa"]
-            self.d_b_a += grads["d_b_a"]
-            self.d_a_prevt = grads["d_a_prev"]
+            self.d_x[:, :, t] = grads.d_x
+            self.d_W_ax += grads.d_W_ax
+            self.d_W_aa += grads.d_W_aa
+            self.d_b_a += grads.d_b_a
+            self.d_a_prevt = grads.d_a_prev
 
-        self.d_a0 = grads["d_a_prev"]
-        return {"d_x": self.d_x, "d_a0": self.d_a0, "d_W_ax": self.d_W_ax, "d_W_aa": self.d_W_aa,"d_b_a": self.d_b_a}
+        self.d_a0 = grads.d_a_prev
 
+        return Gradients(self.d_x, None, self.d_W_ax, self.d_W_aa, self.d_b_a, self.d_a0)
 
 if __name__ == '__main__':
     RANDOM_STATE = 1
@@ -77,6 +77,7 @@ if __name__ == '__main__':
     rnn = SimpleRNN(NUM_TIMESTEPS, NUM_FEATURES, NUM_HIDDEN, NUM_OUTPUT, NUM_OBSERVATIONS)
 
     # Perform one forward pass
+    print("Forward pass")
     res_a_next, res_y_pred = rnn.forward_pass(x)
 
     print("a[4][1] = ", res_a_next[4][1])
@@ -85,15 +86,17 @@ if __name__ == '__main__':
     print("y_pred.shape = ", res_y_pred.shape)
 
     # Perform backprop
+    print("\nBackprop pass")
     da = np.random.randn(NUM_HIDDEN, NUM_OBSERVATIONS, NUM_TIMESTEPS)
-    gradients = rnn.backprop(da)
-    print("\nd_x[1][2] =", gradients["d_x"][1][2])
-    print("d_x.shape =", gradients["d_x"].shape)
-    print("d_a0[2][3] =", gradients["d_a0"][2][3])
-    print("d_a0.shape =", gradients["d_a0"].shape)
-    print("d_W_ax[3][1] =", gradients["d_W_ax"][3][1])
-    print("d_W_ax.shape =", gradients["d_W_ax"].shape)
-    print("d_W_aa[1][2] =", gradients["d_W_aa"][1][2])
-    print("d_W_aa.shape =", gradients["d_W_aa"].shape)
-    print("d_b_a[4] =", gradients["d_b_a"][4])
-    print("d_b_a.shape =", gradients["d_b_a"].shape)
+    grads = rnn.backprop(da)
+
+    print("d_x[1][2] =", grads.d_x[1][2])
+    print("d_x.shape =", grads.d_x.shape)
+    print("d_a0[2][3] =", grads.d_a0[2][3])
+    print("d_a0.shape =", grads.d_a0.shape)
+    print("d_W_ax[3][1] =", grads.d_W_ax[3][1])
+    print("d_W_ax.shape =", grads.d_W_ax.shape)
+    print("d_W_aa[1][2] =", grads.d_W_aa[1][2])
+    print("d_W_aa.shape =", grads.d_W_aa.shape)
+    print("d_b_a[4] =", grads.d_b_a[4])
+    print("d_b_a.shape =", grads.d_b_a.shape)
