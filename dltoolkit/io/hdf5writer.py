@@ -1,4 +1,4 @@
-"""Wrapper for creating HFD5 files
+"""Wrapper for creating HDF5 files
 
 Code is based on the excellent book "Deep Learning for Computer Vision" by PyImageSearch available on:
 https://www.pyimagesearch.com/deep-learning-computer-vision-python-book/
@@ -13,18 +13,23 @@ BUF_SIZE = 10000
 
 
 class HDF5Writer:
-    def __init__(self, dimensions, output_path, feat_key="X", label_key="Y", bufsize=BUF_SIZE):
+    def __init__(self, dimensions, output_path, feat_key="X", label_key="Y", buf_size=BUF_SIZE, del_existing=False):
         """
         Create the new HDF5 file
         :param dimensions: (# of records, # of features)
         :param output_path: full path to the HDF5 file
         :param feat_key: name of the features data set
         :param label_key: name of the labels data set
-        :param bufsize: size of the in-memory buffer (= maximum number of records to keep in memory before
+        :param buf_size: size of the in-memory buffer (= maximum number of records to keep in memory before
+        :param del_existing: delete existing file with the same name True/False
         flushing to disc)
         """
-        # check if the file already exists, exit if it does
-        if os.path.exists(output_path):
+        self.include_labels = True          # Assume target labels are provided
+
+        if del_existing:
+            if os.path.exists(output_path):
+                os.remove(output_path)
+        elif os.path.exists(output_path):
             raise ValueError("Output path already exists", output_path)
 
         # Create the HDF5 file
@@ -32,17 +37,27 @@ class HDF5Writer:
 
         #  Create the two datasets: features and labels
         self.feat_dataset = self.db.create_dataset(feat_key, dimensions, dtype="float")
-        self.label_dataset = self.db.create_dataset(label_key, (dimensions[0],), dtype="int")
+
+        if label_key is not None:
+            self.label_dataset = self.db.create_dataset(label_key, (dimensions[0],), dtype="int")
+        else:
+            self.include_labels = False
 
         # Init the in-memory buffer
-        self.buf_size = bufsize
-        self.buffer = {BUF_FEATURES: [], BUF_LABELS: []}
+        self.buf_size = min(buf_size, dimensions[0])
+
+        if self.include_labels:
+            self.buffer = {BUF_FEATURES: [], BUF_LABELS: []}
+        else:
+            self.buffer = {BUF_FEATURES: []}
         self.index = 0
 
     def add(self, features, labels):
         """Add features and labels to the buffer and flush it to disc when it is full"""
         self.buffer[BUF_FEATURES].extend(features)
-        self.buffer[BUF_LABELS].extend(labels)
+
+        if self.include_labels:
+            self.buffer[BUF_LABELS].extend(labels)
 
         if len(self.buffer[BUF_FEATURES]) >= self.buf_size:
             self.flush()
@@ -53,11 +68,17 @@ class HDF5Writer:
 
         # Add buffer contents to the data sets
         self.feat_dataset[self.index:i] = self.buffer[BUF_FEATURES]
-        self.label_dataset[self.index:i] = self.buffer[BUF_LABELS]
+
+        if self.include_labels:
+            self.label_dataset[self.index:i] = self.buffer[BUF_LABELS]
+
         self.index = i
 
         # Reset the buffer
-        self.buffer = {BUF_FEATURES: [], BUF_LABELS: []}
+        if self.include_labels:
+            self.buffer = {BUF_FEATURES: [], BUF_LABELS: []}
+        else:
+            self.buffer = {BUF_FEATURES: []}
 
     def write_class_names(self, class_names):
         """Write the class name strings to disc"""
@@ -71,3 +92,9 @@ class HDF5Writer:
             self.flush()
 
         self.db.close()
+
+
+class HDF5Reader:
+    def load_hdf5(self, file_path, key):
+        with h5py.File(file_path, "r") as f:
+            return f[key][()]

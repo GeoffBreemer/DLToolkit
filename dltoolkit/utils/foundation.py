@@ -41,6 +41,5 @@ if __name__ == '__main__':
              "dy": np.array([-1,-2, -3]),
              "dz": np.array([3,4, -5])}
 
-
     clip(grads, 2)
     print(grads)

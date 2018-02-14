@@ -39,9 +39,15 @@ class CropPreprocessor:
             [0, height - self.img_height, self.img_width, height]               # bottom left
         ]
 
+
+        print("height: {}".format(height))
+        print(" width: {}".format(width))
+        print(self.img_width)
+        print(self.img_height)
+
         # Get the center crop
         crop_width = int(0.5 * (width - self.img_width))
-        crop_height = int(0.5, (height - self.img_height))
+        crop_height = int(0.5 * (height - self.img_height))
         corners.append([crop_width, crop_height, width - crop_width, height - crop_height])
 
         # Get the corner crops

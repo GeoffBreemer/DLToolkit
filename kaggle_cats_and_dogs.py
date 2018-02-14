@@ -13,6 +13,7 @@ from dltoolkit.preprocess import ResizeWithAspectRatioPreprocessor, ImgToArrayPr
 from dltoolkit.io import HDF5Generator, HDF5Writer
 from dltoolkit.nn.cnn import AlexNetNN
 from dltoolkit.utils import TrainingMonitor, ranked_accuracy, save_model_architecture
+from dltoolkit.utils.generic import list_images
 
 from keras.preprocessing.image import ImageDataGenerator
 from keras.optimizers import Adam
@@ -30,10 +31,8 @@ TEST_SET = "TEST_SET"
 
 def create_hdf5():
     """Convert the data set to HDF5 format"""
-    from imutils import paths
-
     # Load image paths and determine class label from the file name
-    train_paths = list(paths.list_images(settings.DATA_PATH))
+    train_paths = list(list_images(settings.DATA_PATH))
     train_labels = [p.split(os.path.sep)[2].split(".")[0] for p in train_paths]
 
     # Encode labels
@@ -52,9 +51,9 @@ def create_hdf5():
                                                                           random_state=settings.RANDOM_STATE)
 
     # Create list of all data sets and their paths
-    data = [(TRAIN_SET, train_paths, train_labels, settings.TRAIN_SET_HFD5_PATH),
-            (VAL_SET, val_paths, val_labels, settings.VAL_SET_HFD5_PATH),
-            (TEST_SET, test_paths, test_labels, settings.TEST_SET_HFD5_PATH)]
+    data = [(TRAIN_SET, train_paths, train_labels, settings.TRAIN_SET_HDF5_PATH),
+            (VAL_SET, val_paths, val_labels, settings.VAL_SET_HDF5_PATH),
+            (TEST_SET, test_paths, test_labels, settings.TEST_SET_HDF5_PATH)]
 
     # Init image resizer and channel averages
     aspect_process = ResizeWithAspectRatioPreprocessor(settings.IMG_DIM_WIDTH, settings.IMG_DIM_HEIGHT)
@@ -65,8 +64,11 @@ def create_hdf5():
         writer = HDF5Writer((len(paths), settings.IMG_DIM_WIDTH,
                              settings.IMG_DIM_HEIGHT, settings.IMG_CHANNELS), output_path)
 
+        print("{}".format((len(paths), settings.IMG_DIM_WIDTH,
+                             settings.IMG_DIM_HEIGHT, settings.IMG_CHANNELS)))
+
         # Prepare progress bar
-        widgets = ["Creating HFD5 database ", progressbar.Percentage(), " ", progressbar.Bar(), " ", progressbar.ETA()]
+        widgets = ["Creating HDF5 database ", progressbar.Percentage(), " ", progressbar.Bar(), " ", progressbar.ETA()]
         pbar = progressbar.ProgressBar(maxval=len(paths), widgets=widgets).start()
 
         # Preprocess each image and write to hfd5. Keep track of mean RGB values for the training set
@@ -119,10 +121,10 @@ def train_alexnet(model):
     itoa_pre = ImgToArrayPreprocessor()
 
     # Init data generators
-    train_gen = HDF5Generator(settings.TRAIN_SET_HFD5_PATH, batchsize=settings.BATCH_SIZE, augment=aug,
+    train_gen = HDF5Generator(settings.TRAIN_SET_HDF5_PATH, batchsize=settings.BATCH_SIZE, augment=aug,
                               preprocessors=[patch_pre, mean_pre, itoa_pre], num_classes=settings.NUM_CLASSES)
 
-    val_gen = HDF5Generator(settings.VAL_SET_HFD5_PATH, batchsize=settings.BATCH_SIZE, augment=aug,
+    val_gen = HDF5Generator(settings.VAL_SET_HDF5_PATH, batchsize=settings.BATCH_SIZE, augment=aug,
                             preprocessors=[res_pre, mean_pre, itoa_pre], num_classes=settings.NUM_CLASSES)
 
     # Train the model
@@ -170,7 +172,7 @@ def evaluate_model():
     model = load_model(settings.MODEL_PATH)
 
     # Create the data generator
-    test_gen = HDF5Generator(settings.TEST_SET_HFD5_PATH, batchsize=settings.BATCH_SIZE,
+    test_gen = HDF5Generator(settings.TEST_SET_HDF5_PATH, batchsize=settings.BATCH_SIZE,
                              preprocessors=[res_pre, mean_pre, itoa_pre], num_classes=settings.NUM_CLASSES)
 
     # Make predictions

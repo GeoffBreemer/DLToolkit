@@ -1,4 +1,4 @@
-"""Utility functions for visualision"""
+"""Utility functions for visualisation"""
 from keras.utils import plot_model
 from sklearn.metrics import classification_report
 import cv2

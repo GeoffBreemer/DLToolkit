@@ -1,6 +1,6 @@
 from dltoolkit.utils.foundation import *
-from dltoolkit.utils.utils_rnn import *
 from dltoolkit.nn.rnn import LSTMCell
+
 
 class SimpleLSTM:
     def __init__(self, n_time_step, n_x, n_a, n_y, m):
