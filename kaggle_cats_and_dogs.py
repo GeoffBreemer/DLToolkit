@@ -11,7 +11,7 @@ from settings import settings_cats_and_dogs as settings
 
 from dltoolkit.preprocess import ResizeWithAspectRatioPreprocessor, ImgToArrayPreprocessor, ResizePreprocessor, PatchPreprocessor, SubtractMeansPreprocessor
 from dltoolkit.io import HDF5Generator, HDF5Writer
-from dltoolkit.nn import AlexNetNN
+from dltoolkit.nn.cnn import AlexNetNN
 from dltoolkit.utils import TrainingMonitor, ranked_accuracy, save_model_architecture
 
 from keras.preprocessing.image import ImageDataGenerator
@@ -22,7 +22,6 @@ from keras.models import load_model
 
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
-
 
 TRAIN_SET = "TRAIN_SET"
 VAL_SET = "VAL_SET"
