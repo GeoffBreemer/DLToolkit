@@ -1,6 +1,9 @@
-"""Use the trained U-Net model to make predictions on the DRIVE test data"""
+"""Use a trained U-Net model (using the -model parameter) to make predictions on the DRIVE test data"""
 from settings import settings_drive as settings
-from drive_utils import perform_groundtruth_preprocessing, perform_image_preprocessing, save_image
+from drive_utils import perform_groundtruth_preprocessing, perform_image_preprocessing,\
+    save_image, crop_image
+
+from dltoolkit.io import HDF5Reader
 
 from keras.models import load_model
 
@@ -14,6 +17,7 @@ def extend_images(imgs, patch_dim):
     Extend images (assumed to be *square*) to the right and/or bottom with black pixels to ensure patches will cove
     the entire image as opposed to missing the bottom and/or right part of the image (because the image dimension
     divided by the patch dimension does not result in an integer)
+    # TODO: needs to be able to deal with non-square images
     :param imgs: array of images to extend (images are assumed to be square)
     :param patch_dim: patch dimensions (patches are assumed to always be square)
     :return: array of extended images
@@ -98,9 +102,11 @@ def reconstruct_image(patches, img_dim, verbose=False):
     start_time = time.time()
 
     patch_dim = patches.shape[1]
-    num_patches = int(img_dim / patch_dim)
+    num_patches = int(img_dim/patch_dim)
+    num_images = int(patches.shape[0] / (num_patches**2))
 
-    patches_reconstructed = np.empty((patches.shape[0], num_patches*patch_dim, num_patches*patch_dim, 1))
+    # patches_reconstructed = np.empty((patches.shape[0], num_patches*patch_dim, num_patches*patch_dim, 1))
+    patches_reconstructed = np.empty((num_images, num_patches*patch_dim, num_patches*patch_dim, 1))
 
     current_image = 0
     current_patch = 0
@@ -122,6 +128,28 @@ def reconstruct_image(patches, img_dim, verbose=False):
     return patches_reconstructed
 
 
+def apply_masks(preds, masks):
+    """Apply the masks to the predictions"""
+    img_height = preds.shape[1]
+    img_width = preds.shape[2]
+
+    for i in range(preds.shape[0]):
+        for x in range(img_width):
+            for y in range(img_height):
+                if masks[i, y, x, 0] == 0:
+                    preds[i, y, x, :] = 0.0
+
+
+def load_masks(mask_path, key, patch_dim):
+    """Load masks and crop and extend them like the images and ground truths were"""
+    masks = HDF5Reader().load_hdf5(mask_path, key).astype("uint8")
+
+    masks = crop_image(masks, masks.shape[1], masks.shape[2])
+    masks, _, _ = extend_images(masks, patch_dim)
+
+    return masks
+
+
 def model_name_from_arguments():
     """Return the full path of the model to be used for making predictions"""
     ap = argparse.ArgumentParser()
@@ -135,13 +163,18 @@ def model_name_from_arguments():
 if __name__ == "__main__":
     # Load and preprocess the test and ground truth images
     print("--- Pre-processing test images")
-    test_imgs = perform_image_preprocessing(os.path.join(settings.TEST_PATH, settings.FOLDER_IMAGES + settings.HDF5_EXT),
-                                            settings.HDF5_KEY)
-    test_ground_truths = perform_groundtruth_preprocessing(os.path.join(settings.TEST_PATH, settings.FOLDER_MANUAL_1+ settings.HDF5_EXT),
-                                                           settings.HDF5_KEY)
+    test_imgs = perform_image_preprocessing(os.path.join(settings.TEST_PATH,
+                                                         settings.FOLDER_IMAGES + settings.HDF5_EXT),
+                                            settings.HDF5_KEY, True)
+
+    test_ground_truths = perform_groundtruth_preprocessing(os.path.join(settings.TEST_PATH,
+                                                                        settings.FOLDER_MANUAL_1 + settings.HDF5_EXT),
+                                                           settings.HDF5_KEY, True)
+
+    # TODO: both should use is_training=False
 
     # Extend images and ground truths to ensure patches cover the entire image
-    print("\n--- Extending patches")
+    print("\n--- Extending images")
     test_imgs, new_img_dim, patches_dim = extend_images(test_imgs, settings.PATCH_DIM)
     test_ground_truths, _, _ = extend_images(test_ground_truths, settings.PATCH_DIM)
 
@@ -159,25 +192,49 @@ if __name__ == "__main__":
     predictions = model.predict(patch_imgs, batch_size=settings.BATCH_SIZE, verbose=2)
 
     # Convert patch predictions into patch images
-    print("\n--- Reconstructing patches")
+    print("\n--- Reconstructing patch predictions to images")
     predictions = convert_pred_to_img(predictions, settings.PATCH_CHANNELS, settings.PATCH_DIM, settings.VERBOSE)
 
     # Reconstruct the images from the patch images
     print("\n--- Reconstructing images from patches")
     predictions = reconstruct_image(predictions, new_img_dim, settings.VERBOSE)
 
-    # Crop any extended pixels added by extend_images()
-    # TODO
+    # Crop back to original resolution
+    # TODO: requires updates to perform_image_preprocessing, perform_groundtruth_preprocessing and extend_images
+    # test_imgs = test_imgs[:, :, 0:new_img_dim, 0:new_img_dim]
+    # predictions = predictions[:, :, 0:new_img_dim, 0:new_img_dim]
 
-    IMG_INDEX = 0
-    cv2.imshow("lala", test_imgs[IMG_INDEX])
+    # Load and apply masks
+    print("\n--- Loading masks")
+    masks = load_masks(os.path.join(settings.TEST_PATH, settings.FOLDER_MASK + settings.HDF5_EXT),
+                       settings.HDF5_KEY,
+                       settings.PATCH_DIM)
+
+    # Show the original, ground truth and prediction for one image
+    print("\n--- Showing results")
+    print(test_imgs.shape)
+
+    IMG_INDEX = 11
+    cv2.imshow("Original image 3", test_imgs[IMG_INDEX])
     cv2.waitKey(0)
     save_image(test_imgs[IMG_INDEX], settings.OUTPUT_PATH + "image_org")
 
-    cv2.imshow("lala", test_ground_truths[IMG_INDEX])
+    cv2.imshow("Ground truth", test_ground_truths[IMG_INDEX])
     cv2.waitKey(0)
     save_image(test_ground_truths[IMG_INDEX], settings.OUTPUT_PATH + "image_groundtruth")
 
-    cv2.imshow("lala", predictions[IMG_INDEX])
+    cv2.imshow("Mask", masks[IMG_INDEX])
+    cv2.waitKey(0)
+    save_image(masks[IMG_INDEX], settings.OUTPUT_PATH + "image_mask")
+
+    cv2.imshow("Prediction", predictions[IMG_INDEX])
     cv2.waitKey(0)
     save_image(predictions[IMG_INDEX], settings.OUTPUT_PATH + "image_pred")
+
+    # Load and apply masks
+    print("\n--- Applying masks")
+    apply_masks(predictions, masks)
+
+    cv2.imshow("Masked prediction", predictions[IMG_INDEX])
+    cv2.waitKey(0)
+    save_image(predictions[IMG_INDEX], settings.OUTPUT_PATH + "image_pred_masked")

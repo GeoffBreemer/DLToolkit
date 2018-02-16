@@ -4,6 +4,7 @@ Code is based on the excellent book "Deep Learning for Computer Vision" by PyIma
 https://www.pyimagesearch.com/deep-learning-computer-vision-python-book/
 """
 import h5py, os
+import numpy as np
 
 # Constants
 BUF_FEATURES = "X"
@@ -15,8 +16,8 @@ BUF_SIZE = 10000
 class HDF5Writer:
     def __init__(self, dimensions, output_path, feat_key="X", label_key="Y", buf_size=BUF_SIZE, del_existing=False):
         """
-        Create the new HDF5 file
-        :param dimensions: (# of records, # of features)
+        Create the new HDF5 file for simple 2D matrices
+        :param dimensions: e.g. (# of records, # of features) or (# of images, height, width, # of channels)
         :param output_path: full path to the HDF5 file
         :param feat_key: name of the features data set
         :param label_key: name of the labels data set
@@ -35,7 +36,7 @@ class HDF5Writer:
         # Create the HDF5 file
         self.db = h5py.File(output_path, "w", libver='latest')
 
-        #  Create the two datasets: features and labels
+        #  Create the two datasets: features and labels (optional)
         self.feat_dataset = self.db.create_dataset(feat_key, dimensions, dtype="float")
 
         if label_key is not None:
@@ -44,12 +45,13 @@ class HDF5Writer:
             self.include_labels = False
 
         # Init the in-memory buffer
-        self.buf_size = min(buf_size, dimensions[0])
+        self.buf_size = buf_size
 
         if self.include_labels:
             self.buffer = {BUF_FEATURES: [], BUF_LABELS: []}
         else:
             self.buffer = {BUF_FEATURES: []}
+
         self.index = 0
 
     def add(self, features, labels):
@@ -93,8 +95,24 @@ class HDF5Writer:
 
         self.db.close()
 
-
 class HDF5Reader:
+    """Simple HDF5 reader that assumes the entire contents can fit in memory. Closes the file right after retuning
+    the data.
+    """
     def load_hdf5(self, file_path, key):
         with h5py.File(file_path, "r") as f:
-            return f[key][()]
+            return np.array(f[key][()])
+
+
+# class HDF5Reader_org:
+#     _db = None
+#
+#     def load_hdf5(self, file_path, key):
+#         self._db = h5py.File(file_path, "r")
+#         data = self._db[key]
+#         return np.array(data)
+#
+#     def close(self):
+#         self._db.close()
+
+

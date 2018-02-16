@@ -5,6 +5,7 @@ from dltoolkit.utils.image import rgb_to_gray, normalise, clahe_equalization, ad
 import numpy as np
 from PIL import Image
 
+
 def crop_image(imgs, img_height, img_width):
     """Cut off the top and bottom pixel rows so that image height and width are the same"""
     new_top = int((img_height-img_width)/2)
@@ -13,7 +14,7 @@ def crop_image(imgs, img_height, img_width):
     return imgs[:, new_top:new_bottom, :, :]
 
 
-def perform_image_preprocessing(image_path, key):
+def perform_image_preprocessing(image_path, key, is_training=True):
     """Perform image pre-processing, resulting pixel values are between 0 and 1"""
     imgs = HDF5Reader().load_hdf5(image_path, key).astype("uint8")
 
@@ -29,36 +30,33 @@ def perform_image_preprocessing(image_path, key):
     # Apply gamma adjustment
     imgs = adjust_gamma(imgs)
 
-    # Cut off top and bottom pixel rows to convert images to squares
-    imgs = crop_image(imgs, imgs.shape[1], imgs.shape[2])
+    # Cut off top and bottom pixel rows to convert images to squares when performing training
+    if is_training:
+        imgs = crop_image(imgs, imgs.shape[1], imgs.shape[2])
 
     return imgs/255.0
 
 
-def perform_groundtruth_preprocessing(ground_truth_path, key):
+def perform_groundtruth_preprocessing(ground_truth_path, key, is_training=True):
     """Perform ground truth image pre-processing, resulting pixel values are between 0 and 1"""
     imgs = HDF5Reader().load_hdf5(ground_truth_path, key).astype("uint8")
 
     # Cut off top and bottom pixel rows to convert images to squares
-    imgs = crop_image(imgs, imgs.shape[1], imgs.shape[2])
+    if is_training:
+        imgs = crop_image(imgs, imgs.shape[1], imgs.shape[2])
 
     return imgs/255.0
 
 
 def save_image(img, filename):
-    print(img.shape)
-
+    """Save an image to disc"""
     if img.shape[2]==1:
         img = np.reshape(img, (img.shape[0], img.shape[1]))
-
-    print(img.shape)
 
     if np.max(img)>1:
         img = Image.fromarray(img.astype(np.uint8))
     else:
         img = Image.fromarray((img*255).astype(np.uint8))
-
-    print(filename + ".png")
     img.save(filename + ".png")
 
     return img

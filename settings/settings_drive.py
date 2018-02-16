@@ -19,13 +19,15 @@ IMG_CHANNELS_GIF = 1        # number of channels for the ground truths (gray sca
 # Patch dimensions
 PATCH_DIM = 48              # patch dimension (width == height)
 PATCH_CHANNELS = 1          # number of channels (gray scale)
-PATCHES_NUM_RND = 50000       # number of random patches to generate for each training image
+PATCHES_NUM_RND = 50000    # number of random patches to generate for each training image
 
 # Training parameters
-NUM_EPOCH = 1 #7
+NUM_EPOCH = 10 #7
 BATCH_SIZE = 32
 TRAIN_VAL_SPLIT = 0.1
 DROPOUT_RATE = 0.0          # 0.2
+NUM_OUTPUT_CHANNELS = 2
+MOMENTUM = 0.99
 
 # Other variables
 VERBOSE = True              # set to True for debugging print statements to the console
