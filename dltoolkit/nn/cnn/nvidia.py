@@ -17,7 +17,7 @@ class NVIDIA_NN(BaseConvNN):
     @staticmethod
     def resize(image):
         '''Resize the image to 66x200 as documented in the NVIDIA paper'''
-        import tensorflow as tf  # This import is required here otherwise the model cannot be loaded in drive.py
+        import tensorflow as tf  # This import is required here otherwise the model cannot be loaded in drive_train.py
         return tf.image.resize_images(image, (66, 200))
 
     @staticmethod
@@ -31,7 +31,7 @@ class NVIDIA_NN(BaseConvNN):
         # Create the model
         model = Sequential()
 
-        # Create the model pipeline, including image preprocessing (avoids having to change drive.py)
+        # Create the model pipeline, including image preprocessing (avoids having to change drive_train.py)
         model = Sequential([
 
             # Resize and normalize the image

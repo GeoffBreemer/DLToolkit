@@ -2,7 +2,7 @@
 from dltoolkit.preprocess import ResizePreprocessor, ImgToArrayPreprocessor, NormalisePreprocessor
 from dltoolkit.io import MemoryDataLoader
 from dltoolkit.nn.cnn import ShallowNetNN
-from dltoolkit.utils import plot_history, ANIMALS_CLASS_NAMES
+from dltoolkit.utils import plot_training_history, ANIMALS_CLASS_NAMES
 
 from keras.optimizers import SGD
 
@@ -63,7 +63,7 @@ preds = nnarch.model.predict(X_test, batch_size=BATCH_SIZE)
 print(classification_report(Y_test.argmax(axis=-1), preds.argmax(axis=1), target_names=ANIMALS_CLASS_NAMES))
 
 # Plot the training results
-plot_history(hist, NUM_EPOCH, show=False, save_path=OUTPUT_PATH + MODEL_NAME, time_stamp=True)
+plot_training_history(hist, NUM_EPOCH, show=False, save_path=OUTPUT_PATH + MODEL_NAME, time_stamp=True)
 
 # Visualise a few random images (could be training and/or test images)
 imagePaths = np.array(list(paths.list_images(args["dataset"])))

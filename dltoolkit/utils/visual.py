@@ -7,7 +7,7 @@ import numpy as np
 import datetime
 
 
-def plot_history(hist, epochs, show=True, save_path=None, time_stamp=False):
+def plot_training_history(hist, epochs, show=True, save_path=None, time_stamp=False):
     """
     Plot Keras training results to a figure and display and/or save it
     :param hist: a Keras History object

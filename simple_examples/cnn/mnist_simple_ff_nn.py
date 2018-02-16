@@ -1,5 +1,5 @@
 """Simple MNIST classification using Keras, Stochastic Gradient Descent and a simple 2-layer FF NN"""
-from dltoolkit.utils import plot_history
+from dltoolkit.utils import plot_training_history
 
 from keras.models import Sequential
 from keras.layers import Dense
@@ -47,4 +47,4 @@ Y_pred = model.predict(X_test, batch_size=BATCH_SIZE)
 print(classification_report(Y_test.argmax(axis=1), Y_pred.argmax(axis=1), target_names=[str(c) for c in lbl_bin.classes_]))
 
 # Plot loss and accuracy
-plot_history(hist, NUM_EPOCH, show=False, save_path=OUTPUT_PATH + MODEL_NAME, time_stamp=True)
+plot_training_history(hist, NUM_EPOCH, show=False, save_path=OUTPUT_PATH + MODEL_NAME, time_stamp=True)

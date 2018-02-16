@@ -12,7 +12,7 @@ https://www.pyimagesearch.com/deep-learning-computer-vision-python-book/
 from dltoolkit.nn.cnn import MiniVGGNN, VGG16CustomNN
 from dltoolkit.preprocess import NormalisePreprocessor, ResizeWithAspectRatioPreprocessor, ImgToArrayPreprocessor
 from dltoolkit.io import MemoryDataLoader
-from dltoolkit.utils import plot_history, str2bool, save_model_architecture, FLOWERS17_CLASS_NAMES,\
+from dltoolkit.utils import plot_training_history, str2bool, model_architecture_to_file, FLOWERS17_CLASS_NAMES,\
     model_performance, visualise_results
 
 from keras.optimizers import SGD, RMSprop
@@ -145,11 +145,11 @@ else:
     # note: the test data set should NOT be used for validation_data, but rather a true validation set should be used
 
     # Save the training and validation results
-    plot_history(hist, NUM_EPOCH_TRAIN, show=False, save_path=OUTPUT_PATH + MODEL_NAME, time_stamp=True)
+    plot_training_history(hist, NUM_EPOCH_TRAIN, show=False, save_path=OUTPUT_PATH + MODEL_NAME, time_stamp=True)
 
 # Make predictions on the test set and print the results to the console
 print("Post training performance:")
 Y_pred = model_performance(nnarch, X_test, Y_test, FLOWERS17_CLASS_NAMES, BATCH_SIZE)
 
 visualise_results(X_test, Y_test, Y_pred, FLOWERS17_CLASS_NAMES)
-save_model_architecture(nnarch.model, OUTPUT_PATH + MODEL_NAME)
+model_architecture_to_file(nnarch.model, OUTPUT_PATH + MODEL_NAME)

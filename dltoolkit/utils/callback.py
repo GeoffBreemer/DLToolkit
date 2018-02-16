@@ -1,5 +1,5 @@
 """Keras BaseLogger callback producing figures after each epoch"""
-from .visual import plot_history
+from .visual import plot_training_history
 from keras.callbacks import BaseLogger
 import json, os
 
@@ -37,4 +37,4 @@ class TrainingMonitor(BaseLogger):
 
         # Create and save the accuracy/loss plot
         if len(self.hist["loss"]) > 1:
-            plot_history(self.hist, len(self.hist["loss"]), False, self.fig_path)
+            plot_training_history(self.hist, len(self.hist["loss"]), False, self.fig_path)

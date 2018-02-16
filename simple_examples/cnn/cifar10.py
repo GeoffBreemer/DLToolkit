@@ -9,7 +9,7 @@ To load a saved model use:
 """
 from dltoolkit.nn.cnn import MiniVGGNN, ShallowNetNN
 from dltoolkit.preprocess import NormalisePreprocessor
-from dltoolkit.utils import plot_history, str2bool, save_model_architecture, CIFAR10_CLASS_NAMES,\
+from dltoolkit.utils import plot_training_history, str2bool, model_architecture_to_file, CIFAR10_CLASS_NAMES,\
     visualise_results, model_performance
 
 from keras.optimizers import SGD
@@ -95,7 +95,7 @@ else:
     # note: the test data set should NOT be used for validation_data, but rather a true validation set should be used
 
     # Plot the training results
-    plot_history(hist, NUM_EPOCH, show=False, save_path=OUTPUT_PATH + MODEL_NAME, time_stamp=True)
+    plot_training_history(hist, NUM_EPOCH, show=False, save_path=OUTPUT_PATH + MODEL_NAME, time_stamp=True)
 
 # Make predictions on the test set and print the results to the console
 Y_pred = model_performance(nnarch, X_test, Y_test, CIFAR10_CLASS_NAMES, BATCH_SIZE)
@@ -104,4 +104,4 @@ Y_pred = model_performance(nnarch, X_test, Y_test, CIFAR10_CLASS_NAMES, BATCH_SI
 visualise_results(X_test, Y_test, Y_pred, CIFAR10_CLASS_NAMES)
 
 # Save the model architecture to disk
-save_model_architecture(nnarch.model, OUTPUT_PATH + MODEL_NAME)
+model_architecture_to_file(nnarch.model, OUTPUT_PATH + MODEL_NAME)

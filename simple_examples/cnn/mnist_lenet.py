@@ -4,7 +4,7 @@ To load a saved model use:
 """
 from dltoolkit.nn.cnn import LeNetNN
 from dltoolkit.preprocess import NormalisePreprocessor
-from dltoolkit.utils import str2bool, plot_history
+from dltoolkit.utils import str2bool, plot_training_history
 
 from keras.models import load_model
 from keras.optimizers import SGD
@@ -76,7 +76,7 @@ else:
     nnarch.model.save(MODEL_PATH + MODEL_NAME + ".model")
 
     # Plot results
-    plot_history(hist, NUM_EPOCH, show=False, save_path=OUTPUT_PATH + MODEL_NAME, time_stamp=True)
+    plot_training_history(hist, NUM_EPOCH, show=False, save_path=OUTPUT_PATH + MODEL_NAME, time_stamp=True)
 
 # Predict on the test set and print the results
 Y_pred = nnarch.model.predict(X_test, batch_size=BATCH_SIZE)

@@ -1,5 +1,5 @@
 """Simple CIFAR-10 classification using Keras, Stochastic Gradient Descent and a simple 2-layer FF NN (no Conv) """
-from dltoolkit.utils import plot_history, CIFAR10_CLASS_NAMES
+from dltoolkit.utils import plot_training_history, CIFAR10_CLASS_NAMES
 
 from keras.models import Sequential
 from keras.layers import Dense
@@ -48,4 +48,4 @@ Y_pred = model.predict(X_test, batch_size=BATCH_SIZE)
 print(classification_report(Y_test.argmax(axis=1), Y_pred.argmax(axis=1), target_names=CIFAR10_CLASS_NAMES))
 
 # Plot loss and accuracy
-plot_history(hist, NUM_EPOCH)
+plot_training_history(hist, NUM_EPOCH)

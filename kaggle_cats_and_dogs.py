@@ -12,7 +12,7 @@ from settings import settings_cats_and_dogs as settings
 from dltoolkit.preprocess import ResizeWithAspectRatioPreprocessor, ImgToArrayPreprocessor, ResizePreprocessor, PatchPreprocessor, SubtractMeansPreprocessor
 from dltoolkit.io import HDF5Generator, HDF5Writer
 from dltoolkit.nn.cnn import AlexNetNN
-from dltoolkit.utils import TrainingMonitor, ranked_accuracy, save_model_architecture
+from dltoolkit.utils import TrainingMonitor, ranked_accuracy, model_architecture_to_file
 from dltoolkit.utils.generic import list_images
 
 from keras.preprocessing.image import ImageDataGenerator
@@ -155,7 +155,7 @@ def visualise_model(model):
     print_summary(model)
 
     # Write the diagram to disc
-    save_model_architecture(model, settings.OUTPUT_PATH + "/catsdogs_alexnet", show_shapes=True)
+    model_architecture_to_file(model, settings.OUTPUT_PATH + "/catsdogs_alexnet", show_shapes=True)
 
 
 def evaluate_model():

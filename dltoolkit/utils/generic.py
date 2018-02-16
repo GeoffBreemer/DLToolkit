@@ -34,21 +34,28 @@ def ranked_accuracy(predictions, labels):
     return (rank1, rank5)
 
 
-def save_model_architecture(model, save_path, show_shapes=True):
+def model_architecture_to_file(model, save_path, show_shapes=True):
     """Save a picture of the model architecture to disk"""
     plot_model(model, to_file=save_path + "_architecture.png", show_shapes=show_shapes)
 
 
+def model_summary_to_file(model, save_path):
+    """Write the output of Keras summary() function to a text file"""
+    with open(save_path, 'w') as fh:
+        model.summary(print_fn=lambda x: fh.write(x + "\n"))
+
+
 def list_images(basePath, validExts=(".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff"), contains=None):
     """
-
-    Original code by Adrian Rosebrock, https://github.com/jrosebr1/imutils
+    Return a generator containing the full paths to images with specific extensions. Original code by Adrian
+    Rosebrock: https://github.com/jrosebr1/imutils
     :param basePath: path to search recursively
     :param validExts: limit the search to specific file extensions
     :param contains: limit the search to files containing a specific string
     :return: generator yielding the full path to each image
     """
     return _list_files(basePath, validExts, contains=contains)
+
 
 def _list_files(basePath, validExts=(".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff"), contains=None):
     """Helper function for list_images performing the actual search"""
