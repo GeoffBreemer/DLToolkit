@@ -16,17 +16,9 @@
 # Deconvolution:
 # https://stackoverflow.com/questions/42144191/the-keras-layersfunctions-corresponding-to-tf-nn-conv2d-transpose
 #
-# import numpy as np
-# import tensorflow as tf
-# import random as rn
-# import os
-# os.environ['PYTHONHASHSEED'] = '0'
-# np.random.seed(42)
-# rn.seed(12345)
-#
-
-
-
+# U-Net variants:
+# http://blog.kaggle.com/2017/05/16/data-science-bowl-2017-predicting-lung-cancer-solution-write-up-team-deep-breath/
+# https://spark-in.me/post/unet-adventures-part-one-getting-acquainted-with-unet
 from settings import settings_drive as settings
 from drive_utils import perform_image_preprocessing, perform_groundtruth_preprocessing, group_images
 from drive_test import convert_pred_to_img
@@ -45,20 +37,19 @@ import os, progressbar, cv2, random, time
 
 from PIL import Image                                   # for reading .gif images
 
-# tf.set_random_seed(1234)
 
 def convert_to_hdf5(img_path, img_shape, exts, key):
     """
-    Convert images present in `img_path` to HDF5 format. The HDF5 file is created in the same folder as
-    where the folder containing the images is located (i.e. one level up from the images)
+    Convert images present in `img_path` to HDF5 format. The HDF5 file is one sub folder up from where the
+    images are located
     :param img_path: path to the folder containing images
     :param img_shape: shape of each image (width, height, # of channels)
-    :return: full path to the HDF5 file
+    :return: full path to the generated HDF5 file
     """
     output_path = os.path.join(os.path.dirname(img_path), os.path.basename(img_path)) + key
     imgs_list = sorted(list(list_images(basePath=img_path, validExts=exts)))
 
-    # Prepare the HDF5 writer, a label vector is not available because this is a segmentation problem
+    # Prepare the HDF5 writer, which expects a label vector. Because this is a segmentation problem just pass None
     hdf5_writer = HDF5Writer((len(imgs_list), img_shape[0], img_shape[1], img_shape[2]), output_path,
                              feat_key=settings.HDF5_KEY,
                              label_key=None,
@@ -192,7 +183,7 @@ def generate_random_patches(imgs, ground_truths, num_rnd_patches, patch_dim, pat
     if verbose:
         print("Elapsed time: {}".format(time.time() - start_time))
 
-    # Shuffle the data
+    # Shuffle the data for good measure TODO: may not be required due to random patch generation
     indices = np.arange(total_patch_count)
     patches = patches[indices]
     patches_ground_truths = patches_ground_truths[indices]
@@ -202,7 +193,7 @@ def generate_random_patches(imgs, ground_truths, num_rnd_patches, patch_dim, pat
 
 def convert_img_to_pred(ground_truths, num_model_channels, verbose=False):
     """Convert ground truth *images* into the shape of the *predictions* produced by the U-Net (the opposite of
-    convert_pred_to_img)
+    convert_pred_to_img in drive_test.py)
     """
     start_time = time.time()
 
@@ -253,14 +244,13 @@ if __name__ == "__main__":
     training_ground_truths = perform_groundtruth_preprocessing(hdf5_paths[1],
                                                                settings.HDF5_KEY)
 
-    # TODO
-    # cv2.imshow("preprocessed image", training_imgs[0])
-    # cv2.waitKey(0)
-    # cv2.imshow("preprocessed ground dtruth", training_ground_truths[0])
-    # cv2.waitKey(0)
-    # TODO
+    print("--- Showing example image and ground truth")
+    cv2.imshow("Preprocessed image", training_imgs[0])
+    cv2.waitKey(0)
+    cv2.imshow("Preprocessed ground dtruth", training_ground_truths[0])
+    cv2.waitKey(0)
 
-    # Create the random patches that will serve as the training set
+    # Generate random patches that will serve as the training set
     print("\n--- Generating random training patches")
     patch_imgs, patch_ground_truths = generate_random_patches(training_imgs, training_ground_truths,
                                                               settings.PATCHES_NUM_RND,
@@ -268,40 +258,13 @@ if __name__ == "__main__":
                                                               settings.PATCH_CHANNELS,
                                                               settings.VERBOSE)
 
-    # TODO: Select only one/a few patches during initial pipeline development
-    # patch_imgs = generate_ordered_patches_local(training_imgs, settings.PATCH_DIM, settings.VERBOSE)
-    # patch_ground_truths = generate_ordered_patches_local(training_ground_truths, settings.PATCH_DIM, settings.VERBOSE)
-    # NUM_OVERFIT = 1
-    # START_OVERFIT = 53
-    # patch_imgs = patch_imgs[START_OVERFIT:START_OVERFIT+NUM_OVERFIT]
-    # patch_ground_truths = patch_ground_truths[START_OVERFIT:START_OVERFIT+NUM_OVERFIT]
-
-    # cv2.imshow("images", group_images(patch_imgs, NUM_OVERFIT))
-    # pi = (patch_imgs[0]*255.).astype("uint8")
-    # print(pi.shape)
-    # print(pi.dtype)
-    # cv2.imwrite("image.png", pi)
-    # print(pi[0,0])
-    # print(patch_imgs.shape)
-    # cv2.waitKey(0)
-
-    # cv2.imshow("ground truth", group_images(patch_ground_truths, NUM_OVERFIT))
-    # gt = (patch_ground_truths[0]*255.).astype("uint8")
-    # print(gt.shape)
-    # print(gt.dtype)
-    # cv2.imwrite("groundtruth.png", gt)
-    # print(patch_ground_truths.shape)
-    # cv2.waitKey(0)
-    # TODO: Select only one/a few patches during initial pipeline development
-
     # Instantiate the U-Net model
     unet = UNet_NN(img_height=settings.PATCH_DIM,
                    img_width=settings.PATCH_DIM,
                    img_channels=settings.PATCH_CHANNELS,
                    num_classes=settings.NUM_OUTPUT_CLASSES,
                    dropout_rate=settings.DROPOUT_RATE)
-
-    model = unet.build_model()
+    model = unet.build_model_DRIVE()
 
     # Prepare some path strings
     model_path = os.path.join(settings.MODEL_PATH, unet.title + "_DRIVE_ep{}_np{}.model".format(settings.NUM_EPOCH, settings.PATCHES_NUM_RND))
@@ -330,7 +293,6 @@ if __name__ == "__main__":
                  CSVLogger(csv_path, append=False)
                  ]
 
-    # TODO use this when done!
     hist = model.fit(patch_imgs, patch_ground_truths_conv,
               epochs=settings.NUM_EPOCH,
               batch_size=settings.BATCH_SIZE,
@@ -368,4 +330,3 @@ if __name__ == "__main__":
     print(predictions_img[0].shape)
     cv2.imshow("predicted image", group_images(predictions_img[0:400], 20))
     cv2.waitKey(0)
-

@@ -253,7 +253,6 @@ class FCN_NN(BaseNN):
                                                                                            self._img_channels,
                                                                                            self._num_classes)
 
-
 if __name__ == "__main__":
     import numpy as np
     a = np.random.random((420, 100))
