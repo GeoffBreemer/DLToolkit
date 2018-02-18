@@ -217,7 +217,7 @@ def convert_img_to_pred(ground_truths, num_model_channels, verbose=False):
             print("{}/{}".format(image, ground_truths.shape[0]))
 
         for pix in range(img_height*img_width):
-            if ground_truths[image, pix] == 0.:      # TODO: update for multiple classes > 2
+            if ground_truths[image, pix] == 0.:      # TODO: update for num_model_channels > 2
                 new_masks[image, pix, 0] = 1.0
                 new_masks[image, pix, 1] = 0.0
             else:
@@ -228,39 +228,6 @@ def convert_img_to_pred(ground_truths, num_model_channels, verbose=False):
         print("Elapsed time: {}".format(time.time() - start_time))
 
     return new_masks
-
-
-def generate_ordered_patches_local(imgs, patch_dim, verbose=False):
-    """Generate an array of patches for an array of images"""
-    start_time = time.time()
-
-    img_dim = imgs.shape[1]
-    num_patches = int(img_dim/patch_dim)
-
-    if verbose:
-        print("# patches {}, pixels remaining: {}".format(num_patches, img_dim%patch_dim))
-
-    num_patches_total = (num_patches*num_patches)*imgs.shape[0]
-
-    patches = np.empty((num_patches_total, patch_dim, patch_dim, imgs.shape[3]))
-
-    # Loop over all images
-    total_patch_count = 0
-    for i in range(imgs.shape[0]):
-        # Create patches for each individual image
-        for h in range(num_patches):
-            for w in range(num_patches):
-                patch = imgs[i,                                 # image
-                        h*patch_dim:(h*patch_dim)+patch_dim,    # height
-                        w*patch_dim:(w*patch_dim)+patch_dim,    # width
-                        :]                                      # color channel
-                patches[total_patch_count] = patch
-                total_patch_count +=1
-
-    if verbose:
-        print("Elapsed time: {}".format(time.time() - start_time))
-
-    return patches
 
 
 if __name__ == "__main__":
@@ -295,53 +262,37 @@ if __name__ == "__main__":
 
     # Create the random patches that will serve as the training set
     print("\n--- Generating random training patches")
-    # patch_imgs, patch_ground_truths = generate_random_patches(training_imgs, training_ground_truths,
-    #                                                           settings.PATCHES_NUM_RND,
-    #                                                           settings.PATCH_DIM,
-    #                                                           settings.PATCH_CHANNELS,
-    #                                                           settings.VERBOSE)
+    patch_imgs, patch_ground_truths = generate_random_patches(training_imgs, training_ground_truths,
+                                                              settings.PATCHES_NUM_RND,
+                                                              settings.PATCH_DIM,
+                                                              settings.PATCH_CHANNELS,
+                                                              settings.VERBOSE)
 
-    # TODO: ORDERED - SELECT ONLY ONE/A FEW PATCHES
-    patch_imgs = generate_ordered_patches_local(training_imgs, settings.PATCH_DIM, settings.VERBOSE)
-    patch_ground_truths = generate_ordered_patches_local(training_ground_truths, settings.PATCH_DIM, settings.VERBOSE)
-    NUM_OVERFIT = 1
-    START_OVERFIT = 51
-    patch_imgs = patch_imgs[START_OVERFIT:START_OVERFIT+NUM_OVERFIT]
-    patch_ground_truths = patch_ground_truths[START_OVERFIT:START_OVERFIT+NUM_OVERFIT]
+    # TODO: Select only one/a few patches during initial pipeline development
+    # patch_imgs = generate_ordered_patches_local(training_imgs, settings.PATCH_DIM, settings.VERBOSE)
+    # patch_ground_truths = generate_ordered_patches_local(training_ground_truths, settings.PATCH_DIM, settings.VERBOSE)
+    # NUM_OVERFIT = 1
+    # START_OVERFIT = 53
+    # patch_imgs = patch_imgs[START_OVERFIT:START_OVERFIT+NUM_OVERFIT]
+    # patch_ground_truths = patch_ground_truths[START_OVERFIT:START_OVERFIT+NUM_OVERFIT]
 
-    cv2.imshow("images", group_images(patch_imgs, NUM_OVERFIT))
-    pi = (patch_imgs[0]*255.).astype("uint8")
-    print(pi.shape)
-    print(pi.dtype)
-    cv2.imwrite("image.png", pi)
-    print(pi[0,0])
-    print(patch_imgs.shape)
-    cv2.waitKey(0)
+    # cv2.imshow("images", group_images(patch_imgs, NUM_OVERFIT))
+    # pi = (patch_imgs[0]*255.).astype("uint8")
+    # print(pi.shape)
+    # print(pi.dtype)
+    # cv2.imwrite("image.png", pi)
+    # print(pi[0,0])
+    # print(patch_imgs.shape)
+    # cv2.waitKey(0)
 
-    cv2.imshow("ground truth", group_images(patch_ground_truths, NUM_OVERFIT))
-    gt = (patch_ground_truths[0]*255.).astype("uint8")
-    print(gt.shape)
-    print(gt.dtype)
-    cv2.imwrite("groundtruth.png", gt)
-    print(patch_ground_truths.shape)
-    cv2.waitKey(0)
-
-
-
-
-
-
-
-
-
-
-    #
-    # patch_imgs = np.vstack((patch_imgs, patch_imgs))
-    # patch_imgs = np.concatenate((patch_imgs, patch_imgs), axis=0)
-    #
-    # patch_ground_truths = np.vstack((patch_ground_truths, patch_ground_truths))
-    # patch_ground_truths = np.concatenate((patch_ground_truths, patch_ground_truths), axis=0)
-    # TODO: ORDERED
+    # cv2.imshow("ground truth", group_images(patch_ground_truths, NUM_OVERFIT))
+    # gt = (patch_ground_truths[0]*255.).astype("uint8")
+    # print(gt.shape)
+    # print(gt.dtype)
+    # cv2.imwrite("groundtruth.png", gt)
+    # print(patch_ground_truths.shape)
+    # cv2.waitKey(0)
+    # TODO: Select only one/a few patches during initial pipeline development
 
     # Instantiate the U-Net model
     unet = UNet_NN(img_height=settings.PATCH_DIM,
@@ -351,7 +302,6 @@ if __name__ == "__main__":
                    dropout_rate=settings.DROPOUT_RATE)
 
     model = unet.build_model()
-    # model = unet.get_unet_OK()
 
     # Prepare some path strings
     model_path = os.path.join(settings.MODEL_PATH, unet.title + "_DRIVE_ep{}_np{}.model".format(settings.NUM_EPOCH, settings.PATCHES_NUM_RND))
@@ -367,18 +317,11 @@ if __name__ == "__main__":
     print("--- \nEncoding training ground truths")
     patch_ground_truths_conv = convert_img_to_pred(patch_ground_truths, settings.NUM_OUTPUT_CLASSES, settings.VERBOSE)
 
-    # np.set_printoptions(threshold=np.inf, suppress=True)
-    # print(patch_grournd_truths_conv)
-
     # Train the model
     print("\n--- Start training")
     # opt = SGD(momentum=settings.MOMENTUM)
-    opt =  Adam()
+    opt = Adam()
     model.compile(optimizer=opt, loss="categorical_crossentropy", metrics=["accuracy"])
-
-
-
-
     # model.compile(optimizer=Adam(0.0001), loss=dice_coef_loss, metrics=[dice_coef])
 
     # Prepare callbacks
@@ -388,45 +331,23 @@ if __name__ == "__main__":
                  ]
 
     # TODO use this when done!
-    # hist = model.fit(patch_imgs, patch_ground_truths_conv,
-    #           epochs=settings.NUM_EPOCH,
-    #           batch_size=settings.BATCH_SIZE,
-    #           verbose=1,
-    #           shuffle=True,
-    #           validation_split=settings.TRAIN_VAL_SPLIT,
-    #           callbacks=callbacks)
-
-    # TODO 50/50 validation set, required doubling of the training data set foe one patch
-    # hist = model.fit(patch_imgs, patch_ground_truths_conv,
-    #           epochs=settings.NUM_EPOCH,
-    #           batch_size=settings.BATCH_SIZE,
-    #           verbose=1,
-    #           validation_split=0.5,
-    #           callbacks=callbacks)
-
-    # TODO no validation set
-    print(patch_imgs.shape)
-    print(patch_ground_truths_conv.shape)
-
-
     hist = model.fit(patch_imgs, patch_ground_truths_conv,
               epochs=settings.NUM_EPOCH,
               batch_size=settings.BATCH_SIZE,
               verbose=1,
               shuffle=True,
+              validation_split=settings.TRAIN_VAL_SPLIT,
               callbacks=callbacks)
 
     print("\n--- Training complete")
 
-    # TODO always save the last model separately to test with drive_test if needed
-    model.save("../savedmodels/last.model", overwrite=True)
+    # Plot the training results - currently breaks if training stopped early
+    plot_training_history(hist, settings.NUM_EPOCH, show=False, save_path=settings.OUTPUT_PATH + unet.title + "_DRIVE", time_stamp=True)
 
-    # Immediately make predictions on the single patch
-    cv2.imshow("inference image", group_images(patch_imgs, NUM_OVERFIT))
-    cv2.waitKey(0)
+    exit()
 
+    print("\n--- Make predictions on the training set (pipeline development only")
     predictions = model.predict(patch_imgs, batch_size=settings.BATCH_SIZE, verbose=2)
-    # print(predictions)
 
     predictions_img = convert_pred_to_img(predictions,
                                       settings.PATCH_DIM,
@@ -435,47 +356,16 @@ if __name__ == "__main__":
 
     print("ORIGINAL GROUND TRUTH image")
     print(patch_ground_truths[0].shape)
-    # cv2.imshow("org gt", patch_ground_truths[0])
-    # cv2.waitKey(0)
-    cv2.imshow("ground truth post", group_images(patch_ground_truths, NUM_OVERFIT))
+    cv2.imshow("ground truth post", group_images(patch_ground_truths[0:400], 20))
+    cv2.waitKey(0)
+
+    print("ORIGINAL image")
+    print(patch_imgs[0].shape)
+    cv2.imshow("image post", group_images(patch_imgs[0:400], 20))
     cv2.waitKey(0)
 
     print("PRED IMG")
     print(predictions_img[0].shape)
-    # cv2.imshow("pred img", predictions_img[0])
-    # cv2.waitKey(0)
-    cv2.imshow("predicted image", group_images(predictions_img, NUM_OVERFIT))
+    cv2.imshow("predicted image", group_images(predictions_img[0:400], 20))
     cv2.waitKey(0)
-
-    print("PRED UNET")
-    print(predictions.shape)
-    print(predictions[0, 0:48, :])
-
-
-    # IMG_INDEX = 0
-    # cv2.imshow("Original image 3", patch_imgs[IMG_INDEX])
-    # cv2.waitKey(0)
-    #
-    # cv2.imshow("Ground truth image 3", patch_ground_truths[IMG_INDEX])
-    # cv2.waitKey(0)
-    #
-    # cv2.imshow("Prediction", predictions[IMG_INDEX])
-    # cv2.waitKey(0)
-
-
-    # plot = group_images(patch_imgs[0:121], 11)
-    # cv2.imshow("org", plot)
-    # cv2.waitKey(0)
-    #
-    # print(patch_ground_truths[0])
-    # plot = group_images(patch_ground_truths[0:121], 11)
-    # cv2.imshow("ground truth", plot)
-    # cv2.waitKey(0)
-    #
-    # plot = group_images(predictions_img[0:121], 11)
-    # cv2.imshow("pred", plot)
-    # cv2.waitKey(0)
-
-    # Plot the training results - currently breaks if training stopped early
-    # plot_training_history(hist, settings.NUM_EPOCH, show=False, save_path=settings.OUTPUT_PATH + unet.title + "_DRIVE", time_stamp=True)
 

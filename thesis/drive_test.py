@@ -174,8 +174,8 @@ if __name__ == "__main__":
 
     # Extend images and ground truths to ensure patches cover the entire image
     print("\n--- Extending images")
-    # test_imgs, new_img_dim, patches_dim = extend_images(test_imgs, settings.PATCH_DIM)
-    # test_ground_truths, _, _ = extend_images(test_ground_truths, settings.PATCH_DIM)
+    test_imgs, new_img_dim, patches_dim = extend_images(test_imgs, settings.PATCH_DIM)
+    test_ground_truths, _, _ = extend_images(test_ground_truths, settings.PATCH_DIM)
 
     # Break up images into patches that will be provided to the U-Net for predicting
     print("\n--- Generating patches")
@@ -183,14 +183,14 @@ if __name__ == "__main__":
     patch_ground_truths = generate_ordered_patches(test_ground_truths, settings.PATCH_DIM, settings.VERBOSE)
 
     # TODO: ORDERED - SELECT ONLY ONE/A FEW PATCHES
-    NUM_OVERFIT = 1
-    START_OVERFIT = 51
-    patch_imgs = patch_imgs[START_OVERFIT:START_OVERFIT+NUM_OVERFIT]
-    patch_ground_truths = patch_ground_truths[START_OVERFIT:START_OVERFIT+NUM_OVERFIT]
-    cv2.imshow("images", group_images(patch_imgs, NUM_OVERFIT))
-    cv2.waitKey(0)
-    cv2.imshow("ground truths", group_images(patch_ground_truths, NUM_OVERFIT))
-    cv2.waitKey(0)
+    # NUM_OVERFIT = 1
+    # START_OVERFIT = 51
+    # patch_imgs = patch_imgs[START_OVERFIT:START_OVERFIT+NUM_OVERFIT]
+    # patch_ground_truths = patch_ground_truths[START_OVERFIT:START_OVERFIT+NUM_OVERFIT]
+    # cv2.imshow("images", group_images(patch_imgs, NUM_OVERFIT))
+    # cv2.waitKey(0)
+    # cv2.imshow("ground truths", group_images(patch_ground_truths, NUM_OVERFIT))
+    # cv2.waitKey(0)
     # TODO
 
     # Load the trained U-net model
@@ -211,35 +211,31 @@ if __name__ == "__main__":
 
 
 
-    print("ORIGINAL GROUND TRUTH image")
-    print(patch_ground_truths[0].shape)
+    print("GROUND TRUTH image")
+    print(patch_ground_truths.shape)
     # cv2.imshow("org gt", patch_ground_truths[0])
     # cv2.waitKey(0)
-    cv2.imshow("ground truths post", group_images(patch_ground_truths, NUM_OVERFIT))
+    cv2.imshow("Ground truth", group_images(patch_ground_truths, 12))
+    cv2.waitKey(0)
+
+    print("ORIGINAL image")
+    print(patch_imgs[0].shape)
+    cv2.imshow("Original", group_images(patch_imgs, 12))
     cv2.waitKey(0)
 
     print("PRED IMG")
     print(predictions_img[0].shape)
     # cv2.imshow("pred img", predictions_img[0])
     # cv2.waitKey(0)
-    cv2.imshow("images post", group_images(predictions_img, NUM_OVERFIT))
+    cv2.imshow("Prediction", group_images(predictions_img, 12))
     cv2.waitKey(0)
-
-    print("PRED UNET")
-    print(predictions.shape)
-    print(predictions[0, 0:48, :])
-
-
-
-
-
-
-
-    exit()
 
     # Reconstruct the images from the patch images
     print("\n--- Reconstructing images from patches")
-    predictions = reconstruct_image(predictions_img, new_img_dim, settings.VERBOSE)
+    reconstucted = reconstruct_image(predictions_img, new_img_dim, settings.VERBOSE)
+
+    cv2.imshow("Reconstructed", reconstucted[0])
+    cv2.waitKey(0)
 
     # Crop back to original resolution
     # TODO: requires updates to perform_image_preprocessing, perform_groundtruth_preprocessing and extend_images
@@ -255,29 +251,16 @@ if __name__ == "__main__":
     # Show the original, ground truth and prediction for one image
     print("\n--- Showing results")
 
-    IMG_INDEX = 0
-    cv2.imshow("Original image 3", test_imgs[IMG_INDEX])
+    cv2.imshow("Mask", masks[0])
     cv2.waitKey(0)
-    save_image(test_imgs[IMG_INDEX], settings.OUTPUT_PATH + "image_org")
-
-    cv2.imshow("Ground truth", test_ground_truths[IMG_INDEX])
-    cv2.waitKey(0)
-    save_image(test_ground_truths[IMG_INDEX], settings.OUTPUT_PATH + "image_groundtruth")
-
-    cv2.imshow("Mask", masks[IMG_INDEX])
-    cv2.waitKey(0)
-    save_image(masks[IMG_INDEX], settings.OUTPUT_PATH + "image_mask")
-
-    cv2.imshow("Prediction", predictions[IMG_INDEX])
-    cv2.waitKey(0)
-    save_image(predictions[IMG_INDEX], settings.OUTPUT_PATH + "image_pred")
+    save_image(masks[0], settings.OUTPUT_PATH + "image_mask")
 
     # Load and apply masks
     print("\n--- Applying masks")
-    apply_masks(predictions, masks)
+    apply_masks(reconstucted, masks)
 
-    cv2.imshow("Masked prediction", predictions[IMG_INDEX])
+    cv2.imshow("Masked reconstructed", reconstucted[0])
     cv2.waitKey(0)
-    save_image(predictions[IMG_INDEX], settings.OUTPUT_PATH + "image_pred_masked")
+    save_image(reconstucted[0], settings.OUTPUT_PATH + "image_reconstruct_masked")
 
     print("\n--- Predicting complete")
