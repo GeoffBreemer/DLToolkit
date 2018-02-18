@@ -2,12 +2,12 @@
 
 Steps:
 
-1 Download the data set from [here](https://www.isi.uu.nl/Research/Databases/DRIVE/)
+1 Download the DRIVE data set from [here](https://www.isi.uu.nl/Research/Databases/DRIVE/).
 
-2 Update the settings file `settings_drive.py`, e.g. by updating the paths
+2 Review and update the settings file (`settings_drive.py`), e.g. update the paths.
 
-3 Execute `drive_train.py` to convert the DRIVE data set to HDF5 format and train the model
+3 Execute `drive_train.py` to convert the DRIVE data set to HDF5 format and train the model.
 
-4 Apply the trained model to the test set by running `drive_test.py` using the paramater `--m` to point to the trained model. For example:
+4 Apply a trained model to the test set by running `drive_test.py` with the `--m` parameter pointing to the name and location of the trained model to use. For example:
 
   `drive_test --m="../savedmodels/UNet_DRIVE_ep10_np2000.model"`
