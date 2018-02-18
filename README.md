@@ -42,12 +42,14 @@ Data sets used:
 
 - `animals`: this is a subset of Kaggle's Dogs vs Cats [competition](https://www.kaggle.com/c/dogs-vs-cats) data set, containing only images of cats, dogs and pandas.
 - `flowers17`: available for download [here](http://www.robots.ox.ac.uk/~vgg/data/flowers/17/), the only change made to the original data set is that each image was moved to a subfolder named after the class.
+- `DRIVE`: this data set contains images of the retina and it is used for the segmentation example. It can be downloaded from [here](https://www.isi.uu.nl/Research/Databases/DRIVE/).
 - the usual suspects like MNIST, CIFAR-10 etc. will be downloaded using sklearn.datasets or keras.datasets when they are used for the first time.
 
 ## Folder Structure
-The root folder contains source code for more elaborate examples, currently only one:
+The root folder contains source code for more elaborate examples:
 
 - `kaggle_cats_and_dogs.py`: Kaggle's Dogs vs Cats [competition](https://www.kaggle.com/c/dogs-vs-cats).
+- `retina`: semantic segmentation using a U-Net, partially based on [this](https://github.com/orobix/retina-unet) repository. This example was created in preparation for my thesis. While it doesn't produce winning results, it does quite well considering it relies on minimal data augmentation and hardly any hyper parameter tuning was used.
 
 The folders below contain toolkit specific code, settings for more elaborate examples and code for all simple examples:
 
