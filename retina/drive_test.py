@@ -135,7 +135,7 @@ def apply_masks(preds, masks):
 
     for i in range(preds.shape[0]):
         for x in range(img_width):
-            for y in range(img_height):
+            for y in range(img_height):         # TODO: replace with cv2.bitwise_and
                 if masks[i, y, x, 0] == 0:
                     preds[i, y, x, :] = 0.0
 
@@ -232,9 +232,9 @@ if __name__ == "__main__":
 
     # Reconstruct the images from the patch images
     print("\n--- Reconstructing images from patches")
-    reconstucted = reconstruct_image(predictions_img, new_img_dim, settings.VERBOSE)
+    reconstructed = reconstruct_image(predictions_img, new_img_dim, settings.VERBOSE)
 
-    cv2.imshow("Reconstructed", reconstucted[0])
+    cv2.imshow("Reconstructed", reconstructed[0])
     cv2.waitKey(0)
 
     # Crop back to original resolution
@@ -257,10 +257,10 @@ if __name__ == "__main__":
 
     # Load and apply masks
     print("\n--- Applying masks")
-    apply_masks(reconstucted, masks)
+    apply_masks(reconstructed, masks)
 
-    cv2.imshow("Masked reconstructed", reconstucted[0])
+    cv2.imshow("Masked reconstructed", reconstructed[0])
     cv2.waitKey(0)
-    save_image(reconstucted[0], settings.OUTPUT_PATH + "image_reconstruct_masked")
+    save_image(reconstructed[0], settings.OUTPUT_PATH + "image_reconstruct_masked")
 
     print("\n--- Predicting complete")
