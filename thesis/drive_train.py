@@ -12,7 +12,10 @@
 #
 # Seed:
 # https://keras.io/getting-started/faq/#how-can-i-obtain-reproducible-results-using-keras-during-development
-
+#
+# Deconvolution:
+# https://stackoverflow.com/questions/42144191/the-keras-layersfunctions-corresponding-to-tf-nn-conv2d-transpose
+#
 # import numpy as np
 # import tensorflow as tf
 # import random as rn
@@ -20,6 +23,8 @@
 # os.environ['PYTHONHASHSEED'] = '0'
 # np.random.seed(42)
 # rn.seed(12345)
+#
+
 
 
 from settings import settings_drive as settings
@@ -345,8 +350,8 @@ if __name__ == "__main__":
                    num_classes=settings.NUM_OUTPUT_CLASSES,
                    dropout_rate=settings.DROPOUT_RATE)
 
-    # model = unet.build_model()
-    model = unet.get_unet()
+    model = unet.build_model()
+    # model = unet.get_unet_OK()
 
     # Prepare some path strings
     model_path = os.path.join(settings.MODEL_PATH, unet.title + "_DRIVE_ep{}_np{}.model".format(settings.NUM_EPOCH, settings.PATCHES_NUM_RND))
@@ -363,15 +368,18 @@ if __name__ == "__main__":
     patch_ground_truths_conv = convert_img_to_pred(patch_ground_truths, settings.NUM_OUTPUT_CLASSES, settings.VERBOSE)
 
     # np.set_printoptions(threshold=np.inf, suppress=True)
-    # print(patch_ground_truths_conv)
+    # print(patch_grournd_truths_conv)
 
     # Train the model
     print("\n--- Start training")
     # opt = SGD(momentum=settings.MOMENTUM)
-    opt = SGD()
     opt =  Adam()
     model.compile(optimizer=opt, loss="categorical_crossentropy", metrics=["accuracy"])
-    # model.compile(optimizer=Adam(lr=1e-5), loss=dice_coef_loss, metrics=[dice_coef])
+
+
+
+
+    # model.compile(optimizer=Adam(0.0001), loss=dice_coef_loss, metrics=[dice_coef])
 
     # Prepare callbacks
     callbacks = [ModelCheckpoint(model_path, monitor="val_loss", mode="min", save_best_only=True, verbose=1),

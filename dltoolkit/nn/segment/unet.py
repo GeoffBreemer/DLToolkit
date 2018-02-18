@@ -1,4 +1,5 @@
-from keras.layers import Input, Conv2D, MaxPooling2D, concatenate, UpSampling2D, Cropping2D, Dropout, Activation, Reshape, Permute
+from keras.layers import Input, Conv2D, MaxPooling2D, concatenate, UpSampling2D, Cropping2D, Dropout, Activation, Reshape, Permute, Conv2DTranspose
+from keras.layers.merge import Concatenate
 from keras.models import Model
 from keras.initializers import RandomNormal
 from keras import backend as K
@@ -16,7 +17,145 @@ class UNet_NN(BaseNN):
         self._dropout_rate = dropout_rate
         self._num_classes = num_classes
 
-    def get_unet(self):
+    def build_model(self):
+        # Same as build_model_OK but with Conv2DTranspose
+        """Build the U-Net architecture used for the DRIVE data set"""
+        _title = "UNet_DRIVE"
+
+        # Set the input shape
+        if K.image_data_format() == "channels_first":
+            input_shape = (self._img_channels, self._img_height, self._img_height)
+        else:
+            input_shape = (self._img_height, self._img_width, self._img_channels)
+            print("CHANNELS LAST")
+
+        inputs = Input(input_shape)
+
+        # Contracting path
+        conv_contr1 = Conv2D(filters=32, kernel_size=(3, 3), activation='relu', padding='same',
+                             kernel_initializer="he_normal")(inputs)
+        conv_contr1 = Conv2D(filters=32, kernel_size=(3, 3), activation='relu', padding='same',
+                             kernel_initializer="he_normal")(conv_contr1)
+        pool_contr1 = MaxPooling2D(pool_size=(2, 2))(conv_contr1)
+
+        conv_contr2 = Conv2D(filters=64, kernel_size=(3, 3), activation='relu', padding='same',
+                             kernel_initializer="he_normal")(pool_contr1)
+        conv_contr2 = Conv2D(filters=64, kernel_size=(3, 3), activation='relu', padding='same',
+                             kernel_initializer="he_normal")(conv_contr2)
+        pool_contr2 = MaxPooling2D(pool_size=(2, 2))(conv_contr2)
+
+        # "Bottom" layer
+        conv_bottom = Conv2D(filters=128, kernel_size=(3, 3), activation='relu', padding='same',
+                             kernel_initializer="he_normal")(pool_contr2)
+        conv_bottom = Conv2D(filters=128, kernel_size=(3, 3), activation='relu', padding='same',
+                             kernel_initializer="he_normal")(conv_bottom)
+
+        # Crop outputs of each contracting path "layer" for use in their corresponding expansive path "layer"
+        # crop_up1 = Cropping2D(cropping=((88, 88), (88, 88)))(conv_contr1)
+        # crop_up2 = Cropping2D(cropping=((40, 40), (40, 40)))(conv_contr2)
+        # crop_up1 = Cropping2D(cropping=((0, 0), (0, 0)))(conv_contr1)
+        # crop_up2 = Cropping2D(cropping=((0, 0), (0, 0)))(conv_contr2)
+        crop_up1 = conv_contr1  # no cropping required
+        crop_up2 = conv_contr2  # no cropping required
+
+        # Expansive path
+        conv_scale_up2 = Conv2DTranspose(filters=64, kernel_size=(2, 2), strides=2, activation="relu", padding="same",
+                             kernel_initializer="he_normal")(conv_bottom)
+        merge_up2 = concatenate([conv_scale_up2, crop_up2], axis=3)
+        conv_up2 = Conv2D(filters=64, kernel_size=(3, 3), activation='relu', padding='same',
+                             kernel_initializer="he_normal")(merge_up2)
+        conv_up2 = Conv2D(filters=64, kernel_size=(3, 3), activation='relu', padding='same',
+                             kernel_initializer="he_normal")(conv_up2)
+
+        conv_scale_up1 = Conv2DTranspose(filters=32, kernel_size=(2, 2), strides=2, activation="relu", padding="same",
+                             kernel_initializer="he_normal")(conv_up2)
+        merge_up1 = concatenate([conv_scale_up1, crop_up1], axis=3)
+        conv_up1 = Conv2D(filters=32, kernel_size=(3, 3), activation='relu', padding='same',
+                             kernel_initializer="he_normal")(merge_up1)
+        conv_up1 = Conv2D(filters=32, kernel_size=(3, 3), activation='relu', padding='same',
+                             kernel_initializer="he_normal")(conv_up1)
+
+        # Final 1x1 conv layer
+        conv_final = Conv2D(self._num_classes, (1, 1), activation='relu', padding='same',
+                             kernel_initializer="he_normal")(conv_up1)
+        conv_final = Reshape((self._img_height * self._img_width, self._num_classes))(conv_final)
+        conv_final = Activation('softmax')(conv_final)
+
+        self._model = Model(inputs=[inputs], outputs=[conv_final])
+
+        return self._model
+
+    def build_model_WITH_INIT(self):
+        # Same as build_model_OK but with Conv2DTranspose
+        """Build the U-Net architecture used for the DRIVE data set"""
+        _title = "UNet_DRIVE"
+
+        # Set the input shape
+        if K.image_data_format() == "channels_first":
+            input_shape = (self._img_channels, self._img_height, self._img_height)
+        else:
+            input_shape = (self._img_height, self._img_width, self._img_channels)
+            print("CHANNELS LAST")
+
+        inputs = Input(input_shape)
+
+        # Contracting path
+        conv_contr1 = Conv2D(filters=32, kernel_size=(3, 3), activation='relu', padding='same',
+                             kernel_initializer=RandomNormal(
+                                 stddev=sqrt(2 / (self._img_width * self._img_height * self._img_channels))))(inputs)
+        conv_contr1 = Conv2D(filters=32, kernel_size=(3, 3), activation='relu', padding='same',
+                             kernel_initializer=RandomNormal(stddev=sqrt(2 / (3 * 3 * 32))))(conv_contr1)
+        pool_contr1 = MaxPooling2D(pool_size=(2, 2))(conv_contr1)
+
+        conv_contr2 = Conv2D(filters=64, kernel_size=(3, 3), activation='relu', padding='same',
+                             kernel_initializer=RandomNormal(stddev=sqrt(2 / (3 * 3 * 32))))(pool_contr1)
+        conv_contr2 = Conv2D(filters=64, kernel_size=(3, 3), activation='relu', padding='same',
+                             kernel_initializer=RandomNormal(stddev=sqrt(2 / (3 * 3 * 64))))(conv_contr2)
+        pool_contr2 = MaxPooling2D(pool_size=(2, 2))(conv_contr2)
+
+        # "Bottom" layer
+        conv_bottom = Conv2D(filters=128, kernel_size=(3, 3), activation='relu', padding='same',
+                             kernel_initializer=RandomNormal(stddev=sqrt(2 / (3 * 3 * 64))))(pool_contr2)
+        conv_bottom = Conv2D(filters=128, kernel_size=(3, 3), activation='relu', padding='same',
+                             kernel_initializer=RandomNormal(stddev=sqrt(2 / (3 * 3 * 128))))(conv_bottom)
+
+        # Crop outputs of each contracting path "layer" for use in their corresponding expansive path "layer"
+        # crop_up1 = Cropping2D(cropping=((88, 88), (88, 88)))(conv_contr1)
+        # crop_up2 = Cropping2D(cropping=((40, 40), (40, 40)))(conv_contr2)
+        # crop_up1 = Cropping2D(cropping=((0, 0), (0, 0)))(conv_contr1)
+        # crop_up2 = Cropping2D(cropping=((0, 0), (0, 0)))(conv_contr2)
+        crop_up1 = conv_contr1  # no cropping required
+        crop_up2 = conv_contr2  # no cropping required
+
+        # Expansive path
+        conv_scale_up2 = Conv2DTranspose(filters=64, kernel_size=(2, 2), strides=2, activation="relu", padding="same",
+                                         kernel_initializer=RandomNormal(stddev=sqrt(2 / (3 * 3 * 128))))(conv_bottom)
+        merge_up2 = concatenate([conv_scale_up2, crop_up2], axis=3)
+        conv_up2 = Conv2D(filters=64, kernel_size=(3, 3), activation='relu', padding='same',
+                          kernel_initializer=RandomNormal(stddev=sqrt(2 / (3 * 3 * 64))))(merge_up2)
+        conv_up2 = Conv2D(filters=64, kernel_size=(3, 3), activation='relu', padding='same',
+                          kernel_initializer=RandomNormal(stddev=sqrt(2 / (3 * 3 * 64))))(conv_up2)
+
+        conv_scale_up1 = Conv2DTranspose(filters=32, kernel_size=(2, 2), strides=2, activation="relu", padding="same",
+                                         kernel_initializer=RandomNormal(stddev=sqrt(2 / (3 * 3 * 64))))(conv_up2)
+        merge_up1 = concatenate([conv_scale_up1, crop_up1], axis=3)
+        conv_up1 = Conv2D(filters=32, kernel_size=(3, 3), activation='relu', padding='same',
+                          kernel_initializer=RandomNormal(stddev=sqrt(2 / (3 * 3 * 32))))(merge_up1)
+        conv_up1 = Conv2D(filters=32, kernel_size=(3, 3), activation='relu', padding='same',
+                          kernel_initializer=RandomNormal(stddev=sqrt(2 / (3 * 3 * 32))))(conv_up1)
+
+        # Final 1x1 conv layer
+        conv_final = Conv2D(self._num_classes, (1, 1), activation='relu', padding='same',
+                            kernel_initializer=RandomNormal(stddev=sqrt(2 / (3 * 3 * 32))))(conv_up1)
+        conv_final = Reshape((self._img_height * self._img_width, self._num_classes))(conv_final)
+        conv_final = Activation('softmax')(conv_final)
+
+        self._model = Model(inputs=[inputs], outputs=[conv_final])
+
+        return self._model
+
+    def get_unet_OK(self):
+        # Werk vrij snel na 100 epochs
         inputs = Input(shape=(self._img_height, self._img_width, self._img_channels))
         conv1 = Conv2D(32, (3, 3), activation='relu', padding='same', kernel_initializer="he_normal")(inputs)
         conv1 = Conv2D(32, (3, 3), activation='relu', padding='same', kernel_initializer="he_normal")(conv1)
@@ -51,8 +190,8 @@ class UNet_NN(BaseNN):
 
         return self._model
 
-
-    def build_model(self):
+    def build_model_OK(self):
+        "Werkt pas na 150 epochs minimaal"
         """Build the U-Net architecture used for the DRIVE data set"""
         _title = "UNet_DRIVE"
 
@@ -119,8 +258,8 @@ class UNet_NN(BaseNN):
         # Final 1x1 conv layer
         conv_final = Conv2D(self._num_classes , (1, 1), activation='relu', padding='same',
                              kernel_initializer=RandomNormal(stddev=sqrt(2/(3 * 3 * 32))))(conv_up1)
-        conv_final = Reshape((self._num_classes, self._img_height * self._img_width))(conv_final)  # TODO org
-        conv_final = Permute((2, 1))(conv_final)                                                    # TODO org
+        conv_final = Reshape((self._img_height * self._img_width, self._num_classes))(conv_final)  # TODO org
+        # conv_final = Permute((2, 1))(conv_final)                                                    # TODO org
         # conv_final = Reshape((self._img_height * self._img_width, self._num_classes))(conv_final) # TODO meh
         # conv_final = Reshape((-1, self._num_classes))(conv_final)  # TODO meh
         conv_final = Activation('softmax')(conv_final)
