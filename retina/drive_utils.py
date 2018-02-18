@@ -62,22 +62,25 @@ def save_image(img, filename):
     return img
 
 
-def group_images(data, per_row):
-    assert data.shape[0]%per_row==0
-    # assert (data.shape[1]==1 or data.shape[1]==3)
+def group_images(imgs, num_per_row):
+    """Attempts to put an array of images into a single image, provided the number of image can be divided by
+    the number of images desired per row
+    """
+    all_rows = []
 
-    # data = np.transpose(data,(0,2,3,1))  #corect format for imshow
-    all_stripe = []
+    for i in range(int(imgs.shape[0] / num_per_row)):
+        # Add the first image to the current row
+        row = imgs[i * num_per_row]
 
-    for i in range(int(data.shape[0]/per_row)):
-        stripe = data[i*per_row]
-        for k in range(i*per_row+1, i*per_row+per_row):
-            stripe = np.concatenate((stripe,data[k]),axis=1)
-        all_stripe.append(stripe)
+        # Concatenate the remaining images to the current row
+        for k in range(i * num_per_row + 1, i * num_per_row + num_per_row):
+            row = np.concatenate((row, imgs[k]), axis=1)
 
-    totimg = all_stripe[0]
+        all_rows.append(row)
 
-    for i in range(1,len(all_stripe)):
-        totimg = np.concatenate((totimg,all_stripe[i]),axis=0)
+    # Take the first row and concatenate the remaining ones
+    final_image = all_rows[0]
+    for i in range(1, len(all_rows)):
+        final_image = np.concatenate((final_image,all_rows[i]),axis=0)
 
-    return totimg
+    return final_image

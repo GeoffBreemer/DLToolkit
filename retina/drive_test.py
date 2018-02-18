@@ -171,10 +171,13 @@ if __name__ == "__main__":
                                                                         settings.FOLDER_MANUAL_1 + settings.HDF5_EXT),
                                                            settings.HDF5_KEY, True)
     # TODO: both should use is_training=False
+    # print(test_imgs.shape)
+    # test_imgs = test_imgs[[0],:,:,:]
+    # test_ground_truths = test_ground_truths[[0],:,:,:]
 
     # Extend images and ground truths to ensure patches cover the entire image
     print("\n--- Extending images")
-    test_imgs, new_img_dim, patches_dim = extend_images(test_imgs, settings.PATCH_DIM)
+    test_imgs, new_img_dim, num_patches = extend_images(test_imgs, settings.PATCH_DIM)
     test_ground_truths, _, _ = extend_images(test_ground_truths, settings.PATCH_DIM)
 
     # Break up images into patches that will be provided to the U-Net for predicting
@@ -194,7 +197,7 @@ if __name__ == "__main__":
     # TODO
 
     # Load the trained U-net model
-    print("\n--- Loading trained model")
+    print("\n--- Loading trained model: {}".format(model_name_from_arguments()))
     model = load_model(model_name_from_arguments())
 
     # Make predictions on the patches
@@ -208,34 +211,39 @@ if __name__ == "__main__":
                                       settings.PRED_THRESHOLD,
                                       settings.VERBOSE)
 
-
-
-
-    print("GROUND TRUTH image")
+    print("GROUND TRUTH patches")
     print(patch_ground_truths.shape)
     # cv2.imshow("org gt", patch_ground_truths[0])
     # cv2.waitKey(0)
-    cv2.imshow("Ground truth", group_images(patch_ground_truths, 12))
+    tmp_img = group_images(patch_ground_truths, 5*num_patches)
+    cv2.imshow("Ground truth", tmp_img)
     cv2.waitKey(0)
+    save_image(tmp_img, settings.OUTPUT_PATH + "patches_ground_truth")
 
-    print("ORIGINAL image")
+    print("ORIGINAL patches")
     print(patch_imgs[0].shape)
-    cv2.imshow("Original", group_images(patch_imgs, 12))
+    tmp_img = group_images(patch_imgs, 5*num_patches)
+    cv2.imshow("Original", tmp_img)
     cv2.waitKey(0)
+    save_image(tmp_img, settings.OUTPUT_PATH + "patches_original")
 
-    print("PRED IMG")
+    print("PREDICTED patches")
     print(predictions_img[0].shape)
-    # cv2.imshow("pred img", predictions_img[0])
-    # cv2.waitKey(0)
-    cv2.imshow("Prediction", group_images(predictions_img, 12))
+    tmp_img = group_images(predictions_img, 5 * num_patches)
+    cv2.imshow("Prediction", tmp_img)
     cv2.waitKey(0)
+    save_image(tmp_img, settings.OUTPUT_PATH + "patches_predicted")
 
-    # Reconstruct the images from the patch images
+    # Reconstruct images from the predicted patch images
     print("\n--- Reconstructing images from patches")
     reconstructed = reconstruct_image(predictions_img, new_img_dim, settings.VERBOSE)
 
-    cv2.imshow("Reconstructed", reconstructed[0])
+    tmp_img = group_images(reconstructed, 5)
+    cv2.imshow("Reconstructed", tmp_img)
     cv2.waitKey(0)
+    save_image(tmp_img, settings.OUTPUT_PATH + "images_reconstructed")
+
+    exit()
 
     # Crop back to original resolution
     # TODO: requires updates to perform_image_preprocessing, perform_groundtruth_preprocessing and extend_images
@@ -249,7 +257,7 @@ if __name__ == "__main__":
                        settings.PATCH_DIM)
 
     # Show the original, ground truth and prediction for one image
-    print("\n--- Showing results")
+    print("\n--- Showing masked results")
 
     cv2.imshow("Mask", masks[0])
     cv2.waitKey(0)

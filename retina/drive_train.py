@@ -19,6 +19,11 @@
 # U-Net variants:
 # http://blog.kaggle.com/2017/05/16/data-science-bowl-2017-predicting-lung-cancer-solution-write-up-team-deep-breath/
 # https://spark-in.me/post/unet-adventures-part-one-getting-acquainted-with-unet
+#
+# Batch size:
+# https://stats.stackexchange.com/questions/164876/tradeoff-batch-size-vs-number-of-iterations-to-train-a-neural-network
+# Page 276: http://www.deeplearningbook.org/contents/optimization.html
+#
 from settings import settings_drive as settings
 from drive_utils import perform_image_preprocessing, perform_groundtruth_preprocessing, group_images
 from drive_test import convert_pred_to_img
@@ -119,24 +124,6 @@ def perform_hdf5_conversion():
     return output_paths
 
 
-def is_patch_within_boundary(x, y, img_dim, patch_dim):
-    """"
-    Return True if the patch with center (x, y) and dimensions patch_dim is fully contained within an image
-    of the retina (i.e. a circle) with dimensions img_dim
-    """
-    x = x - int(img_dim/2)        # origin (0,0) shifted to image center
-    y = y - int(img_dim/2)       # origin (0,0) shifted to image center
-
-    R_inside = 270 - int(patch_dim * np.sqrt(2.0) / 2.0) #radius is 270 (from DRIVE db docs), minus the patch diagonal (assumed it is a square #this is the limit to contain the full patch in the FOV
-
-    radius = np.sqrt((x*x)+(y*y))
-
-    if radius < R_inside:
-        return True
-    else:
-        return False
-
-
 def generate_random_patches(imgs, ground_truths, num_rnd_patches, patch_dim, patch_channels, verbose=False):
     """Random sample small patches from the preprocessed images and corresponding ground truths"""
     start_time = time.time()
@@ -157,11 +144,6 @@ def generate_random_patches(imgs, ground_truths, num_rnd_patches, patch_dim, pat
             # Pick a random center point inside the original image
             x = random.randint(0 + int(patch_dim/2), img_dim - int(patch_dim / 2))
             y = random.randint(0 + int(patch_dim/2), img_dim - int(patch_dim / 2))
-
-            # Ensure the patch is completely within the image boundary
-            # if not is_patch_within_boundary(x, y, img_dim, patch_dim):
-            #     Discard the patch if it is not
-            #     continue
 
             # Grab the patch from the original image and ground truth
             img_patch = imgs[i,                                     # current image
@@ -225,7 +207,7 @@ if __name__ == "__main__":
     # Convert images to HDF5 format (without applying any preprocessing), this is only required once
 
     # if settings.DEVELOPMENT:
-    if True:
+    if False:
         # Hard code paths to the HDF5 files during development instead
         hdf5_paths = ["../data/DRIVE/training/images.hdf5",
                         "../data/DRIVE/training/1st_manual.hdf5",
@@ -268,7 +250,10 @@ if __name__ == "__main__":
 
     # Prepare some path strings
     model_path = os.path.join(settings.MODEL_PATH, unet.title + "_DRIVE_ep{}_np{}.model".format(settings.NUM_EPOCH, settings.PATCHES_NUM_RND))
-    csv_path = os.path.join(settings.OUTPUT_PATH, unet.title + "_DRIVE_training_ep{}_np{}.csv".format(settings.NUM_EPOCH, settings.PATCHES_NUM_RND))
+    csv_path = os.path.join(settings.OUTPUT_PATH, unet.title + "_DRIVE_training_ep{}_np{}_bs{}.csv".format(
+        settings.NUM_EPOCH,
+        settings.PATCHES_NUM_RND,
+        settings.BATCH_SIZE))
     summ_path = os.path.join(settings.OUTPUT_PATH, unet.title + "_DRIVE_model_summary.txt")
 
     # Print the architecture to the console, a text file and an image
@@ -283,9 +268,9 @@ if __name__ == "__main__":
     # Train the model
     print("\n--- Start training")
     # opt = SGD(momentum=settings.MOMENTUM)
+    # model.compile(optimizer=Adam(0.0001), loss=dice_coef_loss, metrics=[dice_coef])
     opt = Adam()
     model.compile(optimizer=opt, loss="categorical_crossentropy", metrics=["accuracy"])
-    # model.compile(optimizer=Adam(0.0001), loss=dice_coef_loss, metrics=[dice_coef])
 
     # Prepare callbacks
     callbacks = [ModelCheckpoint(model_path, monitor="val_loss", mode="min", save_best_only=True, verbose=1),

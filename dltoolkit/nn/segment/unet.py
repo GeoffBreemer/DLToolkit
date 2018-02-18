@@ -1,10 +1,9 @@
-from keras.layers import Input, Conv2D, MaxPooling2D, concatenate, UpSampling2D, Cropping2D, Dropout, Activation, Reshape, Permute, Conv2DTranspose
-from keras.layers.merge import Concatenate
+from keras.layers import Input, Conv2D, MaxPooling2D, concatenate, UpSampling2D, Cropping2D,\
+    Dropout, Activation, Reshape, Conv2DTranspose
 from keras.models import Model
 from keras.initializers import RandomNormal
 from keras import backend as K
 from dltoolkit.nn.base_nn import BaseNN
-from math import sqrt
 
 
 class UNet_NN(BaseNN):

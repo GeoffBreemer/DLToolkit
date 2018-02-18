@@ -24,7 +24,7 @@ NUM_OUTPUT_CLASSES = 2      # number of classes the U-Net should identify
 # Training parameters
 PATCHES_NUM_RND = 2000      # total # of random patches to generate (i.e. for all images in the training set combined)
 NUM_EPOCH = 10              #10  #10 #30 #7
-BATCH_SIZE = 1              # TODO increase after testing!!!
+BATCH_SIZE = 1
 TRAIN_VAL_SPLIT = 0.1       # Percentage of training data to use for the validation set
 DROPOUT_RATE = 0.0          # Dropout rate used for all DropOut layers
 MOMENTUM = 0.99
