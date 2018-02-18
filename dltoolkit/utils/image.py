@@ -10,6 +10,7 @@ def rgb_to_gray(rgb):
     """
     bn_imgs = rgb[:,:,:,0]*0.299 + rgb[:,:,:,1]*0.587 + rgb[:,:,:,2]*0.114
     bn_imgs = np.reshape(bn_imgs,(rgb.shape[0], rgb.shape[1], rgb.shape[2], 1))
+    # bn_imgs = np.reshape(bn_imgs,(rgb.shape[0], rgb.shape[1], rgb.shape[2]))
 
     # return bn_imgs
     return bn_imgs.astype("uint8")

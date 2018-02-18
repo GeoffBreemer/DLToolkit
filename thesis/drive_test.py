@@ -1,7 +1,7 @@
 """Use a trained U-Net model (using the -model parameter) to make predictions on the DRIVE test data"""
 from settings import settings_drive as settings
 from drive_utils import perform_groundtruth_preprocessing, perform_image_preprocessing,\
-    save_image, crop_image
+    save_image, crop_image, group_images
 
 from dltoolkit.io import HDF5Reader
 
@@ -43,7 +43,7 @@ def extend_images(imgs, patch_dim):
 
 
 def generate_ordered_patches(imgs, patch_dim, verbose=False):
-    """Generate an array of patches for an array of images"""
+    """Generate an array of patches for each image in an array of images"""
     start_time = time.time()
 
     img_dim = imgs.shape[1]
@@ -59,7 +59,7 @@ def generate_ordered_patches(imgs, patch_dim, verbose=False):
     # Loop over all images
     total_patch_count = 0
     for i in range(imgs.shape[0]):
-        # Create patches for each individual image
+        # Create patches for each individual image covering the entire image
         for h in range(num_patches):
             for w in range(num_patches):
                 patch = imgs[i,                                 # image
@@ -75,21 +75,21 @@ def generate_ordered_patches(imgs, patch_dim, verbose=False):
     return patches
 
 
-def convert_pred_to_img(pred, pred_num_channels, patch_dim, verbose=False):
+def convert_pred_to_img(pred, patch_dim, threshold=0.5, verbose=False):
     """Convert patch *predictions* to patch *images* (the opposite of convert_img_to_pred)"""
     start_time = time.time()
 
-    pred_images = np.empty((pred.shape[0], pred.shape[1] * pred.shape[2]))
-    pred = np.reshape(pred, newshape=(pred.shape[0], pred.shape[1] * pred.shape[2], pred.shape[3]))
+    pred_images = np.empty((pred.shape[0], pred.shape[1]))
+    # pred = np.reshape(pred, newshape=(pred.shape[0], pred.shape[1] * pred.shape[2]))
 
     for i in range(pred.shape[0]):
         for pix in range(pred.shape[1]):
-            if pred[i, pix, 1] >= 0.5:
+            if pred[i, pix, 1] > threshold:        # TODO for multiple classes > 2 use argmax
                 pred_images[i, pix] = 1
             else:
                 pred_images[i, pix] = 0
 
-    pred_images = np.reshape(pred_images, (pred.shape[0], patch_dim, patch_dim, pred_num_channels))
+    pred_images = np.reshape(pred_images, (pred.shape[0], patch_dim, patch_dim, 1))
 
     if verbose:
         print("Elapsed time: {}".format(time.time() - start_time))
@@ -170,18 +170,28 @@ if __name__ == "__main__":
     test_ground_truths = perform_groundtruth_preprocessing(os.path.join(settings.TEST_PATH,
                                                                         settings.FOLDER_MANUAL_1 + settings.HDF5_EXT),
                                                            settings.HDF5_KEY, True)
-
     # TODO: both should use is_training=False
 
     # Extend images and ground truths to ensure patches cover the entire image
     print("\n--- Extending images")
-    test_imgs, new_img_dim, patches_dim = extend_images(test_imgs, settings.PATCH_DIM)
-    test_ground_truths, _, _ = extend_images(test_ground_truths, settings.PATCH_DIM)
+    # test_imgs, new_img_dim, patches_dim = extend_images(test_imgs, settings.PATCH_DIM)
+    # test_ground_truths, _, _ = extend_images(test_ground_truths, settings.PATCH_DIM)
 
     # Break up images into patches that will be provided to the U-Net for predicting
     print("\n--- Generating patches")
     patch_imgs = generate_ordered_patches(test_imgs, settings.PATCH_DIM, settings.VERBOSE)
     patch_ground_truths = generate_ordered_patches(test_ground_truths, settings.PATCH_DIM, settings.VERBOSE)
+
+    # TODO: ORDERED - SELECT ONLY ONE/A FEW PATCHES
+    NUM_OVERFIT = 1
+    START_OVERFIT = 51
+    patch_imgs = patch_imgs[START_OVERFIT:START_OVERFIT+NUM_OVERFIT]
+    patch_ground_truths = patch_ground_truths[START_OVERFIT:START_OVERFIT+NUM_OVERFIT]
+    cv2.imshow("images", group_images(patch_imgs, NUM_OVERFIT))
+    cv2.waitKey(0)
+    cv2.imshow("ground truths", group_images(patch_ground_truths, NUM_OVERFIT))
+    cv2.waitKey(0)
+    # TODO
 
     # Load the trained U-net model
     print("\n--- Loading trained model")
@@ -193,11 +203,43 @@ if __name__ == "__main__":
 
     # Convert patch predictions into patch images
     print("\n--- Reconstructing patch predictions to images")
-    predictions = convert_pred_to_img(predictions, settings.PATCH_CHANNELS, settings.PATCH_DIM, settings.VERBOSE)
+    predictions_img = convert_pred_to_img(predictions,
+                                      settings.PATCH_DIM,
+                                      settings.PRED_THRESHOLD,
+                                      settings.VERBOSE)
+
+
+
+
+    print("ORIGINAL GROUND TRUTH image")
+    print(patch_ground_truths[0].shape)
+    # cv2.imshow("org gt", patch_ground_truths[0])
+    # cv2.waitKey(0)
+    cv2.imshow("ground truths post", group_images(patch_ground_truths, NUM_OVERFIT))
+    cv2.waitKey(0)
+
+    print("PRED IMG")
+    print(predictions_img[0].shape)
+    # cv2.imshow("pred img", predictions_img[0])
+    # cv2.waitKey(0)
+    cv2.imshow("images post", group_images(predictions_img, NUM_OVERFIT))
+    cv2.waitKey(0)
+
+    print("PRED UNET")
+    print(predictions.shape)
+    print(predictions[0, 0:48, :])
+
+
+
+
+
+
+
+    exit()
 
     # Reconstruct the images from the patch images
     print("\n--- Reconstructing images from patches")
-    predictions = reconstruct_image(predictions, new_img_dim, settings.VERBOSE)
+    predictions = reconstruct_image(predictions_img, new_img_dim, settings.VERBOSE)
 
     # Crop back to original resolution
     # TODO: requires updates to perform_image_preprocessing, perform_groundtruth_preprocessing and extend_images
@@ -212,9 +254,8 @@ if __name__ == "__main__":
 
     # Show the original, ground truth and prediction for one image
     print("\n--- Showing results")
-    print(test_imgs.shape)
 
-    IMG_INDEX = 11
+    IMG_INDEX = 0
     cv2.imshow("Original image 3", test_imgs[IMG_INDEX])
     cv2.waitKey(0)
     save_image(test_imgs[IMG_INDEX], settings.OUTPUT_PATH + "image_org")
@@ -238,3 +279,5 @@ if __name__ == "__main__":
     cv2.imshow("Masked prediction", predictions[IMG_INDEX])
     cv2.waitKey(0)
     save_image(predictions[IMG_INDEX], settings.OUTPUT_PATH + "image_pred_masked")
+
+    print("\n--- Predicting complete")
