@@ -1,4 +1,4 @@
-# Project: dltoolkit
+# Project: DLToolkit
 Collection of deep learning code being developed while working on my thesis. 
 
 ## Getting Started
