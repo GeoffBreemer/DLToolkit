@@ -56,10 +56,10 @@ The folders below contain toolkit specific code, settings for more elaborate exa
   - `preprocess`: various image preprocessing utilities (resize, crop etc.).
   - `utils`: various generic utilities.
 - `settings`: settings for more elaborate examples, which are kept separate from the training source code.
-- `simple_examples`: a number of simple examples (e.g. MNIST using LeNet).
-- `complex_examples`: more involved examples, currently only:
+- `examples_simple`: a number of simple examples (e.g. MNIST using LeNet).
+- `examples_complex`: more involved examples, currently only:
   - `kaggle_cats_and_dogs.py` for Kaggle's Dogs vs Cats [competition](https://www.kaggle.com/c/dogs-vs-cats)
-  - `/retina`: semantic segmentation using a U-Net, partially based on [this](https://github.com/orobix/retina-unet) repository. Doesn't produce winning results, but does quite well considering the minimal data augmentation and hardly any hyper parameter tuning was used. Comes in Keras and TensorFlow versions.
+  - `/retina`: semantic segmentation using a U-Net, partially based on [this](https://github.com/orobix/retina-unet) repository. Does not produce winning results and is not production-ready code, but does quite well considering the minimal data augmentation and hardly any hyper parameter tuning was used. Comes in Keras and TensorFlow versions.
 
 The folders below are not included on GitHub due to their (potential) size and/or because they contain output data created by the various examples:
 
