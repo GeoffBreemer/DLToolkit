@@ -60,7 +60,7 @@ The folders below contain toolkit specific code, settings for more elaborate exa
 - `simple_examples`: a number of simple examples (e.g. MNIST using LeNet).
 - `complex_examples`: more involved examples, currently only:
   - `kaggle_cats_and_dogs.py` for Kaggle's Dogs vs Cats [competition](https://www.kaggle.com/c/dogs-vs-cats)
-  - `/retina`: semantic segmentation using a U-Net, partially based on [this](https://github.com/orobix/retina-unet) repository. This example was created in preparation for my thesis. While it doesn't produce winning results, it does quite well considering it relies on minimal data augmentation and hardly any hyper parameter tuning was used.
+  - `/retina`: semantic segmentation using a U-Net, partially based on [this](https://github.com/orobix/retina-unet) repository. Doesn't produce winning results, but does quite well considering the minimal data augmentation and hardly any hyper parameter tuning was used. Comes in Keras and TensorFlow versions.
 
 The folders below are not included on GitHub due to their (potential) size and/or because they contain output data created by the various examples:
 
