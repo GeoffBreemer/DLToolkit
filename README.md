@@ -11,14 +11,13 @@ Install the Python packages listed below and any packages they may depend on:
 
 - scikit-learn
 - scikit-image
-- OpenCV3
+- OpenCV 3.3
 - NumPy
-- Keras 2.1.2
-- Tensorflow
+- Keras 2.1.4
+- Tensorflow 1.5
 - HDF5
 - graphviz
 - matplotlib
-- [imutils](https://github.com/jrosebr1/imutils)
 
 All code is written in Python 3.6.3 using PyCharm Professional 2017.3.
 
