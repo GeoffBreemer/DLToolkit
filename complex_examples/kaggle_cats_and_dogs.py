@@ -32,7 +32,7 @@ TEST_SET = "TEST_SET"
 def create_hdf5():
     """Convert the data set to HDF5 format"""
     # Load image paths and determine class label from the file name
-    train_paths = list(list_images(settings.DATA_PATH))
+    train_paths = list(list_images(settings.DATA_PATH, validExts="jpg"))
     train_labels = [p.split(os.path.sep)[2].split(".")[0] for p in train_paths]
 
     # Encode labels

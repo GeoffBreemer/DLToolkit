@@ -1,8 +1,8 @@
 # Variables used to construct paths and filenames
-TRAINING_PATH = "../data/DRIVE/training"            # training images
-TEST_PATH = "../data/DRIVE/test"                    # test images
-MODEL_PATH = "../savedmodels/"                      # model weights
-OUTPUT_PATH = "../output/"                          # plots and other outputs
+TRAINING_PATH = "....//data/DRIVE/training"            # training images
+TEST_PATH = "../../data/DRIVE/test"                    # test images
+MODEL_PATH = "../../savedmodels/"                      # model weights
+OUTPUT_PATH = "../../output/"                          # plots and other outputs
 
 FOLDER_MANUAL_1 = "1st_manual"                      # ground truths
 FOLDER_IMAGES = "images"                            # retina images
