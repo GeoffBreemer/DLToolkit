@@ -42,7 +42,7 @@ import os, progressbar, cv2, random, time
 from PIL import Image                                   # for reading .gif images
 
 
-def convert_to_hdf5(img_path, img_shape, exts, key):
+def convert_to_hdf5(img_path, img_shape, img_exts, key, ext):
     """
     Convert images present in `img_path` to HDF5 format. The HDF5 file is one sub folder up from where the
     images are located
@@ -50,12 +50,12 @@ def convert_to_hdf5(img_path, img_shape, exts, key):
     :param img_shape: shape of each image (width, height, # of channels)
     :return: full path to the generated HDF5 file
     """
-    output_path = os.path.join(os.path.dirname(img_path), os.path.basename(img_path)) + key
-    imgs_list = sorted(list(list_images(basePath=img_path, validExts=exts)))
+    output_path = os.path.join(os.path.dirname(img_path), os.path.basename(img_path)) + ext
+    imgs_list = sorted(list(list_images(basePath=img_path, validExts=img_exts)))
 
     # Prepare the HDF5 writer, which expects a label vector. Because this is a segmentation problem just pass None
     hdf5_writer = HDF5Writer((len(imgs_list), img_shape[0], img_shape[1], img_shape[2]), output_path,
-                             feat_key=settings.HDF5_KEY,
+                             feat_key=key,
                              label_key=None,
                              del_existing=True,
                              buf_size=len(imgs_list)
@@ -65,7 +65,7 @@ def convert_to_hdf5(img_path, img_shape, exts, key):
     widgets = ["Creating HDF5 database ", progressbar.Percentage(), " ", progressbar.Bar(), " ", progressbar.ETA()]
     pbar = progressbar.ProgressBar(maxval=len(imgs_list), widgets=widgets).start()
     for i, img in enumerate(imgs_list):
-        if exts == ".gif":
+        if img_exts == ".gif":
             # Ground truth and masks are single colour channel .gif files
             image = np.asarray(Image.open(img).convert("L"))
             image = image.reshape((img_shape[0],
@@ -93,32 +93,32 @@ def perform_hdf5_conversion():
     # Convert training images in each sub folder to a single HDF5 file
     output_paths.append(convert_to_hdf5(os.path.join(settings.TRAINING_PATH, settings.FOLDER_IMAGES),
                                         (settings.IMG_HEIGHT, settings.IMG_WIDTH, settings.IMG_CHANNELS_TIF),
-                                        exts=".tif", key=settings.HDF5_EXT))
+                                        img_exts=".tif", key=settings.HDF5_KEY, ext=settings.HDF5_EXT))
 
     # Training ground truths
     output_paths.append(convert_to_hdf5(os.path.join(settings.TRAINING_PATH, settings.FOLDER_MANUAL_1),
                                         (settings.IMG_HEIGHT, settings.IMG_WIDTH, settings.IMG_CHANNELS_GIF),
-                                        exts=".gif", key=settings.HDF5_EXT))
+                                        img_exts=".gif", key=settings.HDF5_KEY, ext=settings.HDF5_EXT))
 
     # Training masks
     output_paths.append(convert_to_hdf5(os.path.join(settings.TRAINING_PATH, settings.FOLDER_MASK),
                                         (settings.IMG_HEIGHT, settings.IMG_WIDTH, settings.IMG_CHANNELS_GIF),
-                                        exts=".gif", key=settings.HDF5_EXT))
+                                        img_exts=".gif", key=settings.HDF5_KEY, ext=settings.HDF5_EXT))
 
     # Do the same for the test images
     output_paths.append(convert_to_hdf5(os.path.join(settings.TEST_PATH, settings.FOLDER_IMAGES),
                                         (settings.IMG_HEIGHT, settings.IMG_WIDTH, settings.IMG_CHANNELS_TIF),
-                                        exts=".tif", key=settings.HDF5_EXT))
+                                        img_exts=".tif", key=settings.HDF5_KEY, ext=settings.HDF5_EXT))
 
     # Test ground truths
     output_paths.append(convert_to_hdf5(os.path.join(settings.TEST_PATH, settings.FOLDER_MANUAL_1),
                                         (settings.IMG_HEIGHT, settings.IMG_WIDTH, settings.IMG_CHANNELS_GIF),
-                                        exts=".gif", key=settings.HDF5_EXT))
+                                        img_exts=".gif", key=settings.HDF5_KEY, ext=settings.HDF5_EXT))
 
     # Test masks
     output_paths.append(convert_to_hdf5(os.path.join(settings.TEST_PATH, settings.FOLDER_MASK),
                                         (settings.IMG_HEIGHT, settings.IMG_WIDTH, settings.IMG_CHANNELS_GIF),
-                                        exts=".gif", key=settings.HDF5_EXT))
+                                        img_exts=".gif", key=settings.HDF5_KEY, ext=settings.HDF5_EXT))
 
     return output_paths
 
@@ -204,7 +204,7 @@ def convert_img_to_pred(ground_truths, num_model_channels, verbose=False):
 
 if __name__ == "__main__":
     # Convert images to HDF5 format (without applying any preprocessing), this is only required once
-    if settings.DEVELOPMENT:
+    if not settings.DEVELOPMENT:
         # Hard code paths to the HDF5 files during development instead
         hdf5_paths = ["../../data/DRIVE/training/images.hdf5",
                         "../../data/DRIVE/training/1st_manual.hdf5",

@@ -22,7 +22,7 @@ class UNet_NN(BaseNN):
 
         # Set the input shape
         if K.image_data_format() == "channels_first":
-            input_shape = (self._img_channels, self._img_height, self._img_height)
+            input_shape = (self._img_channels, self._img_width, self._img_height)
         else:
             input_shape = (self._img_height, self._img_width, self._img_channels)
             print("CHANNELS LAST")
@@ -49,10 +49,6 @@ class UNet_NN(BaseNN):
                              kernel_initializer="he_normal")(conv_bottom)
 
         # Crop outputs of each contracting path "layer" for use in their corresponding expansive path "layer"
-        # crop_up1 = Cropping2D(cropping=((88, 88), (88, 88)))(conv_contr1)
-        # crop_up2 = Cropping2D(cropping=((40, 40), (40, 40)))(conv_contr2)
-        # crop_up1 = Cropping2D(cropping=((0, 0), (0, 0)))(conv_contr1)
-        # crop_up2 = Cropping2D(cropping=((0, 0), (0, 0)))(conv_contr2)
         crop_up1 = conv_contr1  # no cropping required
         crop_up2 = conv_contr2  # no cropping required
 
@@ -103,7 +99,7 @@ class UNet_NN(BaseNN):
 
         # Set the input shape
         if K.image_data_format() == "channels_first":
-            input_shape = (self._img_channels, self._img_height, self._img_height)
+            input_shape = (self._img_channels, self._img_width, self._img_height)
         else:
             input_shape = (self._img_height, self._img_width, self._img_channels)
 
@@ -171,6 +167,6 @@ class UNet_NN(BaseNN):
         # Final 1x1 conv layer
         conv_final = Conv2D(filters=2, kernel_size=(1, 1), activation='sigmoid')(conv_up1)
 
-        self._model = Model(input=inputs, output=conv_final)
+        self._model = Model(inputs=inputs, outputs=conv_final)
 
         return self._model
