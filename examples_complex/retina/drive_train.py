@@ -174,7 +174,7 @@ def generate_random_patches(imgs, ground_truths, num_rnd_patches, patch_dim, pat
 
 def convert_img_to_pred(ground_truths, num_model_channels, verbose=False):
     """Convert ground truth *images* into the shape of the *predictions* produced by the U-Net (the opposite of
-    convert_pred_to_img in drive_test.py)
+    convert_pred_to_img_3D in drive_test.py)
     """
     start_time = time.time()
 

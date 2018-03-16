@@ -9,10 +9,15 @@
 #    https://stackoverflow.com/questions/43033436/how-to-do-point-wise-categorical-crossentropy-loss-in-keras
 #    https://stackoverflow.com/questions/43968028/how-to-use-weighted-categorical-crossentropy-on-fcn-u-net-in-keras?rq=1
 #    https://stackoverflow.com/questions/46504371/how-to-do-weight-imbalanced-classes-for-cross-entropy-loss-in-keras
+#    GOOD --> https://github.com/keras-team/keras/issues/3653
 #
 #
-#
-#
+# AlexNet
+# CHECK DEZE:
+# https://github.com/heuritech/convnets-keras
+# https://devblogs.nvidia.com/image-segmentation-using-digits-5/
+# For the AlexNet, the images(for the mode without the heatmap) have to be of shape (227, 227).It is recommended to
+# resize the images with a size of (256, 256), and then do a crop of size (227, 227).The colors are in RGB order.
 #
 
 # - cannot do pixel level softmax:
@@ -20,87 +25,20 @@
 
 import settings_baseline as settings
 
-from dltoolkit.nn.cnn import AlexNetNN
 from dltoolkit.io import HDF5Writer, HDF5Reader
 from dltoolkit.utils.generic import list_images, model_architecture_to_file, model_summary_to_file
 from dltoolkit.nn.segment import UNet_NN, FCN32_VGG16_NN
 from dltoolkit.utils.visual import plot_training_history
-from dltoolkit.utils.image import rgb_to_gray, normalise, clahe_equalization, adjust_gamma, standardise
-from dltoolkit.preprocess import ResizePreprocessor
+
+from common_baseline import perform_image_preprocessing, perform_groundtruth_preprocessing,\
+    convert_img_to_pred_4D, convert_pred_to_img_4D,\
+    convert_img_to_pred_3D, convert_pred_to_img_3D
 
 from keras.callbacks import ModelCheckpoint, EarlyStopping, CSVLogger
-from keras.optimizers import SGD, Adam
-from keras.layers import Conv2D, Conv2DTranspose, Activation, Reshape
-from keras.models import Model
-from keras.models import load_model
-from keras import backend as K
+from keras.optimizers import Adam
 
-import tensorflow as tf
-
-import cv2
 import numpy as np
-import os, progressbar, cv2, random, time
-from PIL import Image                                   # for reading .gif images
-
-
-def convert_img_to_pred_width_height(ground_truths, num_model_channels, verbose=False):
-    """Convert ground truth *images* into the shape of the *predictions* produced by the U-Net (the opposite of
-    convert_pred_to_img in drive_test.py)
-    """
-    start_time = time.time()
-
-    img_height = ground_truths.shape[1]
-    img_width = ground_truths.shape[2]
-
-    # ground_truths = np.reshape(ground_truths, (ground_truths.shape[0], img_height, img_width))
-    new_masks = np.empty((ground_truths.shape[0], img_height, img_width, num_model_channels))
-
-    for image in range(ground_truths.shape[0]):
-        if verbose and image % 1000 == 0:
-            print("{}/{}".format(image, ground_truths.shape[0]))
-
-        for pix in range(img_height):
-            for pix_w in range(img_width):
-                if ground_truths[image, pix, pix_w] == 0.:      # TODO: update for num_model_channels > 2
-                    new_masks[image, pix, pix_w, 0] = 1.0
-                    new_masks[image, pix, pix_w, 1] = 0.0
-                else:
-                    new_masks[image, pix, pix_w, 0] = 0.0
-                    new_masks[image, pix, pix_w, 1] = 1.0
-
-    if verbose:
-        print("Elapsed time: {}".format(time.time() - start_time))
-
-    return new_masks
-
-def convert_img_to_pred(ground_truths, num_model_channels, verbose=False):
-    """Convert ground truth *images* into the shape of the *predictions* produced by the U-Net (the opposite of
-    convert_pred_to_img in drive_test.py)
-    """
-    start_time = time.time()
-
-    img_height = ground_truths.shape[1]
-    img_width = ground_truths.shape[2]
-
-    ground_truths = np.reshape(ground_truths, (ground_truths.shape[0], img_height * img_width))
-    new_masks = np.empty((ground_truths.shape[0], img_height * img_width, num_model_channels))
-
-    for image in range(ground_truths.shape[0]):
-        if verbose and image % 1000 == 0:
-            print("{}/{}".format(image, ground_truths.shape[0]))
-
-        for pix in range(img_height*img_width):
-            if ground_truths[image, pix] == 0.:      # TODO: update for num_model_channels > 2
-                new_masks[image, pix, 0] = 1.0
-                new_masks[image, pix, 1] = 0.0
-            else:
-                new_masks[image, pix, 0] = 0.0
-                new_masks[image, pix, 1] = 1.0
-
-    if verbose:
-        print("Elapsed time: {}".format(time.time() - start_time))
-
-    return new_masks
+import os, progressbar, cv2
 
 
 def convert_to_hdf5(img_path, img_shape, img_exts, key, ext, is_mask=False):
@@ -119,7 +57,8 @@ def convert_to_hdf5(img_path, img_shape, img_exts, key, ext, is_mask=False):
                              feat_key=key,
                              label_key=None,
                              del_existing=True,
-                             buf_size=len(imgs_list)
+                             buf_size=len(imgs_list),
+                             dtype_feat="f" if not is_mask else "i8"
                              )
 
     # Loop through all images
@@ -128,18 +67,18 @@ def convert_to_hdf5(img_path, img_shape, img_exts, key, ext, is_mask=False):
     for i, img in enumerate(imgs_list):
         image = cv2.imread(img, cv2.IMREAD_GRAYSCALE)
 
-        # Apply thresholding to ground truth masks only, not to images
+        # Apply binary thresholding to ground truths only, not to images
+        # 0: background
+        # 255: blood vessel
         if is_mask:
-            # print("before", np.min(image), np.max(image))
             _, image = cv2.threshold(image, settings.MASK_BINARY_THRESHOLD, 255, cv2.THRESH_BINARY)
-            # print("after", np.min(image), np.max(image))
 
-        # Resize to AlexNet dimensions
-        # image = cv2.resize(image, (img_shape[0], img_shape[1]), interpolation=cv2.INTER_AREA)
-
+        # Reshape from (height, width) to (height, width, 1)
         image = image.reshape((img_shape[0],
                                img_shape[1],
                                img_shape[2]))
+
+        # print("image dype: {}".format(image.dtype))
 
         hdf5_writer.add([image], None)
         pbar.update(i)
@@ -160,6 +99,7 @@ def perform_hdf5_conversion():
     # output_paths.append(convert_to_hdf5(os.path.join(settings.TRAINING_PATH, settings.FLDR_IMAGES),
     #                                     (settings.IMG_RESIZE_DIM, settings.IMG_RESIZE_DIM, settings.IMG_CHANNELS),
     #                                     img_exts=".jpg", key=settings.HDF5_KEY, ext=settings.HDF5_EXT))
+
     output_paths.append(convert_to_hdf5(os.path.join(settings.TRAINING_PATH, settings.FLDR_IMAGES),
                                         (settings.IMG_HEIGHT, settings.IMG_WIDTH, settings.IMG_CHANNELS),
                                         img_exts=".jpg", key=settings.HDF5_KEY, ext=settings.HDF5_EXT))
@@ -168,6 +108,7 @@ def perform_hdf5_conversion():
     # output_paths.append(convert_to_hdf5(os.path.join(settings.TRAINING_PATH, settings.FLDR_GROUND_TRUTH),
     #                                     (settings.IMG_RESIZE_DIM_GT, settings.IMG_RESIZE_DIM_GT, settings.IMG_CHANNELS),
     #                                     img_exts=".jpg", key=settings.HDF5_KEY, ext=settings.HDF5_EXT))
+
     output_paths.append(convert_to_hdf5(os.path.join(settings.TRAINING_PATH, settings.FLDR_GROUND_TRUTH),
                                         (settings.IMG_HEIGHT, settings.IMG_WIDTH, settings.IMG_CHANNELS),
                                         img_exts=".jpg", key=settings.HDF5_KEY, ext=settings.HDF5_EXT,
@@ -177,89 +118,12 @@ def perform_hdf5_conversion():
     # output_paths.append(convert_to_hdf5(os.path.join(settings.TEST_PATH, settings.FLDR_IMAGES),
     #                                     (settings.IMG_RESIZE_DIM, settings.IMG_RESIZE_DIM, settings.IMG_CHANNELS),
     #                                     img_exts=".jpg", key=settings.HDF5_KEY, ext=settings.HDF5_EXT))
+
     output_paths.append(convert_to_hdf5(os.path.join(settings.TEST_PATH, settings.FLDR_IMAGES),
                                         (settings.IMG_HEIGHT, settings.IMG_WIDTH, settings.IMG_CHANNELS),
                                         img_exts=".jpg", key=settings.HDF5_KEY, ext=settings.HDF5_EXT))
 
     return output_paths
-
-
-def perform_image_preprocessing(image_path, key, is_training=True):
-    """Perform image pre-processing, resulting pixel values are between 0.0 and 1.0"""
-    imgs = HDF5Reader().load_hdf5(image_path, key).astype("uint8")
-
-    # Standardise
-    imgs = standardise(imgs)
-
-    # Apply CLAHE equalization
-    # imgs = clahe_equalization(imgs)
-
-    # Apply gamma adjustment
-    # imgs = adjust_gamma(imgs)
-
-    # Cut off top and bottom pixel rows to convert images to squares when performing training
-    # if is_training:
-    #     imgs = crop_image(imgs, imgs.shape[1], imgs.shape[2])
-
-    return imgs             # /255.0
-
-
-def perform_groundtruth_preprocessing(ground_truth_path, key, is_training=True):
-    """Perform ground truth image pre-processing, resulting pixel values are between 0 and 1"""
-    imgs = HDF5Reader().load_hdf5(ground_truth_path, key).astype("uint8")
-
-    # Cut off top and bottom pixel rows to convert images to squares
-    # if is_training:
-    #     imgs = crop_image(imgs, imgs.shape[1], imgs.shape[2])
-
-    return imgs/255.0
-
-
-# def weighted_pixelwise_crossentropy(class_weights):
-#     def loss(y_true, y_pred):
-#         epsilon = _to_tensor(_EPSILON, y_pred.dtype.base_dtype)
-#         y_pred = tf.clip_by_value(y_pred, epsilon, 1. - epsilon)
-#         return - tf.reduce_sum(tf.multiply(y_true * tf.log(y_pred), class_weights))
-#
-#     return loss
-
-
-def w_categorical_crossentropy(y_true, y_pred, weights):
-    nb_cl = len(weights)
-    final_mask = K.zeros_like(y_pred[:, 0])
-    y_pred_max = K.max(y_pred, axis=1)
-    y_pred_max = K.reshape(y_pred_max, (K.shape(y_pred)[0], 1))
-    y_pred_max_mat = K.cast(K.equal(y_pred, y_pred_max), K.floatx())
-    for c_p, c_t in product(range(nb_cl), range(nb_cl)):
-        final_mask += (weights[c_t, c_p] * y_pred_max_mat[:, c_p] * y_true[:, c_t])
-    cross_ent = K.categorical_crossentropy(y_pred, y_true, from_logits=False)
-    return cross_ent * final_mask
-
-
-def weighted_pixelwise_crossentropy(class_weights):
-    def loss(y_true, y_pred):
-        epsilon = tf.convert_to_tensor(10e-8, y_pred.dtype.base_dtype)
-        y_pred = tf.clip_by_value(y_pred, epsilon, 1. - epsilon)
-        return - tf.reduce_sum(tf.multiply(y_true * tf.log(y_pred), class_weights))
-
-    return loss
-
-def dice_coef(y_true, y_pred):
-    smooth = 1.
-    y_true_f = K.flatten(y_true)
-    y_pred_f = K.flatten(y_pred)
-    intersection = K.sum(y_true_f * y_pred_f)
-    return (2. * intersection + smooth) / (K.sum(y_true_f) + K.sum(y_pred_f) + smooth)
-
-
-def dice_coef_loss(y_true, y_pred):
-    return -dice_coef(y_true, y_pred)
-
-
-def class_weighted_pixelwise_crossentropy(target, output):
-    output = tf.clip_by_value(output, 10e-8, 1.-10e-8)
-    weights = [0.8, 0.2]
-    return -tf.reduce_sum(target * weights * tf.log(output))
 
 
 if __name__ == "__main__":
@@ -269,47 +133,39 @@ if __name__ == "__main__":
         # During development avoid performing the HDF5 conversion for every run
         hdf5_paths = ["../data/MSC8002/training/images.h5",
                       "../data/MSC8002/training/groundtruths.h5",
-                      "../data/MSC8002/test/images.hdf5"]
+                      # "../data/MSC8002/test/images.hdf5"
+                      ]
 
-    # Read the training images
+    # Read the training images and ground truths
     train_imgs = perform_image_preprocessing(hdf5_paths[0], settings.HDF5_KEY)
     train_grndtr = perform_groundtruth_preprocessing(hdf5_paths[1], settings.HDF5_KEY)
 
-    # Show one image and associated ground truth
-    cv2.imshow("image", train_imgs[9])
-    cv2.waitKey(0)
-    cv2.imshow("ground truth", train_grndtr[9])
+    # Show an image plus its ground truth to check
+    cv2.imshow("CHECK image", train_imgs[9])
+    cv2.imshow("CHECK ground truth", train_grndtr[9])
+    print("       Max image intensity: {} - {} - {}".format(np.max(train_imgs[9]), train_imgs.dtype, train_imgs.shape))
+    print("Max ground truth intensity: {} - {} - {}".format(np.max(train_grndtr[9]), train_grndtr.dtype, train_grndtr.shape))
     cv2.waitKey(0)
 
-    # Only train using a handful images
+    # Only train using 10 images to test the pipeline
     PRED_IX = range(9, 19)
     train_imgs = train_imgs[[PRED_IX]]
     train_grndtr = train_grndtr[[PRED_IX]]
 
-    # Shuffle
+    # Shuffle the data set
     idx = np.random.permutation(len(train_imgs))
     train_imgs, train_grndtr= train_imgs[idx], train_grndtr[idx]
 
-    # CHECK DEZE:
-    # https://github.com/heuritech/convnets-keras
-    # https://devblogs.nvidia.com/image-segmentation-using-digits-5/
-    # For the AlexNet, the images(for the mode without the heatmap) have to be of shape (227, 227).It is recommended to
-    # resize the images with a size of (256, 256), and then do a crop of size (227, 227).The colors are in RGB order.
-
     # Instantiate the U-Net model
-    # alex_seg = AlexNetNN(settings.NUM_CLASSES)
-    # model, output_size = alex_seg.build_model_conv(settings.IMG_CHANNELS)
-    # model.summary()
-
     unet = UNet_NN(img_height=settings.IMG_HEIGHT,
                    img_width=settings.IMG_WIDTH,
                    img_channels=settings.IMG_CHANNELS,
                    num_classes=settings.NUM_CLASSES)
-    # model = unet.build_model()
-    model = unet.build_model_2class()
 
-    print("model.output_shape: {}".format(model.output_shape))
-    # print("       output_size: {}".format(output_size))
+    model = unet.build_model()                # flatten
+    # model = unet.build_model_2class()
+    # model = unet.build_model_softmax()
+    # print("model.output_shape: {}".format(model.output_shape))
 
     # Prepare some path strings
     model_path = os.path.join(settings.MODEL_PATH, unet.title + "_ep{}.model".format(settings.TRN_NUM_EPOCH))
@@ -325,21 +181,19 @@ if __name__ == "__main__":
 
     # Convert the random patches into the same shape as the predictions the U-net produces
     print("--- \nEncoding training ground truths")
-    print(train_grndtr.shape)
-    # train_grndtr_ext_conv = convert_img_to_pred_width_height(train_grndtr, settings.NUM_CLASSES, settings.VERBOSE)
-    # train_grndtr_ext_conv = convert_img_to_pred(train_grndtr, settings.NUM_CLASSES, settings.VERBOSE)
-    train_grndtr_ext_conv = train_grndtr
-    print(train_grndtr_ext_conv.shape)
+    print("Ground truth shape before conversion: {}".format(train_grndtr.shape))
+    # train_grndtr_ext_conv = convert_img_to_pred_4D(train_grndtr, settings.NUM_CLASSES, settings.VERBOSE)  # softmax: 4D
+    train_grndtr_ext_conv = convert_img_to_pred_3D(train_grndtr, settings.NUM_CLASSES, settings.VERBOSE)             # softmax: 3D
+    # train_grndtr_ext_conv = train_grndtr                                                                            # no conversion for sigmoid
+    print(" Ground truth shape AFTER conversion: {}\n".format(train_grndtr_ext_conv.shape))
 
     # Train the model
     print("\n--- Start training")
     opt = Adam()
-
-    model.compile(optimizer=opt, loss="binary_crossentropy", metrics=["accuracy"])
+    # model.compile(optimizer=opt, loss="binary_crossentropy", metrics=["accuracy"])                          # sigmoid
     # model.compile(optimizer=opt, loss=class_weighted_pixelwise_crossentropy, metrics=["accuracy"])
-    # model.compile(optimizer=opt, loss="categorical_crossentropy", metrics=["accuracy"])
+    model.compile(optimizer=opt, loss="categorical_crossentropy", metrics=["accuracy"])                       # softmax
     # model .compile(optimizer=opt, loss=dice_coef_loss, metrics=[dice_coef])
-
     # model.compile(optimizer=opt, loss=weighted_pixelwise_crossentropy([8, 1]), metrics=["accuracy"])
     # model.compile(optimizer=opt, loss=weighted_pixelwise_crossentropy([1, 1]), metrics=["accuracy"])
 
@@ -347,7 +201,6 @@ if __name__ == "__main__":
     callbacks = [ModelCheckpoint(model_path, monitor="val_loss", mode="min", save_best_only=True, verbose=1),
                  EarlyStopping(monitor='val_loss', min_delta=0, patience=4, verbose=0, mode="auto"),
                  CSVLogger(csv_path, append=False),
-                 # TensorBoard(settings.OUTPUT_PATH + "/tensorboard", histogram_freq=1, batch_size=1)
                  ]
 
     hist = model.fit(train_imgs, train_grndtr_ext_conv,
@@ -363,12 +216,16 @@ if __name__ == "__main__":
     # Plot the training results - currently breaks if training stopped early
     plot_training_history(hist, settings.TRN_NUM_EPOCH, show=False, save_path=settings.OUTPUT_PATH + unet.title, time_stamp=True)
 
-    # Predict
+    # Predict on one training image
     predictions = model.predict(train_imgs[[0]], batch_size=settings.TRN_BATCH_SIZE, verbose=2)
-
+    # predictions = convert_pred_to_img_4D(predictions, settings.IMG_HEIGHT, settings.TRN_PRED_THRESHOLD)
+    predictions = convert_pred_to_img_3D(predictions, settings.IMG_HEIGHT, settings.TRN_PRED_THRESHOLD)
     cv2.imshow("pred org", train_imgs[0])
     cv2.imshow("pred org mask", train_grndtr[0])
-    cv2.imshow("prediced mask", predictions[0])
+    cv2.imshow("predicted mask", predictions[0])
+    print("  original {} dtype {}".format(np.max(train_imgs[0]), train_imgs[0].dtype))
+    print("  gr truth {} dtype {}".format(np.max(train_grndtr[0]), train_grndtr[0].dtype))
+    print("prediction {} dtype {}".format(np.max(predictions[0]), predictions[0].dtype))
     cv2.waitKey(0)
 
 

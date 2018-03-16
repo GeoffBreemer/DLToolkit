@@ -15,7 +15,10 @@ IMG_WIDTH = 320             # original image width (prior to any pre-processing)
 IMG_RESIZE_DIM = 227
 IMG_RESIZE_DIM_GT = 224
 IMG_CHANNELS = 1            # number of channels for the images and ground truths (gray scale)
-MASK_BINARY_THRESHOLD = 14
+MASK_BINARY_THRESHOLD = 1
+
+MASK_BACKGROUND = 0
+MASK_BLOODVESSEL = 255
 
 # Training hyper parameters
 TRN_BATCH_SIZE = 1

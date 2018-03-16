@@ -16,7 +16,7 @@ from PIL import Image                                   # for reading .gif image
 
 def convert_img_to_pred(ground_truths, num_model_channels, verbose=False):
     """Convert ground truth *images* into the shape of the *predictions* produced by the U-Net (the opposite of
-    convert_pred_to_img in drive_test.py)
+    convert_pred_to_img_3D in drive_test.py)
     """
     start_time = time.time()
 
