@@ -29,7 +29,7 @@ def convert_img_to_pred_4D(ground_truths, num_model_channels, verbose=False):
 
         for pix in range(img_height):
             for pix_w in range(img_width):
-                if ground_truths[image, pix, pix_w] == 0.:      # TODO: update for num_model_channels > 2
+                if ground_truths[image, pix, pix_w] == 0:      # TODO: update for num_model_channels > 2
                     new_masks[image, pix, pix_w, 0] = 1.0
                     new_masks[image, pix, pix_w, 1] = 0.0
                 else:
@@ -61,7 +61,7 @@ def convert_img_to_pred_3D(ground_truths, num_model_channels, verbose=False):
             print("{}/{}".format(image, ground_truths.shape[0]))
 
         for pix in range(img_height*img_width):
-            if ground_truths[image, pix] == 0.:      # TODO: update for num_model_channels > 2
+            if ground_truths[image, pix] == 0:      # TODO: update for num_model_channels > 2
                 new_masks[image, pix, 0] = 1.0
                 new_masks[image, pix, 1] = 0.0
             else:
@@ -89,7 +89,7 @@ def convert_pred_to_img_4D(pred, patch_dim, threshold=0.5, verbose=False):
                     pred_images[i, pix, pix_w] = 0
                 else:
                     # print("from {} to {}".format(pred[i, pix, 1], 0))
-                    pred_images[i, pix, pix_w] = settings
+                    pred_images[i, pix, pix_w] = 255
 
     pred_images = np.reshape(pred_images, (pred.shape[0], patch_dim, patch_dim, 1))
 

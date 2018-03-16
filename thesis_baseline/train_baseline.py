@@ -10,6 +10,7 @@
 #    https://stackoverflow.com/questions/43968028/how-to-use-weighted-categorical-crossentropy-on-fcn-u-net-in-keras?rq=1
 #    https://stackoverflow.com/questions/46504371/how-to-do-weight-imbalanced-classes-for-cross-entropy-loss-in-keras
 #    GOOD --> https://github.com/keras-team/keras/issues/3653
+#    GOOD --> https://github.com/keras-team/keras/issues/6538
 #
 #
 # AlexNet
@@ -141,14 +142,15 @@ if __name__ == "__main__":
     train_grndtr = perform_groundtruth_preprocessing(hdf5_paths[1], settings.HDF5_KEY)
 
     # Show an image plus its ground truth to check
-    cv2.imshow("CHECK image", train_imgs[9])
-    cv2.imshow("CHECK ground truth", train_grndtr[9])
-    print("       Max image intensity: {} - {} - {}".format(np.max(train_imgs[9]), train_imgs.dtype, train_imgs.shape))
-    print("Max ground truth intensity: {} - {} - {}".format(np.max(train_grndtr[9]), train_grndtr.dtype, train_grndtr.shape))
+    IX = 69
+    cv2.imshow("CHECK image", train_imgs[IX])
+    cv2.imshow("CHECK ground truth", train_grndtr[IX])
+    print("       Max image intensity: {} - {} - {}".format(np.max(train_imgs[IX]), train_imgs.dtype, train_imgs.shape))
+    print("Max ground truth intensity: {} - {} - {}".format(np.max(train_grndtr[IX]), train_grndtr.dtype, train_grndtr.shape))
     cv2.waitKey(0)
 
     # Only train using 10 images to test the pipeline
-    PRED_IX = range(9, 19)
+    PRED_IX = range(69, 79)
     train_imgs = train_imgs[[PRED_IX]]
     train_grndtr = train_grndtr[[PRED_IX]]
 
@@ -203,8 +205,14 @@ if __name__ == "__main__":
                  CSVLogger(csv_path, append=False),
                  ]
 
+    input_weights = np.zeros((len(train_imgs), model.output_shape[1], model.output_shape[2]))
+    input_weights[:]
+    class_weights = {0: 0.1, 255: 0.9}
+
+
     hist = model.fit(train_imgs, train_grndtr_ext_conv,
               epochs=settings.TRN_NUM_EPOCH,
+                     class_weight=class_weights,
               batch_size=settings.TRN_BATCH_SIZE,
               verbose=1,
               shuffle=True,

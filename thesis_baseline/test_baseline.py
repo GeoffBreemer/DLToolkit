@@ -34,14 +34,15 @@ if __name__ == "__main__":
                                                      settings.HDF5_KEY, True)
 
     # Show an image plus its ground truth to check
-    cv2.imshow("CHECK image", test_imgs[9])
-    cv2.imshow("CHECK ground truth", test_ground_truths[9])
-    print("       Max image intensity: {} - {} - {}".format(np.max(test_imgs[9]), test_imgs.dtype, test_imgs.shape))
-    print("Max ground truth intensity: {} - {} - {}".format(np.max(test_ground_truths[9]), test_ground_truths.dtype, test_ground_truths.shape))
+    IX = 69
+    cv2.imshow("CHECK image", test_imgs[IX])
+    cv2.imshow("CHECK ground truth", test_ground_truths[IX])
+    print("       Max image intensity: {} - {} - {}".format(np.max(test_imgs[IX]), test_imgs.dtype, test_imgs.shape))
+    print("Max ground truth intensity: {} - {} - {}".format(np.max(test_ground_truths[IX]), test_ground_truths.dtype, test_ground_truths.shape))
     cv2.waitKey(0)
 
     # Only predict for one image
-    PRED_IX = 9
+    PRED_IX = IX
     test_imgs = test_imgs[[PRED_IX]]
     test_ground_truths = test_ground_truths[[PRED_IX]]
 
@@ -69,7 +70,7 @@ if __name__ == "__main__":
     print("predictions.shape BEFORE conv: {} ".format(predictions.shape))
 
     # Convert predictions to images
-    print(predictions[0, 0:100, :])
+    # print(predictions[0, 0:100, :])
 
     # predictions = convert_pred_to_img_4D(predictions, settings.IMG_HEIGHT, settings.TRN_PRED_THRESHOLD)
     predictions = convert_pred_to_img_3D(predictions, settings.IMG_HEIGHT, settings.TRN_PRED_THRESHOLD)
