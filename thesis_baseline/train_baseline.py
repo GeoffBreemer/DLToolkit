@@ -1,6 +1,22 @@
 # TODO:
 # - imbalanced classes:
 #    https://github.com/keras-team/keras/issues/6261
+#    https://github.com/keras-team/keras/issues/8308
+#    --> https://github.com/keras-team/keras/issues/2115
+#    https://github.com/keras-team/keras/issues/5116
+#    https://github.com/keras-team/keras/issues/6538#issuecomment-302964746
+#    --> https://github.com/keras-team/keras/issues/3653
+#    https://stackoverflow.com/questions/43033436/how-to-do-point-wise-categorical-crossentropy-loss-in-keras
+#    https://stackoverflow.com/questions/43968028/how-to-use-weighted-categorical-crossentropy-on-fcn-u-net-in-keras?rq=1
+#    https://stackoverflow.com/questions/46504371/how-to-do-weight-imbalanced-classes-for-cross-entropy-loss-in-keras
+#
+#
+#
+#
+#
+
+# - cannot do pixel level softmax:
+#    https://stackoverflow.com/questions/42118821/cross-entropy-loss-for-semantic-segmentation-keras?noredirect=1&lq=1
 
 import settings_baseline as settings
 
@@ -17,12 +33,45 @@ from keras.optimizers import SGD, Adam
 from keras.layers import Conv2D, Conv2DTranspose, Activation, Reshape
 from keras.models import Model
 from keras.models import load_model
+from keras import backend as K
+
+import tensorflow as tf
 
 import cv2
 import numpy as np
 import os, progressbar, cv2, random, time
 from PIL import Image                                   # for reading .gif images
 
+
+def convert_img_to_pred_width_height(ground_truths, num_model_channels, verbose=False):
+    """Convert ground truth *images* into the shape of the *predictions* produced by the U-Net (the opposite of
+    convert_pred_to_img in drive_test.py)
+    """
+    start_time = time.time()
+
+    img_height = ground_truths.shape[1]
+    img_width = ground_truths.shape[2]
+
+    # ground_truths = np.reshape(ground_truths, (ground_truths.shape[0], img_height, img_width))
+    new_masks = np.empty((ground_truths.shape[0], img_height, img_width, num_model_channels))
+
+    for image in range(ground_truths.shape[0]):
+        if verbose and image % 1000 == 0:
+            print("{}/{}".format(image, ground_truths.shape[0]))
+
+        for pix in range(img_height):
+            for pix_w in range(img_width):
+                if ground_truths[image, pix, pix_w] == 0.:      # TODO: update for num_model_channels > 2
+                    new_masks[image, pix, pix_w, 0] = 1.0
+                    new_masks[image, pix, pix_w, 1] = 0.0
+                else:
+                    new_masks[image, pix, pix_w, 0] = 0.0
+                    new_masks[image, pix, pix_w, 1] = 1.0
+
+    if verbose:
+        print("Elapsed time: {}".format(time.time() - start_time))
+
+    return new_masks
 
 def convert_img_to_pred(ground_truths, num_model_channels, verbose=False):
     """Convert ground truth *images* into the shape of the *predictions* produced by the U-Net (the opposite of
@@ -166,6 +215,53 @@ def perform_groundtruth_preprocessing(ground_truth_path, key, is_training=True):
     return imgs/255.0
 
 
+# def weighted_pixelwise_crossentropy(class_weights):
+#     def loss(y_true, y_pred):
+#         epsilon = _to_tensor(_EPSILON, y_pred.dtype.base_dtype)
+#         y_pred = tf.clip_by_value(y_pred, epsilon, 1. - epsilon)
+#         return - tf.reduce_sum(tf.multiply(y_true * tf.log(y_pred), class_weights))
+#
+#     return loss
+
+
+def w_categorical_crossentropy(y_true, y_pred, weights):
+    nb_cl = len(weights)
+    final_mask = K.zeros_like(y_pred[:, 0])
+    y_pred_max = K.max(y_pred, axis=1)
+    y_pred_max = K.reshape(y_pred_max, (K.shape(y_pred)[0], 1))
+    y_pred_max_mat = K.cast(K.equal(y_pred, y_pred_max), K.floatx())
+    for c_p, c_t in product(range(nb_cl), range(nb_cl)):
+        final_mask += (weights[c_t, c_p] * y_pred_max_mat[:, c_p] * y_true[:, c_t])
+    cross_ent = K.categorical_crossentropy(y_pred, y_true, from_logits=False)
+    return cross_ent * final_mask
+
+
+def weighted_pixelwise_crossentropy(class_weights):
+    def loss(y_true, y_pred):
+        epsilon = tf.convert_to_tensor(10e-8, y_pred.dtype.base_dtype)
+        y_pred = tf.clip_by_value(y_pred, epsilon, 1. - epsilon)
+        return - tf.reduce_sum(tf.multiply(y_true * tf.log(y_pred), class_weights))
+
+    return loss
+
+def dice_coef(y_true, y_pred):
+    smooth = 1.
+    y_true_f = K.flatten(y_true)
+    y_pred_f = K.flatten(y_pred)
+    intersection = K.sum(y_true_f * y_pred_f)
+    return (2. * intersection + smooth) / (K.sum(y_true_f) + K.sum(y_pred_f) + smooth)
+
+
+def dice_coef_loss(y_true, y_pred):
+    return -dice_coef(y_true, y_pred)
+
+
+def class_weighted_pixelwise_crossentropy(target, output):
+    output = tf.clip_by_value(output, 10e-8, 1.-10e-8)
+    weights = [0.8, 0.2]
+    return -tf.reduce_sum(target * weights * tf.log(output))
+
+
 if __name__ == "__main__":
     if  settings.IS_DEVELOPMENT:
         hdf5_paths = perform_hdf5_conversion()
@@ -209,7 +305,8 @@ if __name__ == "__main__":
                    img_width=settings.IMG_WIDTH,
                    img_channels=settings.IMG_CHANNELS,
                    num_classes=settings.NUM_CLASSES)
-    model = unet.build_model()
+    # model = unet.build_model()
+    model = unet.build_model_2class()
 
     print("model.output_shape: {}".format(model.output_shape))
     # print("       output_size: {}".format(output_size))
@@ -229,15 +326,22 @@ if __name__ == "__main__":
     # Convert the random patches into the same shape as the predictions the U-net produces
     print("--- \nEncoding training ground truths")
     print(train_grndtr.shape)
-    train_grndtr_ext_conv = convert_img_to_pred(train_grndtr, settings.NUM_CLASSES, settings.VERBOSE)
-    # train_grndtr_ext_conv = train_grndtr
+    # train_grndtr_ext_conv = convert_img_to_pred_width_height(train_grndtr, settings.NUM_CLASSES, settings.VERBOSE)
+    # train_grndtr_ext_conv = convert_img_to_pred(train_grndtr, settings.NUM_CLASSES, settings.VERBOSE)
+    train_grndtr_ext_conv = train_grndtr
     print(train_grndtr_ext_conv.shape)
 
     # Train the model
     print("\n--- Start training")
     opt = Adam()
-    # model.compile(optimizer=opt, loss="binary_crossentropy", metrics=["accuracy"])
-    model.compile(optimizer=opt, loss="categorical_crossentropy", metrics=["accuracy"])
+
+    model.compile(optimizer=opt, loss="binary_crossentropy", metrics=["accuracy"])
+    # model.compile(optimizer=opt, loss=class_weighted_pixelwise_crossentropy, metrics=["accuracy"])
+    # model.compile(optimizer=opt, loss="categorical_crossentropy", metrics=["accuracy"])
+    # model .compile(optimizer=opt, loss=dice_coef_loss, metrics=[dice_coef])
+
+    # model.compile(optimizer=opt, loss=weighted_pixelwise_crossentropy([8, 1]), metrics=["accuracy"])
+    # model.compile(optimizer=opt, loss=weighted_pixelwise_crossentropy([1, 1]), metrics=["accuracy"])
 
     # Prepare callbacks
     callbacks = [ModelCheckpoint(model_path, monitor="val_loss", mode="min", save_best_only=True, verbose=1),
@@ -257,6 +361,15 @@ if __name__ == "__main__":
     print("\n--- Training complete")
 
     # Plot the training results - currently breaks if training stopped early
-    plot_training_history(hist, settings.TRN_NUM_EPOCH, show=True, save_path=settings.OUTPUT_PATH + unet.title, time_stamp=True)
+    plot_training_history(hist, settings.TRN_NUM_EPOCH, show=False, save_path=settings.OUTPUT_PATH + unet.title, time_stamp=True)
+
+    # Predict
+    predictions = model.predict(train_imgs[[0]], batch_size=settings.TRN_BATCH_SIZE, verbose=2)
+
+    cv2.imshow("pred org", train_imgs[0])
+    cv2.imshow("pred org mask", train_grndtr[0])
+    cv2.imshow("prediced mask", predictions[0])
+    cv2.waitKey(0)
+
 
     # TODO: calculate performance metrics
