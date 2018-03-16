@@ -19,19 +19,28 @@ def rgb_to_gray(rgb):
 # def rgb2gray(rgb):
 #     return np.dot(rgb[...,:3], [0.299, 0.587, 0.114])
 
-
-def normalise(imgs):
-    """Normalise an array of RGB images"""
-    imgs_normalized = np.empty(imgs.shape)
+def standardise(imgs):
+    """Standardise an array of RGB images, values are float32 between 0.0 and 1.0"""
+    # imgs_standardised = np.empty(imgs.shape)
 
     imgs_std = np.std(imgs)
     imgs_mean = np.mean(imgs)
-    imgs_normalized = (imgs-imgs_mean)/imgs_std
+    imgs_standardised = (imgs-imgs_mean)/imgs_std
 
     for i in range(imgs.shape[0]):
-        imgs_normalized[i] = ((imgs_normalized[i] - np.min(imgs_normalized[i])) / (np.max(imgs_normalized[i])-np.min(imgs_normalized[i])))*255
+        imgs_standardised[i] = ((imgs_standardised[i] - np.min(imgs_standardised[i])) / (np.max(imgs_standardised[i])-np.min(imgs_standardised[i])))
 
-    return imgs_normalized.astype("uint8")
+    return imgs_standardised.astype("float32")
+
+
+def normalise(imgs):
+    """Normalise an array of RGB images, values are float32 between 0.0 and 255.0"""
+    imgs_normalized = np.empty(imgs.shape)
+
+    for i in range(imgs.shape[0]):
+        imgs_normalized[i] = ((imgs[i] - np.min(imgs[i])) / (np.max(imgs[i])-np.min(imgs[i])))
+
+    return imgs_normalized.astype("float32")
 
 
 def clahe_equalization(imgs):

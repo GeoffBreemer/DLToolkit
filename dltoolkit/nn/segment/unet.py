@@ -1,3 +1,4 @@
+"""Implementation of U-Net using Keras"""
 from keras.layers import Input, Conv2D, MaxPooling2D, concatenate, UpSampling2D, Cropping2D,\
     Dropout, Activation, Reshape, Conv2DTranspose
 from keras.models import Model
@@ -18,7 +19,7 @@ class UNet_NN(BaseNN):
 
     def build_model_DRIVE(self):
         """Build the U-Net architecture used for the DRIVE data set"""
-        _title = "UNet_DRIVE"
+        self._title = "UNet_DRIVE"
 
         # Set the input shape
         if K.image_data_format() == "channels_first":
@@ -79,7 +80,7 @@ class UNet_NN(BaseNN):
 
         return self._model
 
-    def build_model(self):
+    def build_model_paper(self):
         """
         Build the U-Net architecture as defined by Ronneberger et al:
         https://lmb.informatik.uni-freiburg.de/people/ronneber/u-net/
@@ -95,7 +96,7 @@ class UNet_NN(BaseNN):
         - add Dropout layers at the end of the contracting path
         - add kernel initialisers: kernel_initializer=RandomNormal(stddev=sqrt(2 / (prev. kernel**2 * filters)))
         """
-        _title = "UNet_paper"
+        self._title = "UNet_paper"
 
         # Set the input shape
         if K.image_data_format() == "channels_first":
@@ -136,6 +137,11 @@ class UNet_NN(BaseNN):
         crop_up3 = Cropping2D(cropping=((16, 16), (16, 16)))(conv_contr3)
         crop_up4 = Cropping2D(cropping=((4, 4), (4, 4)))(conv_contr4)
 
+        # crop_up1 = conv_contr1
+        # crop_up2 = conv_contr2
+        # crop_up3 = conv_contr3
+        # crop_up4 = conv_contr4
+
         # Expansive path, from the paper:
         # Every step in the expansive path consists of an upsampling of the feature map followed by a 2x2 convolution
         # (“up-convolution”) that halves the number of feature channels, a concatenation with the correspondingly
@@ -168,5 +174,161 @@ class UNet_NN(BaseNN):
         conv_final = Conv2D(filters=2, kernel_size=(1, 1), activation='sigmoid')(conv_up1)
 
         self._model = Model(inputs=inputs, outputs=conv_final)
+
+        return self._model
+
+    def build_model_WORKS(self):
+        """
+        Build the U-Net architecture as defined by Ronneberger et al:
+        https://lmb.informatik.uni-freiburg.de/people/ronneber/u-net/
+
+        For grayscale axial brain MRI images of size 320 x 320
+
+        Uses an input shape of 320x320. Instantiate the model using:
+
+            UNet_NN(img_height=320,
+                    img_width=320,
+                    img_channels=1,
+                    num_classes=2).build_model()
+
+        Todo:
+        - add Dropout layers at the end of the contracting path
+        - add kernel initialisers: kernel_initializer=RandomNormal(stddev=sqrt(2 / (prev. kernel**2 * filters)))
+        """
+        self._title = "UNet_brain_MRI"
+
+        # Set the input shape
+        if K.image_data_format() == "channels_first":
+            input_shape = (self._img_channels, self._img_width, self._img_height)
+        else:
+            input_shape = (self._img_height, self._img_width, self._img_channels)
+
+        inputs = Input(input_shape)
+
+        # Contracting path
+        conv_contr1 = Conv2D(filters=32, kernel_size=(3, 3), activation='relu', padding='same',
+                             kernel_initializer="he_normal")(inputs)
+        conv_contr1 = Conv2D(filters=32, kernel_size=(3, 3), activation='relu', padding='same',
+                             kernel_initializer="he_normal")(conv_contr1)
+        pool_contr1 = MaxPooling2D(pool_size=(2, 2))(conv_contr1)
+
+        conv_contr2 = Conv2D(filters=64, kernel_size=(3, 3), activation='relu', padding='same',
+                             kernel_initializer="he_normal")(pool_contr1)
+        conv_contr2 = Conv2D(filters=64, kernel_size=(3, 3), activation='relu', padding='same',
+                             kernel_initializer="he_normal")(conv_contr2)
+        pool_contr2 = MaxPooling2D(pool_size=(2, 2))(conv_contr2)
+
+        # "Bottom" layer
+        conv_bottom = Conv2D(filters=128, kernel_size=(3, 3), activation='relu', padding='same',
+                             kernel_initializer="he_normal")(pool_contr2)
+        conv_bottom = Conv2D(filters=128, kernel_size=(3, 3), activation='relu', padding='same',
+                             kernel_initializer="he_normal")(conv_bottom)
+
+        # Crop outputs of each contracting path "layer" for use in their corresponding expansive path "layer"
+        crop_up1 = conv_contr1  # no cropping required
+        crop_up2 = conv_contr2  # no cropping required
+
+        # Expansive path
+        conv_scale_up2 = Conv2DTranspose(filters=64, kernel_size=(2, 2), strides=2, activation="relu", padding="same",
+                             kernel_initializer="he_normal")(conv_bottom)
+        merge_up2 = concatenate([conv_scale_up2, crop_up2], axis=3)
+        conv_up2 = Conv2D(filters=64, kernel_size=(3, 3), activation='relu', padding='same',
+                             kernel_initializer="he_normal")(merge_up2)
+        conv_up2 = Conv2D(filters=64, kernel_size=(3, 3), activation='relu', padding='same',
+                             kernel_initializer="he_normal")(conv_up2)
+
+        conv_scale_up1 = Conv2DTranspose(filters=32, kernel_size=(2, 2), strides=2, activation="relu", padding="same",
+                             kernel_initializer="he_normal")(conv_up2)
+        merge_up1 = concatenate([conv_scale_up1, crop_up1], axis=3)
+        conv_up1 = Conv2D(filters=32, kernel_size=(3, 3), activation='relu', padding='same',
+                             kernel_initializer="he_normal")(merge_up1)
+        conv_up1 = Conv2D(filters=32, kernel_size=(3, 3), activation='relu', padding='same',
+                             kernel_initializer="he_normal")(conv_up1)
+
+        # Final 1x1 conv layer
+        conv_final = Conv2D(self._num_classes, (1, 1), activation='relu', padding='same',
+                             kernel_initializer="he_normal")(conv_up1)
+        conv_final = Reshape((self._img_height * self._img_width, self._num_classes))(conv_final)
+        conv_final = Activation('softmax')(conv_final)
+
+        self._model = Model(inputs=[inputs], outputs=[conv_final])
+
+        return self._model
+
+    def build_model(self):
+        """
+        Build the U-Net architecture as defined by Ronneberger et al:
+        https://lmb.informatik.uni-freiburg.de/people/ronneber/u-net/
+
+        For grayscale axial brain MRI images of size 320 x 320
+
+        Uses an input shape of 320x320. Instantiate the model using:
+
+            UNet_NN(img_height=320,
+                    img_width=320,
+                    img_channels=1,
+                    num_classes=2).build_model()
+
+        Todo:
+        - add Dropout layers at the end of the contracting path
+        - add kernel initialisers: kernel_initializer=RandomNormal(stddev=sqrt(2 / (prev. kernel**2 * filters)))
+        """
+        self._title = "UNet_brain_MRI"
+
+        # Set the input shape
+        if K.image_data_format() == "channels_first":
+            input_shape = (self._img_channels, self._img_width, self._img_height)
+        else:
+            input_shape = (self._img_height, self._img_width, self._img_channels)
+
+        inputs = Input(input_shape)
+
+        # Contracting path
+        conv_contr1 = Conv2D(filters=32, kernel_size=(3, 3), activation='relu', padding='same',
+                             kernel_initializer="he_normal")(inputs)
+        conv_contr1 = Conv2D(filters=32, kernel_size=(3, 3), activation='relu', padding='same',
+                             kernel_initializer="he_normal")(conv_contr1)
+        pool_contr1 = MaxPooling2D(pool_size=(2, 2))(conv_contr1)
+
+        conv_contr2 = Conv2D(filters=64, kernel_size=(3, 3), activation='relu', padding='same',
+                             kernel_initializer="he_normal")(pool_contr1)
+        conv_contr2 = Conv2D(filters=64, kernel_size=(3, 3), activation='relu', padding='same',
+                             kernel_initializer="he_normal")(conv_contr2)
+        pool_contr2 = MaxPooling2D(pool_size=(2, 2))(conv_contr2)
+
+        # "Bottom" layer
+        conv_bottom = Conv2D(filters=128, kernel_size=(3, 3), activation='relu', padding='same',
+                             kernel_initializer="he_normal")(pool_contr2)
+        conv_bottom = Conv2D(filters=128, kernel_size=(3, 3), activation='relu', padding='same',
+                             kernel_initializer="he_normal")(conv_bottom)
+
+        # Crop outputs of each contracting path "layer" for use in their corresponding expansive path "layer"
+        crop_up1 = conv_contr1  # no cropping required
+        crop_up2 = conv_contr2  # no cropping required
+
+        # Expansive path
+        conv_scale_up2 = Conv2DTranspose(filters=64, kernel_size=(2, 2), strides=2, activation="relu", padding="same",
+                             kernel_initializer="he_normal")(conv_bottom)
+        merge_up2 = concatenate([conv_scale_up2, crop_up2], axis=3)
+        conv_up2 = Conv2D(filters=64, kernel_size=(3, 3), activation='relu', padding='same',
+                             kernel_initializer="he_normal")(merge_up2)
+        conv_up2 = Conv2D(filters=64, kernel_size=(3, 3), activation='relu', padding='same',
+                             kernel_initializer="he_normal")(conv_up2)
+
+        conv_scale_up1 = Conv2DTranspose(filters=32, kernel_size=(2, 2), strides=2, activation="relu", padding="same",
+                             kernel_initializer="he_normal")(conv_up2)
+        merge_up1 = concatenate([conv_scale_up1, crop_up1], axis=3)
+        conv_up1 = Conv2D(filters=32, kernel_size=(3, 3), activation='relu', padding='same',
+                             kernel_initializer="he_normal")(merge_up1)
+        conv_up1 = Conv2D(filters=32, kernel_size=(3, 3), activation='relu', padding='same',
+                             kernel_initializer="he_normal")(conv_up1)
+
+        # Final 1x1 conv layer
+        conv_final = Conv2D(self._num_classes, (1, 1), activation='relu', padding='same',
+                             kernel_initializer="he_normal")(conv_up1)
+        conv_final = Reshape((self._img_height * self._img_width, self._num_classes))(conv_final)
+        conv_final = Activation('softmax')(conv_final)
+
+        self._model = Model(inputs=[inputs], outputs=[conv_final])
 
         return self._model

@@ -1,3 +1,4 @@
+"""Implementation of a 3D U-Net using Keras - NOT TESTED"""
 from keras.layers import Input, Conv2D, MaxPooling2D, concatenate, UpSampling2D, Cropping2D,\
     Dropout, Activation, Reshape, Conv2DTranspose
 from keras.layers import Input, Conv3D, MaxPooling3D, UpSampling3D, Cropping3D
