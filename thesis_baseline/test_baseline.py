@@ -33,6 +33,8 @@ if __name__ == "__main__":
                                                                         settings.FLDR_GROUND_TRUTH + settings.HDF5_EXT),
                                                      settings.HDF5_KEY, True)
 
+
+
     # Show an image plus its ground truth to check
     IX = 69
     cv2.imshow("CHECK image", test_imgs[IX])
@@ -51,9 +53,9 @@ if __name__ == "__main__":
 
     # Weights ony
     unet = UNet_NN(settings.IMG_HEIGHT, settings.IMG_WIDTH, settings.IMG_CHANNELS, settings.NUM_CLASSES)
-    model = unet.build_model()
-    # model = unet.build_model_2class()
-    # model = unet.build_model_softmax()
+    # model = unet.build_model()
+    # model = unet.build_model_3D_soft()
+    model = unet.build_model_4D_soft()
     model.load_weights(model_name_from_arguments())
 
     # Entire model
@@ -72,8 +74,8 @@ if __name__ == "__main__":
     # Convert predictions to images
     # print(predictions[0, 0:100, :])
 
-    # predictions = convert_pred_to_img_4D(predictions, settings.IMG_HEIGHT, settings.TRN_PRED_THRESHOLD)
-    predictions = convert_pred_to_img_3D(predictions, settings.IMG_HEIGHT, settings.TRN_PRED_THRESHOLD)
+    predictions = convert_pred_to_img_4D(predictions, settings.IMG_HEIGHT, settings.TRN_PRED_THRESHOLD)
+    # predictions = convert_pred_to_img_3D(predictions, settings.IMG_HEIGHT, settings.TRN_PRED_THRESHOLD)
     # print(predictions[0, 100:110, 100:110])
     print(" predictions.shape AFTER conv: {} ".format(predictions.shape))
 

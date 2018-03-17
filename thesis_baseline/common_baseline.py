@@ -24,8 +24,8 @@ def convert_img_to_pred_4D(ground_truths, num_model_channels, verbose=False):
     print("new_masks: {}".format(new_masks.shape))
 
     for image in range(ground_truths.shape[0]):
-        if verbose and image % 1000 == 0:
-            print("{}/{}".format(image, ground_truths.shape[0]))
+        if image != 0 and verbose and image % 1000 == 0:
+            print("Processed {}/{}".format(image, ground_truths.shape[0]))
 
         for pix in range(img_height):
             for pix_w in range(img_width):
@@ -157,6 +157,13 @@ def perform_groundtruth_preprocessing(ground_truth_path, key, is_training=True):
 #
 #     return loss
 
+
+def dice_coef2(y_true, y_pred):
+    y_true_f = K.flatten(y_true)
+    y_pred_f = K.flatten(y_pred)
+    intersection = K.sum(y_true_f * y_pred_f)
+    coef = (2. * intersection + K.epsilon()) / (K.sum(y_true_f) + K.sum(y_pred_f) + K.epsilon())
+    return coef
 
 def dice_coef(y_true, y_pred):
     smooth = 1.

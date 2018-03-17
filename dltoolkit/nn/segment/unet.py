@@ -80,7 +80,7 @@ class UNet_NN(BaseNN):
 
         return self._model
 
-    def build_model_paper(self):
+    def build_model(self):
         """
         Build the U-Net architecture as defined by Ronneberger et al:
         https://lmb.informatik.uni-freiburg.de/people/ronneber/u-net/
@@ -255,7 +255,7 @@ class UNet_NN(BaseNN):
 
         return self._model
 
-    def build_model_softmax(self):
+    def build_model_4D_soft(self):
         """
         Build the U-Net architecture as defined by Ronneberger et al:
         https://lmb.informatik.uni-freiburg.de/people/ronneber/u-net/
@@ -333,7 +333,7 @@ class UNet_NN(BaseNN):
 
         return self._model
 
-    def build_model_2class(self):
+    def build_model_sigmoid(self):
         """
         Build the U-Net architecture as defined by Ronneberger et al:
         https://lmb.informatik.uni-freiburg.de/people/ronneber/u-net/
@@ -411,7 +411,7 @@ class UNet_NN(BaseNN):
 
         return self._model
 
-    def build_model(self):
+    def build_model_3D_soft(self):
         """
         Build the U-Net architecture as defined by Ronneberger et al:
         https://lmb.informatik.uni-freiburg.de/people/ronneber/u-net/
