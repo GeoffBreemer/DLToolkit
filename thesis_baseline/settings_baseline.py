@@ -15,15 +15,17 @@ IMG_WIDTH = 320             # original image width (prior to any pre-processing)
 IMG_RESIZE_DIM = 227
 IMG_RESIZE_DIM_GT = 224
 IMG_CHANNELS = 1            # number of channels for the images and ground truths (gray scale)
-MASK_BINARY_THRESHOLD = 20
+MASK_BINARY_THRESHOLD = 14
 
 MASK_BACKGROUND = 0
 MASK_BLOODVESSEL = 255
+ONEHOT_BACKGROUND = 0
+ONEHOT_BLOODVESSEL = 1
 
 # Training hyper parameters
-TRN_BATCH_SIZE = 1
+TRN_BATCH_SIZE = 4
 TRN_LEARNING_RATE = 0.001
-TRN_NUM_EPOCH = 50              #10  #10 #30 #7
+TRN_NUM_EPOCH = 100              #10  #10 #30 #7
 TRN_TRAIN_VAL_SPLIT = 0.1       # Percentage of training data to use for the validation set
 TRN_DROPOUT_RATE = 0.0          # Dropout rate used for all DropOut layers
 TRN_MOMENTUM = 0.99

@@ -17,13 +17,20 @@
 #   https://datascience.stackexchange.com/questions/23968/99-validation-accuracy-but-0-prediction-results-unet-architecture
 #   https://github.com/keras-team/keras/issues/2115
 #   --> https://github.com/keras-team/keras/issues/2115
+#   https://github.com/keras-team/keras/issues/9395
+#
+#
 #
 #   Class weights
 #   https://github.com/keras-team/keras/issues/5116
 #
 #
+#   Other approaches:
+#   https://www.kaggle.com/c/ultrasound-nerve-segmentation/discussion/22951
 #
-
+#
+#
+#
 #
 # AlexNet
 # CHECK DEZE:
@@ -56,7 +63,7 @@ from dltoolkit.utils.visual import plot_training_history
 from common_baseline import perform_image_preprocessing, perform_groundtruth_preprocessing,\
     convert_img_to_pred_4D, convert_pred_to_img_4D,\
     convert_img_to_pred_3D, convert_pred_to_img_3D,\
-    dice_coef, dice_coef_loss
+    dice_coef, dice_coef_loss, focal_loss, weighted_pixelwise_crossentropy_loss
 
 from keras.callbacks import ModelCheckpoint, EarlyStopping, CSVLogger
 from keras.optimizers import Adam
@@ -64,16 +71,12 @@ from keras import backend as K
 
 import numpy as np
 import os, progressbar, cv2
-import tensorflow as tf
-import itertools
-from itertools import product
-from functools import partial
 
 
 def convert_to_hdf5(img_path, img_shape, img_exts, key, ext, is_mask=False):
     """
     Convert images present in `img_path` to HDF5 format. The HDF5 file is one sub folder up from where the
-    images are located
+    images are located. Masks are binary tresholded to be 0 for background pixels and 255 for blood vessels.
     :param img_path: path to the folder containing images
     :param img_shape: shape of each image (width, height, # of channels)
     :return: full path to the generated HDF5 file
@@ -96,18 +99,14 @@ def convert_to_hdf5(img_path, img_shape, img_exts, key, ext, is_mask=False):
     for i, img in enumerate(imgs_list):
         image = cv2.imread(img, cv2.IMREAD_GRAYSCALE)
 
-        # Apply binary thresholding to ground truths only, not to images
-        # 0: background
-        # 255: blood vessel
+        # Apply binary thresholding to ground truth masks
         if is_mask:
-            _, image = cv2.threshold(image, settings.MASK_BINARY_THRESHOLD, 255, cv2.THRESH_BINARY)
+            _, image = cv2.threshold(image, settings.MASK_BINARY_THRESHOLD, settings.MASK_BLOODVESSEL, cv2.THRESH_BINARY)
 
         # Reshape from (height, width) to (height, width, 1)
         image = image.reshape((img_shape[0],
                                img_shape[1],
                                img_shape[2]))
-
-        # print("image dype: {}".format(image.dtype))
 
         hdf5_writer.add([image], None)
         pbar.update(i)
@@ -125,102 +124,22 @@ def perform_hdf5_conversion():
     output_paths = []
 
     # Convert training images in each sub folder to a single HDF5 file
-    # output_paths.append(convert_to_hdf5(os.path.join(settings.TRAINING_PATH, settings.FLDR_IMAGES),
-    #                                     (settings.IMG_RESIZE_DIM, settings.IMG_RESIZE_DIM, settings.IMG_CHANNELS),
-    #                                     img_exts=".jpg", key=settings.HDF5_KEY, ext=settings.HDF5_EXT))
-
     output_paths.append(convert_to_hdf5(os.path.join(settings.TRAINING_PATH, settings.FLDR_IMAGES),
                                         (settings.IMG_HEIGHT, settings.IMG_WIDTH, settings.IMG_CHANNELS),
                                         img_exts=".jpg", key=settings.HDF5_KEY, ext=settings.HDF5_EXT))
 
     # Training ground truths
-    # output_paths.append(convert_to_hdf5(os.path.join(settings.TRAINING_PATH, settings.FLDR_GROUND_TRUTH),
-    #                                     (settings.IMG_RESIZE_DIM_GT, settings.IMG_RESIZE_DIM_GT, settings.IMG_CHANNELS),
-    #                                     img_exts=".jpg", key=settings.HDF5_KEY, ext=settings.HDF5_EXT))
-
     output_paths.append(convert_to_hdf5(os.path.join(settings.TRAINING_PATH, settings.FLDR_GROUND_TRUTH),
                                         (settings.IMG_HEIGHT, settings.IMG_WIDTH, settings.IMG_CHANNELS),
                                         img_exts=".jpg", key=settings.HDF5_KEY, ext=settings.HDF5_EXT,
                                         is_mask=True))
 
     # Do the same for the test images
-    # output_paths.append(convert_to_hdf5(os.path.join(settings.TEST_PATH, settings.FLDR_IMAGES),
-    #                                     (settings.IMG_RESIZE_DIM, settings.IMG_RESIZE_DIM, settings.IMG_CHANNELS),
-    #                                     img_exts=".jpg", key=settings.HDF5_KEY, ext=settings.HDF5_EXT))
-
     output_paths.append(convert_to_hdf5(os.path.join(settings.TEST_PATH, settings.FLDR_IMAGES),
                                         (settings.IMG_HEIGHT, settings.IMG_WIDTH, settings.IMG_CHANNELS),
                                         img_exts=".jpg", key=settings.HDF5_KEY, ext=settings.HDF5_EXT))
 
     return output_paths
-
-
-
-def w_categorical_crossentropy2(y_true, y_pred, weights):
-    from itertools import product
-
-    nb_cl = len(weights)
-    final_mask = K.zeros_like(y_pred[:, 0])
-    y_pred_max = K.max(y_pred, axis=1)
-    y_pred_max = K.reshape(y_pred_max, (K.int_shape(y_pred)[0], 1))
-    y_pred_max_mat = K.equal(y_pred, y_pred_max)
-
-    for c_p, c_t in product(range(nb_cl), range(nb_cl)):
-        final_mask += (weights[c_t, c_p] * y_pred_max_mat[:, c_p] * y_true[:, c_t])
-
-    return K.categorical_crossentropy(y_pred, y_true) * final_mask
-
-
-def w_categorical_crossentropy(y_true, y_pred, weights):
-    from itertools import product
-
-    nb_cl = len(weights)
-    final_mask = K.zeros_like(y_pred[:, 0])
-    y_pred_max = K.max(y_pred, axis=1)
-    y_pred_max = K.reshape(y_pred_max, (K.shape(y_pred)[0], 1))
-    y_pred_max_mat = K.cast(K.equal(y_pred, y_pred_max), K.floatx())
-    for c_p, c_t in product(range(nb_cl), range(nb_cl)):
-        final_mask += (weights[c_t, c_p] * y_pred_max_mat[:, c_p] * y_true[:, c_t])
-    return K.categorical_crossentropy(y_pred, y_true) * final_mask
-
-
-def weighted_pixelwise_crossentropy(class_weights):
-    def loss(y_true, y_pred):
-        epsilon = tf.convert_to_tensor(1e-07, y_pred.dtype.base_dtype)
-        # epsilon = 1e-07
-        y_pred = tf.clip_by_value(y_pred, epsilon, 1. - epsilon)
-
-        return - tf.reduce_sum(tf.multiply(y_true * tf.log(y_pred), class_weights))
-
-    return loss
-
-
-class WeightedCategoricalCrossEntropy(object):
-
-  def __init__(self, weights):
-    nb_cl = len(weights)
-    self.weights = np.ones((nb_cl, nb_cl))
-    for class_idx, class_weight in weights.items():
-      self.weights[0][class_idx] = class_weight
-      self.weights[class_idx][0] = class_weight
-    self.__name__ = 'w_categorical_crossentropy'
-
-  def __call__(self, y_true, y_pred):
-    return self.w_categorical_crossentropy(y_true, y_pred)
-
-  def w_categorical_crossentropy(self, y_true, y_pred):
-    nb_cl = len(self.weights)
-    final_mask = K.zeros_like(y_pred[..., 0])
-    y_pred_max = K.max(y_pred, axis=-1)
-    y_pred_max = K.expand_dims(y_pred_max, axis=-1)
-    y_pred_max_mat = K.equal(y_pred, y_pred_max)
-    for c_p, c_t in itertools.product(range(nb_cl), range(nb_cl)):
-        w = K.cast(self.weights[c_t, c_p], K.floatx())
-        y_p = K.cast(y_pred_max_mat[..., c_p], K.floatx())
-        # y_t = K.cast(y_pred_max_mat[..., c_t], K.floatx())
-        y_t = K.cast(y_true[..., c_t], K.floatx())
-        final_mask += w * y_p * y_t
-    return K.categorical_crossentropy(y_pred, y_true) * final_mask
 
 
 if __name__ == "__main__":
@@ -247,8 +166,14 @@ if __name__ == "__main__":
 
     # Only train using 10 images to test the pipeline
     PRED_IX = range(69, 79)
+    # PRED_IX = range(59, 89)
     train_imgs = train_imgs[[PRED_IX]]
     train_grndtr = train_grndtr[[PRED_IX]]
+
+    # Print class distribution
+    print("total: {}".format(320*320))
+    unique, counts = np.unique(train_grndtr[0], return_counts=True)
+    print("countr: {}".format(dict(zip(unique, counts))))
 
     # Shuffle the data set
     idx = np.random.permutation(len(train_imgs))
@@ -263,7 +188,6 @@ if __name__ == "__main__":
     # model = unet.build_model_sigmoid()                # flatten
     # model = unet.build_model_3D_soft()
     model = unet.build_model_4D_soft()
-    # print("model.output_shape: {}".format(model.output_shape))
 
     # Prepare some path strings
     model_path = os.path.join(settings.MODEL_PATH, unet.title + "_ep{}.model".format(settings.TRN_NUM_EPOCH))
@@ -277,227 +201,61 @@ if __name__ == "__main__":
     model_summary_to_file(model, summ_path)
     model_architecture_to_file(unet.model, settings.OUTPUT_PATH + unet.title + "_BRAIN_base_training")
 
-    # Convert the random patches into the same shape as the predictions the U-net produces
+    # Convert the ground truths into the same shape as the predictions the U-net produces
     print("--- \nEncoding training ground truths")
     print("Ground truth shape before conversion: {}".format(train_grndtr.shape))
 
-    train_grndtr_ext_conv = convert_img_to_pred_4D(train_grndtr, settings.NUM_CLASSES, settings.VERBOSE)  # softmax: 4D
-    # train_grndtr_ext_conv = convert_img_to_pred_3D(train_grndtr, settings.NUM_CLASSES, settings.VERBOSE)             # softmax: 3D
     # train_grndtr_ext_conv = train_grndtr                                                                            # no conversion for sigmoid
+    # train_grndtr_ext_conv = convert_img_to_pred_3D(train_grndtr, settings.NUM_CLASSES, settings.VERBOSE)            # softmax: 3D
+    train_grndtr_ext_conv = convert_img_to_pred_4D(train_grndtr, settings.NUM_CLASSES, settings.VERBOSE)  # softmax: 4D
 
-    print(" Ground truth shape AFTER conversion: {}\n".format(train_grndtr_ext_conv.shape))
+    print(" Ground truth shape AFTER conversion: {} of type {}\n".format(train_grndtr_ext_conv.shape, train_grndtr_ext_conv.dtype))
 
     # Train the model
     print("\n--- Start training")
-    opt = Adam()
-    # model.compile(optimizer=opt, loss="binary_crossentropy", metrics=["accuracy"])                          # sigmoid
-    # model.compile(optimizer=opt, loss=class_weighted_pixelwise_crossentropy, metrics=["accuracy"])
-
-    # model.compile(optimizer=opt, loss="categorical_crossentropy", weighted_metrics=["accuracy"])                       # softmax
-    # model.compile(optimizer=opt, loss="categorical_crossentropy", metrics=["accuracy"], sample_weight_mode='temporal')                       # softmax
-
-    # model .compile(optimizer=opt, loss=dice_coef_loss, metrics=[dice_coef])
-    # model.compile(optimizer=opt, loss=weighted_pixelwise_crossentropy([8, 1]), metrics=["accuracy"])
-    # model.compile(optimizer=opt, loss=weighted_pixelwise_crossentropy([1, 1]), metrics=["accuracy"])
-
     # Prepare callbacks
     callbacks = [ModelCheckpoint(model_path, monitor="val_loss", mode="min", save_best_only=True, verbose=1),
                  EarlyStopping(monitor='val_loss', min_delta=0, patience=4, verbose=0, mode="auto"),
                  CSVLogger(csv_path, append=False),
                  ]
 
-    ### Normal approach with dice metric but not loss
-    # model.compile(optimizer=opt, loss="categorical_crossentropy", metrics=[dice_coef])                       # softmax
-    # class_weights = {0: .1, 1: .9}
-    # class_weights = [1., 1.]
-    # model.compile(optimizer=opt, loss=weighted_pixelwise_crossentropy(class_weights), metrics=[dice_coef])                       # softmax
-    #
-    # hist = model.fit(train_imgs, train_grndtr_ext_conv,
-    #           epochs=settings.TRN_NUM_EPOCH,
-    #           batch_size=settings.TRN_BATCH_SIZE,
-    #           verbose=1,
-    #           shuffle=True,
-    #           validation_split=settings.TRN_TRAIN_VAL_SPLIT,
-    #           callbacks=callbacks)
-    ###
+    # Set the optimiser, loss function and metrics
+    opt = Adam()
+    metrics = [dice_coef]
 
+    # loss = "categorical_crossentropy"                             # Works only when MASK_BINARY_THRESHOLD is 1
+    loss = weighted_pixelwise_crossentropy_loss([1., 50.])
+    # loss = focal_loss
 
-
-    ### FOCAL LOSS
-    def focal_loss(target, output, gamma=2):
-        output /= K.sum(output, axis=-1, keepdims=True)
-        eps = K.epsilon()
-        output = K.clip(output, eps, 1. - eps)
-        return -K.sum(K.pow(1. - output, gamma) * target * K.log(output),
-                      axis=-1)
-
-
-    model.compile(optimizer=opt, loss=focal_loss, metrics=[dice_coef])  # softmax
-
+    # Compile and fit
+    model.compile(optimizer=opt, loss=loss, metrics=metrics)
     hist = model.fit(train_imgs, train_grndtr_ext_conv,
                      epochs=settings.TRN_NUM_EPOCH,
+                     # epochs=2,
                      batch_size=settings.TRN_BATCH_SIZE,
                      verbose=1,
                      shuffle=True,
                      validation_split=settings.TRN_TRAIN_VAL_SPLIT,
                      callbacks=callbacks)
-    ###
 
-
-
-
-    ### Normal approach with dice loss
-    # model.compile(optimizer=opt, loss=dice_coef_loss, metrics=[dice_coef])                       # softmax
-    # hist = model.fit(train_imgs, train_grndtr_ext_conv,
-    #           epochs=settings.TRN_NUM_EPOCH,
-    #           batch_size=settings.TRN_BATCH_SIZE,
-    #           verbose=1,
-    #           shuffle=True,
-    #           validation_split=settings.TRN_TRAIN_VAL_SPLIT,
-    #           callbacks=callbacks)
-    ###
-
-    ### werkt ook niet
-    # weights = {0: 1.,
-    #            1: 1.}
-    # wcce = WeightedCategoricalCrossEntropy(weights)
-    # model.compile(optimizer=opt, loss=wcce, metrics=[dice_coef])                       # softmax
-    # hist = model.fit(train_imgs, train_grndtr_ext_conv,
-    #           epochs=settings.TRN_NUM_EPOCH,
-    #           batch_size=settings.TRN_BATCH_SIZE,
-    #           verbose=1,
-    #           shuffle=True,
-    #           validation_split=settings.TRN_TRAIN_VAL_SPLIT,
-    #           callbacks=callbacks)
-    ###
-
-    ######
-    # def w_categorical_crossentropy(y_true, y_pred, weights):
-    #     nb_cl = len(weights)
-    #     final_mask = K.zeros_like(y_pred[:, 0])
-    #     y_pred_max = K.max(y_pred, axis=1)
-    #     y_pred_max = K.reshape(y_pred_max, (K.shape(y_pred)[0], 1))
-    #     y_pred_max_mat = K.cast(K.equal(y_pred, y_pred_max), K.floatx())
-    #     for c_p, c_t in product(range(nb_cl), range(nb_cl)):
-    #         final_mask += (weights[c_t, c_p] * y_pred_max_mat[:, c_p] * y_true[:, c_t])
-    #     cross_ent = K.categorical_crossentropy(y_true, y_pred, from_logits=False)
-    #     return cross_ent * final_mask
-    #
-    # w_array = np.ones((2, 2))
-    # custom_loss = partial(w_categorical_crossentropy, weights=w_array)
-    # custom_loss.__name__ = 'w_categorical_crossentropy'
-    #
-    # from keras.models import Sequential
-    # from keras.layers import Dense, BatchNormalization, Dropout, Dense
-    # custom_model = Sequential([
-    #     Dense(128, input_shape=(20,), activation="relu"),
-    #     BatchNormalization(axis=1),
-    #     Dropout(0.6),
-    #     Dense(2, activation="sigmoid")
-    # ])
-    # custom_model.compile(optimizer='rmsprop', loss=custom_loss, metrics=["accuracy"])
-    # custom_model.summary()
-    #
-    # model.compile(optimizer=opt, loss=custom_loss, metrics=[dice_coef])                       # softmax
-    #
-    # hist = model.fit(train_imgs, train_grndtr_ext_conv,
-    #           epochs=settings.TRN_NUM_EPOCH,
-    #           batch_size=settings.TRN_BATCH_SIZE,
-    #           verbose=1,
-    #           shuffle=True,
-    #           validation_split=settings.TRN_TRAIN_VAL_SPLIT,
-    #           callbacks=callbacks)
-    ######
-
-    ### custom weighted loss does not work
-    # from functools import *
-    # w_array = np.ones((2, 2))
-    # w_array[0, 1] = 1.
-    # w_array[1, 0] = 10.
-    #
-    # ncce = partial(w_categorical_crossentropy, weights=np.ones((2, 2)))
-    # model.compile(loss=ncce, optimizer=opt)
-    # hist = model.fit(train_imgs, train_grndtr_ext_conv,
-    #           epochs=settings.TRN_NUM_EPOCH,
-    #           batch_size=settings.TRN_BATCH_SIZE,
-    #           verbose=1,
-    #           shuffle=True,
-    #           validation_split=settings.TRN_TRAIN_VAL_SPLIT,
-    #           callbacks=callbacks)
-    ###
-
-    ### class_weight II
-    # model.compile(optimizer=opt, loss="categorical_crossentropy", metrics=["accuracy"], sample_weight_mode='temporal')  # length = model.output_shape[1]
-    # n_classes = 2
-    # n_samples = len(train_imgs)
-    #
-    # class_weight = [.1, 0.9]
-    # weights = np.ones((length, n_classes))
-    #
-    # print("weights shape; {}".format(weights.shape))
-    # for k, x in enumerate(class_weight):
-    #     print(k, x)
-    #     weights[:, k] *= x
-    #
-    # print(weights)
-    # class_weight = K.constant(np.concatenate(settings.TRN_BATCH_SIZE * [np.array(weights).reshape((1, length, n_classes))]))
-    # hist = model.fit(train_imgs, train_grndtr_ext_conv,
-    #           epochs=settings.TRN_NUM_EPOCH,
-    #                  # sample_weight=class_weights,
-    #           classs_weight=class_weight,
-    #           batch_size=settings.TRN_BATCH_SIZE,
-    #           verbose=1,
-    #           shuffle=True,
-    #           validation_split=settings.TRN_TRAIN_VAL_SPLIT,
-    #           callbacks=callbacks)
-    ###
-
-    ###### sample_weight
-    # model.compile(optimizer=opt, loss="categorical_crossentropy", metrics=["accuracy"], sample_weight_mode='temporal')  # length = model.output_shape[1]
-    # sample_weights = np.zeros((len(train_imgs), model.output_shape[1]))
-    # print(sample_weights.shape)
-    # sample_weights[:, 0] += 1
-    # sample_weights[:, 1] += 10
-    #
-    # hist = model.fit(train_imgs, train_grndtr_ext_conv,
-    #           epochs=settings.TRN_NUM_EPOCH,
-    #           sample_weight=sample_weights,
-    #           batch_size=settings.TRN_BATCH_SIZE,
-    #           verbose=1,
-    #           shuffle=True,
-    #           validation_split=settings.TRN_TRAIN_VAL_SPLIT,
-    #           callbacks=callbacks)
-    ######
-
-
-    ###### class_weight
-    # model.compile(optimizer=opt, loss="categorical_crossentropy", metrics=["accuracy"], sample_weight_mode='temporal')  # length = model.output_shape[1]
-    # class_weight = {0   : 1.,
-    #                 1   : 10.}
-    # hist = model.fit(train_imgs, train_grndtr_ext_conv,
-    #           epochs=settings.TRN_NUM_EPOCH,
-    #                  class_weight=class_weight,
-    #           batch_size=settings.TRN_BATCH_SIZE,
-    #           verbose=1,
-    #           shuffle=True,
-    #           validation_split=settings.TRN_TRAIN_VAL_SPLIT,
-    #           callbacks=callbacks)
-    ######
+    # Plot the training results - currently breaks if training stopped early
+    plot_training_history(hist,
+                          settings.TRN_NUM_EPOCH,
+                          show=False,
+                          save_path=settings.OUTPUT_PATH + unet.title,
+                          time_stamp=True,
+                          metric="dice_coef")
 
     print("\n--- Training complete")
 
-    # Plot the training results - currently breaks if training stopped early
-    # plot_training_history(hist, settings.TRN_NUM_EPOCH, show=False, save_path=settings.OUTPUT_PATH + unet.title, time_stamp=True)
 
-    # Predict on one training image
+    # For pipeline testing only, predict on one training image
     predictions = model.predict(train_imgs[[0]], batch_size=settings.TRN_BATCH_SIZE, verbose=2)
-    # print("before: {}".format(predictions[0,0:50,:]))
 
-    predictions = convert_pred_to_img_4D(predictions, settings.IMG_HEIGHT, settings.TRN_PRED_THRESHOLD)
-    # predictions = convert_pred_to_img_3D(predictions, settings.IMG_HEIGHT, settings.TRN_PRED_THRESHOLD)
     # predictions = predictions
+    # predictions = convert_pred_to_img_3D(predictions, settings.IMG_HEIGHT, settings.TRN_PRED_THRESHOLD)
+    predictions = convert_pred_to_img_4D(predictions, settings.IMG_HEIGHT, settings.TRN_PRED_THRESHOLD)
 
-    # print(" after: {}".format(predictions[0,0:50, 0:50,:]))
     cv2.imshow("PRED org image", train_imgs[0])
     cv2.imshow("PRED org ground truth", train_grndtr[0])
     cv2.imshow("PRED predicted mask", predictions[0])
@@ -505,5 +263,3 @@ if __name__ == "__main__":
     print("  gr truth {} dtype {}".format(np.max(train_grndtr[0]), train_grndtr[0].dtype))
     print("prediction {} dtype {}".format(np.max(predictions[0]), predictions[0].dtype))
     cv2.waitKey(0)
-
-    # TODO: calculate performance metrics

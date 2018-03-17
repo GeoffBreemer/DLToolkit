@@ -7,7 +7,7 @@ import numpy as np
 import datetime
 
 
-def plot_training_history(hist, epochs, show=True, save_path=None, time_stamp=False):
+def plot_training_history(hist, epochs, show=True, save_path=None, time_stamp=False, metric='acc'):
     """
     Plot Keras training results to a figure and display and/or save it
     :param hist: a Keras History object
@@ -24,18 +24,18 @@ def plot_training_history(hist, epochs, show=True, save_path=None, time_stamp=Fa
     # plt.plot(np.arange(0, epochs), hist.history["val_acc"], label="val_acc")
 
     # plt.figure(figsize=[8, 6])
-    plt.plot(hist.history['loss'], 'r', linewidth=3.0)
-    plt.plot(hist.history['val_loss'], 'b', linewidth=3.0)
-    plt.plot(hist.history['acc'], 'r', linewidth=3.0)
-    plt.plot(hist.history['val_acc'], 'b', linewidth=3.0)
+    plt.plot(hist.history['loss'], 'r--', linewidth=3.0, label="train_loss")
+    plt.plot(hist.history['val_loss'], 'b--', linewidth=3.0, label="val_loss")
+    plt.plot(hist.history[metric], 'r', linewidth=3.0, label="train_"+metric)
+    plt.plot(hist.history["val_"+metric], 'b', linewidth=3.0, label="val_"+metric)
     # plt.legend(['Training loss', 'Validation Loss'], fontsize=18)
     # plt.xlabel('Epochs ', fontsize=16)
     # plt.ylabel('Loss', fontsize=16)
     # plt.title('Loss Curves', fontsize=16)
 
-    plt.title("Loss/Accuracy")
+    plt.title("Loss/"+metric)
     plt.xlabel("Epoch")
-    plt.ylabel("Loss/Accuracy")
+    plt.ylabel("Loss/"+metric)
     plt.legend()
 
     if show:
