@@ -1,5 +1,5 @@
-import settings_baseline as settings
-from common_baseline import perform_image_preprocessing, perform_groundtruth_preprocessing,\
+import DECiSION_settings as settings
+from thesis_common import perform_image_preprocessing, perform_groundtruth_preprocessing,\
     convert_img_to_pred_4D, convert_pred_to_img_4D,\
     convert_img_to_pred_3D, convert_pred_to_img_3D, group_images
 
@@ -27,10 +27,10 @@ if __name__ == "__main__":
     print("--- Pre-processing test NO TRAINING images")
     test_imgs = perform_image_preprocessing(os.path.join(settings.TRAINING_PATH,
                                                          settings.FLDR_IMAGES + settings.HDF5_EXT),
-                                            settings.HDF5_KEY, True)
+                                            settings.HDF5_KEY)
     test_ground_truths = perform_groundtruth_preprocessing(os.path.join(settings.TRAINING_PATH,
                                                                         settings.FLDR_GROUND_TRUTH + settings.HDF5_EXT),
-                                                           settings.HDF5_KEY, True)
+                                                           settings.HDF5_KEY)
 
 
     # Show an image plus its ground truth to check
@@ -50,14 +50,14 @@ if __name__ == "__main__":
     # Load the trained model
     print("\n--- Loading trained model: {}".format(model_name_from_arguments()))
 
-    # Load trained weights
+    # Create the UNet model and load its saved weights
     unet = UNet_NN(settings.IMG_HEIGHT, settings.IMG_WIDTH, settings.IMG_CHANNELS, settings.NUM_CLASSES)
     # model = unet.build_model()
     # model = unet.build_model_3D_soft()
     model = unet.build_model_4D_soft()
     model.load_weights(model_name_from_arguments())
 
-    # Entire model (incl. loss function etc.)
+    # Load the entire model (incl. loss function etc.), does not require prior instantiation
     # model = load_model(model_name_from_arguments())           no need to instantiate the model first
     # model = load_model(model_name_from_arguments(), custom_objects = {'loss': weighted_pixelwise_crossentropy([1, 1])})
     # model = load_model(model_name_from_arguments(), custom_objects = {'loss': dice_coef_loss, 'metric': dice_coef})
@@ -69,8 +69,8 @@ if __name__ == "__main__":
     predictions = model.predict(test_imgs, batch_size=settings.TRN_BATCH_SIZE, verbose=2)
 
     # Convert predictions to images
-    predictions = convert_pred_to_img_4D(predictions, settings.IMG_HEIGHT, settings.TRN_PRED_THRESHOLD)
-    # predictions = convert_pred_to_img_3D(predictions, settings.IMG_HEIGHT, settings.TRN_PRED_THRESHOLD)
+    predictions = convert_pred_to_img_4D(predictions, settings, settings.TRN_PRED_THRESHOLD)
+    # predictions = convert_pred_to_img_3D(predictions, settings, settings.TRN_PRED_THRESHOLD)
     # print(predictions[0, 100:110, 100:110])
 
     print(" predictions.shape AFTER conv: {} ".format(predictions.shape))
@@ -87,11 +87,8 @@ if __name__ == "__main__":
     # cv2.imshow("Prediction", tmp_img)
     # print("prediction {} type {}".format(np.max(tmp_img), tmp_img.dtype))
 
-    group_imgs = group_images(test_ground_truths[0:15], 5)
-    cv2.imshow("grouped ground truths", group_imgs)
-
-    group_imgs = group_images(predictions[0:15], 5)
-    cv2.imshow("grouped predictions", group_imgs)
-    cv2.waitKey(0)
+    print("\n--- Producing output images")
+    group_images(test_ground_truths[0:15], 5, 255, False, "../output/"+unet.title+"_grp_originals")
+    group_images(predictions[0:15], 5, 1.0, False, "../output/"+unet.title+"_grp_predictions")
 
     print("\n--- Predicting complete")

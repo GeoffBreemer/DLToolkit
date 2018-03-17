@@ -27,7 +27,7 @@ class UNet_3D_NN(BaseNN):
         Build the 3D U-Net architecture as defined by Cicek et al:
         https://arxiv.org/abs/1606.06650
         """
-        _title = "UNet3D_paper"
+        self._title = "UNet3D_paper"
 
         # Set the input shape
         if K.image_data_format() == "channels_first":
@@ -85,7 +85,8 @@ class UNet_3D_NN(BaseNN):
         conv_up1 = Conv3D(filters=64, kernel_size=(3, 3, 3), activation='relu', padding='valid')(conv_up1)
 
         # Final 1x1 conv layer
-        conv_final = Conv3D(filters=self._num_classes, kernel_size=(1, 1, 1), activation='sigmoid')(conv_up1)
+        conv_final = Conv3D(filters=self._num_classes, kernel_size=(1, 1, 1))(conv_up1)
+        conv_final = Activation('softmax')(conv_final)
 
         self._model = Model(inputs=inputs, outputs=conv_final)
 
