@@ -97,6 +97,7 @@ class HDF5Writer:
 
         self.db.close()
 
+
 class HDF5Reader:
     """Simple HDF5 reader that assumes the entire contents can fit in memory. Closes the file right after retuning
     the data.
