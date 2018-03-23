@@ -1,137 +1,223 @@
-from dltoolkit.nn.segment import UNet_3D_NN
+RANDOM_STATE = 42
+from numpy.random import seed
+seed(RANDOM_STATE)
 
-import numpy as np
-from keras import backend as K
-from keras.engine import Input, Model
-from keras.layers import Conv3D, MaxPooling3D, UpSampling3D, Activation, BatchNormalization, PReLU, Deconvolution3D
+from tensorflow import set_random_seed
+set_random_seed(RANDOM_STATE)
+
+import random
+random.seed = RANDOM_STATE
+
+import VOLVuLus_settings as settings
+
+from dltoolkit.utils.generic import model_architecture_to_file, model_summary_to_file
+from dltoolkit.nn.segment import UNet_3D_NN
+from dltoolkit.utils.visual import plot_training_history
+
+from thesis_common import read_preprocess_image, read_preprocess_groundtruth, \
+    convert_img_to_pred_5D, convert_pred_to_img_5D, convert_to_hdf5_3D
+from thesis_metric_loss import dice_coef, weighted_pixelwise_crossentropy_loss, focal_loss
+
+from keras.callbacks import ModelCheckpoint, EarlyStopping, CSVLogger
 from keras.optimizers import Adam
 
+import numpy as np
+import os, cv2, time
 
 
-try:
-    from keras.engine import merge
-except ImportError:
-    from keras.layers.merge import concatenate
-
-
-def unet_model_3d(input_shape, pool_size=(2, 2, 2), n_labels=1, initial_learning_rate=0.00001, deconvolution=False,
-                  depth=4, n_base_filters=32, include_label_wise_dice_coefficients=False, metrics=["accuracy"],
-                  batch_normalization=False, activation_name="sigmoid"):
+def perform_hdf5_conversion_3D(settings):
+    """Convert the training and test images, ground truths and masks to HDF5 format. The assumption is that images
+    are all places in the same folder, regardless of the patient.
     """
-    Builds the 3D UNet Keras model.f
-    :param metrics: List metrics to be calculated during model training (default is dice coefficient).
-    :param include_label_wise_dice_coefficients: If True and n_labels is greater than 1, model will report the dice
-    coefficient for each label as metric.
-    :param n_base_filters: The number of filters that the first layer in the convolution network will have. Following
-    layers will contain a multiple of this number. Lowering this number will likely reduce the amount of memory required
-    to train the model.
-    :param depth: indicates the depth of the U-shape for the model. The greater the depth, the more max pooling
-    layers will be added to the model. Lowering the depth may reduce the amount of memory required for training.
-    :param input_shape: Shape of the input data (n_chanels, x_size, y_size, z_size). The x, y, and z sizes must be
-    divisible by the pool size to the power of the depth of the UNet, that is pool_size^depth.
-    :param pool_size: Pool size for the max pooling operations.
-    :param n_labels: Number of binary labels that the model is learning.
-    :param initial_learning_rate: Initial learning rate for the model. This will be decayed during training.
-    :param deconvolution: If set to True, will use transpose convolution(deconvolution) instead of up-sampling. This
-    increases the amount memory required during training.
-    :return: Untrained 3D UNet Model
-    """
-    inputs = Input(input_shape)
-    print("lalalalalalalalalalala {}".format(inputs.shape))
-    current_layer = inputs
-    levels = list()
+    output_paths = []
 
-    K.set_image_data_format("channels_first")
+    print("training images")
+    # Convert training images in each sub folder to a single HDF5 file
+    output_paths.append(convert_to_hdf5_3D(os.path.join(settings.TRAINING_PATH, settings.FLDR_IMAGES),
+                                        (settings.IMG_HEIGHT, settings.IMG_WIDTH, settings.IMG_CHANNELS),
+                                        img_exts=".jpg", key=settings.HDF5_KEY, ext=settings.HDF5_EXT,
+                                        settings=settings))
 
-    # add levels with max pooling
-    for layer_depth in range(depth):
-        layer1 = create_convolution_block(input_layer=current_layer, n_filters=n_base_filters*(2**layer_depth),
-                                          batch_normalization=batch_normalization)
-        layer2 = create_convolution_block(input_layer=layer1, n_filters=n_base_filters*(2**layer_depth)*2,
-                                          batch_normalization=batch_normalization)
-        if layer_depth < depth - 1:
-            current_layer = MaxPooling3D(pool_size=pool_size)(layer2)
-            levels.append([layer1, layer2, current_layer])
-        else:
-            current_layer = layer2
-            levels.append([layer1, layer2])
+    print("training ground truths")
+    # Training ground truths
+    path, class_weights = convert_to_hdf5_3D(os.path.join(settings.TRAINING_PATH, settings.FLDR_GROUND_TRUTH),
+                                        (settings.IMG_HEIGHT, settings.IMG_WIDTH, settings.IMG_CHANNELS),
+                                        img_exts=".jpg", key=settings.HDF5_KEY, ext=settings.HDF5_EXT,
+                                        settings=settings, is_mask=True)
 
-    # add levels with up-convolution or up-sampling
-    for layer_depth in range(depth-2, -1, -1):
-        up_convolution = get_up_convolution(pool_size=pool_size, deconvolution=deconvolution,
-                                            n_filters=current_layer._keras_shape[1])(current_layer)
-        concat = concatenate([up_convolution, levels[layer_depth][1]], axis=1)
-        current_layer = create_convolution_block(n_filters=levels[layer_depth][1]._keras_shape[1],
-                                                 input_layer=concat, batch_normalization=batch_normalization)
-        current_layer = create_convolution_block(n_filters=levels[layer_depth][1]._keras_shape[1],
-                                                 input_layer=current_layer,
-                                                 batch_normalization=batch_normalization)
+    output_paths.append(path)
 
-    final_convolution = Conv3D(n_labels, (1, 1, 1))(current_layer)
-    act = Activation(activation_name)(final_convolution)
-    model = Model(inputs=inputs, outputs=act)
+    # Do the same for the test images
+    output_paths.append(convert_to_hdf5_3D(os.path.join(settings.TEST_PATH, settings.FLDR_IMAGES),
+                                        (settings.IMG_HEIGHT, settings.IMG_WIDTH, settings.IMG_CHANNELS),
+                                        img_exts=".jpg", key=settings.HDF5_KEY, ext=settings.HDF5_EXT,
+                                        settings=settings))
 
-    if not isinstance(metrics, list):
-        metrics = [metrics]
-
-    return model
-
-
-def create_convolution_block(input_layer, n_filters, batch_normalization=False, kernel=(3, 3, 3), activation=None,
-                             padding='same', strides=(1, 1, 1), instance_normalization=False):
-    """
-
-    :param strides:
-    :param input_layer:
-    :param n_filters:
-    :param batch_normalization:
-    :param kernel:
-    :param activation: Keras activation layer to use. (default is 'relu')
-    :param padding:
-    :return:
-    """
-    layer = Conv3D(n_filters, kernel, padding=padding, strides=strides)(input_layer)
-    if batch_normalization:
-        layer = BatchNormalization(axis=1)(layer)
-    elif instance_normalization:
-        try:
-            from keras_contrib.layers.normalization import InstanceNormalization
-        except ImportError:
-            raise ImportError("Install keras_contrib in order to use instance normalization."
-                              "\nTry: pip install git+https://www.github.com/farizrahman4u/keras-contrib.git")
-        layer = InstanceNormalization(axis=1)(layer)
-    if activation is None:
-        return Activation('relu')(layer)
-    else:
-        return activation()(layer)
-
-
-def compute_level_output_shape(n_filters, depth, pool_size, image_shape):
-    """
-    Each level has a particular output shape based on the number of filters used in that level and the depth or number
-    of max pooling operations that have been done on the data at that point.
-    :param image_shape: shape of the 3d image.
-    :param pool_size: the pool_size parameter used in the max pooling operation.
-    :param n_filters: Number of filters used by the last node in a given level.
-    :param depth: The number of levels down in the U-shaped model a given node is.
-    :return: 5D vector of the shape of the output node
-    """
-    output_image_shape = np.asarray(np.divide(image_shape, np.power(pool_size, depth)), dtype=np.int32).tolist()
-    return tuple([None, n_filters] + output_image_shape)
-
-
-def get_up_convolution(n_filters, pool_size, kernel_size=(2, 2, 2), strides=(2, 2, 2),
-                       deconvolution=False):
-    if deconvolution:
-        return Deconvolution3D(filters=n_filters, kernel_size=kernel_size,
-                               strides=strides)
-    else:
-        return UpSampling3D(size=pool_size)
+    return output_paths, class_weights
 
 
 if __name__ == "__main__":
-    lala= UNet_3D_NN(img_height=144, img_width=144, num_slices=144, img_channels=3, num_classes=3).build_model()
-    print(lala.summary())
+    if settings.IS_DEVELOPMENT:
+        hdf5_paths, class_weights = perform_hdf5_conversion_3D(settings)
+    else:
+        # During development avoid performing HDF5 conversion for every run
+        hdf5_paths = ["../data/MSC8002/training_3d/images.h5",
+                      "../data/MSC8002/training_3d/groundtruths.h5",
+                      ]
 
-    # lala = unet_model_3d((3, 144, 144, 144), n_labels=3)
-    # print(lala.summary())
+    # Read the training images and ground truths
+    train_imgs = read_preprocess_image(hdf5_paths[0], settings.HDF5_KEY, is_3D=True)
+    train_grndtr = read_preprocess_groundtruth(hdf5_paths[1], settings.HDF5_KEY, is_3D=True)
+
+    # Only train using a small number of images to test the pipeline
+    PATIENT_ID = 0
+    IX_START = 69
+    IX = 0
+    PRED_IX = range(IX_START, IX_START + settings.NUM_SLICES)
+    train_imgs = train_imgs[:, :, :, PRED_IX]
+    train_grndtr = train_grndtr[:, :, :, PRED_IX]
+
+    # Show one image plus its ground truth as a quick check
+    cv2.imshow("CHECK image", train_imgs[PATIENT_ID, :, :, IX, :])
+    cv2.imshow("CHECK ground truth", train_grndtr[PATIENT_ID, :, :, IX, :])
+    print("       Max image intensity: {} - {} - {}".format(np.max(train_imgs[PATIENT_ID, :, :, IX, :]),
+                                                            train_imgs.dtype,
+                                                            train_imgs.shape))
+    print("Max ground truth intensity: {} - {} - {}".format(np.max(train_grndtr[PATIENT_ID, :, :, IX, :]),
+                                                            train_grndtr.dtype,
+                                                            train_grndtr.shape))
+    cv2.waitKey(0)
+
+
+
+    # TODO TODO TODO TODO TODO
+    # Check dat shuffling niet de order van de slices verandert, alleen de volumes (i.e. maar 1 op het moment)
+    # check ellisdg: doet hij shufflen?
+
+
+
+
+    # Print class distribution
+    class_weights = [settings.CLASS_WEIGHT_BACKGROUND, settings.CLASS_WEIGHT_BLOODVESSEL]
+    print("Class distribution: {}".format(class_weights))
+
+    # Shuffle the data set
+    idx = np.random.permutation(len(train_imgs))
+    train_imgs, train_grndtr = train_imgs[idx], train_grndtr[idx]
+
+    # TODO TODO TODO TODO
+    # show all images to check shuffle impact
+
+
+
+    # Instantiate the 3D U-Net model
+    unet = UNet_3D_NN(img_height=settings.IMG_HEIGHT,
+                      img_width=settings.IMG_WIDTH,
+                      num_slices=settings.NUM_SLICES,
+                      img_channels=settings.IMG_CHANNELS,
+                      num_classes=settings.NUM_CLASSES)
+    model = unet.build_model()
+    print("Input shape: {}, output shape: {}".format(model.input_shape, model.output_shape))
+
+    # Prepare some path strings
+    model_path = os.path.join(settings.MODEL_PATH, unet.title + "_ep{}.model".format(settings.TRN_NUM_EPOCH))
+    summ_path = os.path.join(settings.OUTPUT_PATH, unet.title + "_model_summary.txt")
+    csv_path = os.path.join(settings.OUTPUT_PATH, unet.title + "_training_ep{}_bs{}.csv".format(settings.TRN_NUM_EPOCH,
+                                                                                                settings.TRN_BATCH_SIZE))
+
+    # Print the architecture to the console, a text file and an image
+    model.summary()
+    model_summary_to_file(model, summ_path)
+    model_architecture_to_file(unet.model, settings.OUTPUT_PATH + unet.title + "_BRAIN_base_training")
+
+    # Convert the ground truths into the same shape as the predictions the 3D U-net produces
+    print("\n--- Encoding training ground truths")
+    print("Ground truth shape before conversion: {} of type {}".format(train_grndtr.shape, train_grndtr.dtype))
+    train_grndtr_ext_conv = convert_img_to_pred_5D(train_grndtr, settings.NUM_CLASSES, settings.VERBOSE)
+    print(" Ground truth shape after conversion: {} of type {}".format(train_grndtr_ext_conv.shape, train_grndtr_ext_conv.dtype))
+
+    # Test the pred to image conversion
+    # back = convert_pred_to_img_5D(train_grndtr_ext_conv)
+    # print("back={}, dtype={}".format(back.shape, back.dtype))
+    # cv2.imshow("back image", back[0, 0, :, :])
+    # cv2.waitKey(0)
+    # exit()
+
+    # Train the model
+    print("\n--- Start training")
+    # Prepare callbacks
+    # WITH validation set:
+    # callbacks = [
+    #     ModelCheckpoint(model_path, monitor="val_loss", mode="min", save_best_only=True, verbose=1),
+    #     EarlyStopping(monitor='val_loss', min_delta=0, patience=4, verbose=0, mode="auto"),
+    #     CSVLogger(csv_path, append=False),
+    #     ]
+    # WITHOUT validation set:
+    callbacks = [
+        ModelCheckpoint(model_path, monitor="loss", mode="min", save_best_only=True, verbose=1),
+        EarlyStopping(monitor='loss', min_delta=0, patience=4, verbose=0, mode="auto"),
+        CSVLogger(csv_path, append=False),
+        ]
+
+    # Set the optimiser, loss function and metrics
+    opt = Adam()
+    metrics = [dice_coef]
+    loss = weighted_pixelwise_crossentropy_loss(class_weights)
+    # loss = dice_coefficient_loss
+
+    start_time = time.time()
+
+    # Compile and fit
+    model.compile(optimizer=opt, loss=loss, metrics=metrics)
+    hist = model.fit(train_imgs, train_grndtr_ext_conv,
+                     epochs=settings.TRN_NUM_EPOCH,
+                     # epochs=2,
+                     batch_size=settings.TRN_BATCH_SIZE,
+                     verbose=2,
+                     shuffle=True,
+                     # validation_split=settings.TRN_TRAIN_VAL_SPLIT,
+                     callbacks=callbacks)
+
+    print("Elapsed training time: {}".format(time.time() - start_time))
+
+    # Save the last model
+    # model.save_weights(model_path)
+
+    # Plot the training results
+    # plot_training_history(hist,
+    #                       settings.TRN_NUM_EPOCH,
+    #                       show=False,
+    #                       save_path=settings.OUTPUT_PATH + unet.title,
+    #                       time_stamp=True,
+    #                       metric="dice_coef")
+
+    print("\n--- Training complete")
+
+
+    # For pipeline testing only, predict on one training image
+    print("\n--- Predicting")
+    predictions = model.predict(train_imgs, batch_size=settings.TRN_BATCH_SIZE, verbose=2)
+    print("pred shape 1: {}".format(predictions.shape))
+
+    print("\n--- Processing")
+    predictions = convert_pred_to_img_5D(predictions)
+    print("pred shape 2: {}".format(predictions.shape))
+
+    # Transpose images and ground truths to the correct oder
+    print("  train_imgs 1: {}".format(train_imgs.shape))
+    print("train_grndtr 1: {}".format(train_grndtr.shape))
+
+    train_imgs = np.transpose(train_imgs, axes=(0, 3, 1, 2, 4))
+    train_grndtr = np.transpose(train_grndtr, axes=(0, 3, 1, 2, 4))
+
+    print("  train_imgs 2: {}".format(train_imgs.shape))
+    print("train_grndtr 2: {}".format(train_grndtr.shape))
+
+    # Show a single image, ground truth and prediction
+    cv2.imshow("PRED org image", train_imgs[0, 0])
+    cv2.imshow("PRED org ground truth", train_grndtr[0, 0])
+    cv2.imshow("PRED predicted mask", predictions[0, 0])
+    print("  original {} dtype {}".format(np.max(train_imgs[0, 0]), train_imgs[0, 0].dtype))
+    print("  gr truth {} dtype {}".format(np.max(train_grndtr[0, 0]), train_grndtr[0, 0].dtype))
+    print("prediction {} dtype {}".format(np.max(predictions[0, 0]), predictions[0, 0].dtype))
+    cv2.waitKey(0)

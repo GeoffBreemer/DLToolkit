@@ -1,4 +1,15 @@
-"""Keras loss and metric functions for use with model.compile(metrics=[..., "..."], loss="...")"""
+"""Keras loss and metric functions for use with model.compile(metrics=[..., "..."], loss="...")
+Helpful resources;
+
+Keras discussions:
+https://github.com/keras-team/keras/issues/3653
+https://github.com/keras-team/keras/issues/6261
+https://github.com/keras-team/keras/issues/5335
+
+Focal loss:
+https://arxiv.org/abs/1708.02002
+"""
+
 import keras.backend as K
 import tensorflow as tf
 
@@ -28,7 +39,6 @@ def focal_loss(target, output, gamma=2):
 
 def weighted_pixelwise_crossentropy_loss(class_weights):
     """Weighted loss cross entropy loss, call with a weight array, e.g. [1, 10]"""
-
     def loss(y_true, y_pred):
         epsilon = tf.convert_to_tensor(K.epsilon(), y_pred.dtype.base_dtype)
 
@@ -39,3 +49,16 @@ def weighted_pixelwise_crossentropy_loss(class_weights):
         return -tf.reduce_sum(tf.multiply(y_true * tf.log(y_pred), class_weights))
 
     return loss
+
+
+##############################################################
+# NOT TESTED NOT TESTED NOT TESTED NOT TESTED NOT TESTED
+##############################################################
+def weighted_dice_coefficient(y_true, y_pred, axis=(-4, -3, -2), smooth=0.00001):
+    return K.mean(2. * (K.sum(y_true * y_pred,
+                              axis=axis) + smooth/2)/(K.sum(y_true,
+                                                            axis=axis) + K.sum(y_pred,
+                                                                               axis=axis) + smooth))
+
+def weighted_dice_coefficient_loss(y_true, y_pred):
+    return -weighted_dice_coefficient(y_true, y_pred)

@@ -99,7 +99,7 @@ if __name__ == "__main__":
     save_image(tmp_img, settings.OUTPUT_PATH + "images_reconstructed")
 
     # Crop back to original resolution
-    # TODO: requires updates to perform_image_preprocessing, perform_groundtruth_preprocessing and extend_images
+    # TODO: requires updates to read_preprocess_image, read_preprocess_groundtruth and extend_images
     # test_imgs = test_imgs[:, :, 0:new_img_dim, 0:new_img_dim]
     # predictions = predictions[:, :, 0:new_img_dim, 0:new_img_dim]
 

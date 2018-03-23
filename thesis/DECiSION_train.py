@@ -49,9 +49,9 @@ from dltoolkit.utils.generic import model_architecture_to_file, model_summary_to
 from dltoolkit.nn.segment import UNet_NN
 from dltoolkit.utils.visual import plot_training_history
 
-from thesis_common import perform_image_preprocessing, perform_groundtruth_preprocessing,\
+from thesis_common import read_preprocess_image, read_preprocess_groundtruth,\
     convert_img_to_pred_4D, convert_pred_to_img_4D, convert_to_hdf5
-from thesis_metric_loss import dice_coef, weighted_pixelwise_crossentropy_loss
+from thesis_metric_loss import dice_coef, weighted_pixelwise_crossentropy_loss, focal_loss
 
 from keras.callbacks import ModelCheckpoint, EarlyStopping, CSVLogger
 from keras.optimizers import Adam
@@ -59,9 +59,10 @@ from keras.optimizers import Adam
 import numpy as np
 import os, cv2
 
-def perform_hdf5_conversion():
-    """Convert the training and test images, ground truths and masks to HDF5 format. For the DRIVE data set the
-    assumption is that filenames start with a number and that images/ground truths/masks share the same number
+
+def perform_hdf5_conversion(settings):
+    """Convert the training and test images, ground truths and masks to HDF5 format. The assumption is that images
+    are all placed in the same folder, regardless of the patient.
     """
     output_paths = []
 
@@ -90,7 +91,7 @@ def perform_hdf5_conversion():
 
 if __name__ == "__main__":
     if settings.IS_DEVELOPMENT:
-        hdf5_paths, class_weights = perform_hdf5_conversion()
+        hdf5_paths, class_weights = perform_hdf5_conversion(settings)
     else:
         # During development avoid performing HDF5 conversion for every run
         hdf5_paths = ["../data/MSC8002/training/images.h5",
@@ -98,8 +99,8 @@ if __name__ == "__main__":
                       ]
 
     # Read the training images and ground truths
-    train_imgs = perform_image_preprocessing(hdf5_paths[0], settings.HDF5_KEY)
-    train_grndtr = perform_groundtruth_preprocessing(hdf5_paths[1], settings.HDF5_KEY)
+    train_imgs = read_preprocess_image(hdf5_paths[0], settings.HDF5_KEY)
+    train_grndtr = read_preprocess_groundtruth(hdf5_paths[1], settings.HDF5_KEY)
 
     # Show one image plus its ground truth as a quick check
     IX = 69
@@ -118,8 +119,8 @@ if __name__ == "__main__":
     # Print class distribution
     # unique, counts = np.unique(train_grndtr[0], return_counts=True)
     # print("Class distribution: {}, total: {}".format(dict(zip(unique, counts)), 320*320))
+    class_weights = [settings.CLASS_WEIGHT_BACKGROUND, settings.CLASS_WEIGHT_BLOODVESSEL]
     print("Class distribution: {}".format(class_weights))
-    class_weights = [1., 10.]
 
     # Shuffle the data set
     idx = np.random.permutation(len(train_imgs))
@@ -136,10 +137,11 @@ if __name__ == "__main__":
     model = unet.build_model_4D_soft()
 
     # Prepare some path strings
-    model_path = os.path.join(settings.MODEL_PATH, unet.title + "_ep{}.model".format(settings.TRN_NUM_EPOCH))
-    csv_path = os.path.join(settings.OUTPUT_PATH, unet.title + "_training_ep{}_bs{}.csv".format(
-        settings.TRN_NUM_EPOCH,
-        settings.TRN_BATCH_SIZE))
+    model_path = os.path.join(settings.MODEL_PATH,
+                              unet.title + "_ep{}.model".format(settings.TRN_NUM_EPOCH))
+    csv_path = os.path.join(settings.OUTPUT_PATH,
+                            unet.title + "_training_ep{}_bs{}.csv".format(settings.TRN_NUM_EPOCH,
+                                                                          settings.TRN_BATCH_SIZE))
     summ_path = os.path.join(settings.OUTPUT_PATH, unet.title + "_model_summary.txt")
 
     # Print the architecture to the console, a text file and an image
@@ -156,6 +158,8 @@ if __name__ == "__main__":
     train_grndtr_ext_conv = convert_img_to_pred_4D(train_grndtr, settings, settings.VERBOSE)  # softmax: 4D
 
     print(" Ground truth shape AFTER conversion: {} of type {}\n".format(train_grndtr_ext_conv.shape, train_grndtr_ext_conv.dtype))
+
+    exit()
 
     # Train the model
     print("\n--- Start training")

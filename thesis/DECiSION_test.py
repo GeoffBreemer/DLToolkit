@@ -1,5 +1,5 @@
 import DECiSION_settings as settings
-from thesis_common import perform_image_preprocessing, perform_groundtruth_preprocessing,\
+from thesis_common import read_preprocess_image, read_preprocess_groundtruth,\
     convert_img_to_pred_4D, convert_pred_to_img_4D,\
     convert_img_to_pred_3D, convert_pred_to_img_3D, group_images
 
@@ -25,12 +25,12 @@ if __name__ == "__main__":
     # Load and preprocess the test and ground truth images (the latter will not be used during inference,
     # only for visualisation)
     print("--- Pre-processing test NO TRAINING images")
-    test_imgs = perform_image_preprocessing(os.path.join(settings.TRAINING_PATH,
-                                                         settings.FLDR_IMAGES + settings.HDF5_EXT),
-                                            settings.HDF5_KEY)
-    test_ground_truths = perform_groundtruth_preprocessing(os.path.join(settings.TRAINING_PATH,
-                                                                        settings.FLDR_GROUND_TRUTH + settings.HDF5_EXT),
-                                                           settings.HDF5_KEY)
+    test_imgs = read_preprocess_image(os.path.join(settings.TRAINING_PATH,
+                                                   settings.FLDR_IMAGES + settings.HDF5_EXT),
+                                      settings.HDF5_KEY)
+    test_ground_truths = read_preprocess_groundtruth(os.path.join(settings.TRAINING_PATH,
+                                                                  settings.FLDR_GROUND_TRUTH + settings.HDF5_EXT),
+                                                     settings.HDF5_KEY)
 
 
     # Show an image plus its ground truth to check
