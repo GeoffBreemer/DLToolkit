@@ -24,6 +24,15 @@ from keras.optimizers import Adam
 import numpy as np
 import os, cv2, time
 
+# Useful links:
+#
+# generators: https://github.com/ncullen93/Unet-ants
+
+
+# TODO:
+# - data augmentation: slight rotating, translating and zooming. Slight skewing also makes sense as the patient head
+# position is not always in the exact position.
+# -
 
 def perform_hdf5_conversion_3D(settings):
     """Convert the training and test images, ground truths and masks to HDF5 format. The assumption is that images

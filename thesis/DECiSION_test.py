@@ -5,36 +5,39 @@ from thesis_common import read_preprocess_image, read_preprocess_groundtruth,\
 
 from dltoolkit.nn.segment import UNet_NN
 
-from keras.models import load_model
-
 import os, cv2
+import numpy as np
 
 
 if __name__ == "__main__":
     # Load and preprocess the test and ground truth images (the latter will not be used during inference,
     # only for visualisation)
-    print("--- Pre-processing test ***NO*** TRAINING images")
-    test_imgs = read_preprocess_image(os.path.join(settings.TRAINING_PATH,
-                                                   settings.FLDR_IMAGES + settings.HDF5_EXT),
-                                      settings.HDF5_KEY)
-    test_ground_truths = read_preprocess_groundtruth(os.path.join(settings.TRAINING_PATH,
-                                                                  settings.FLDR_GROUND_TRUTH + settings.HDF5_EXT),
-                                                     settings.HDF5_KEY)
-
+    if settings.IS_DEVELOPMENT:
+        print("--- Pre-processing TRAINING images")
+        test_imgs = read_preprocess_image(
+            os.path.join(settings.TRAINING_PATH, settings.FLDR_IMAGES + settings.HDF5_EXT), settings.HDF5_KEY)
+        test_ground_truths = read_preprocess_groundtruth(
+            os.path.join(settings.TRAINING_PATH, settings.FLDR_GROUND_TRUTH + settings.HDF5_EXT), settings.HDF5_KEY)
+    else:
+        print("--- Pre-processing test images")
+        test_imgs = read_preprocess_image(
+            os.path.join(settings.TEST_PATH, settings.FLDR_IMAGES + settings.HDF5_EXT), settings.HDF5_KEY)
 
     # Show an image plus its ground truth to check
-    # IX = 69
-    # cv2.imshow("CHECK image", test_imgs[IX])
-    # cv2.imshow("CHECK ground truth", test_ground_truths[IX])
-    # print("       Max image intensity: {} - {} - {}".format(np.max(test_imgs[IX]), test_imgs.dtype, test_imgs.shape))
-    # print("Max ground truth intensity: {} - {} - {}".format(np.max(test_ground_truths[IX]), test_ground_truths.dtype, test_ground_truths.shape))
-    # cv2.waitKey(0)
+    IX = 69
+    cv2.imshow("CHECK image", test_imgs[IX])
+    print("       Max image intensity: {} - {} - {}".format(np.max(test_imgs[IX]), test_imgs.dtype, test_imgs.shape))
+    if settings.IS_DEVELOPMENT:
+        cv2.imshow("CHECK ground truth", test_ground_truths[IX])
+        print("Max ground truth intensity: {} - {} - {}".format(np.max(test_ground_truths[IX]), test_ground_truths.dtype, test_ground_truths.shape))
+    cv2.waitKey(0)
 
     # Only predict for some images
     # PRED_IX = IX
     PRED_IX = range(59, 89)
     test_imgs = test_imgs[[PRED_IX]]
-    test_ground_truths = test_ground_truths[[PRED_IX]]
+    if settings.IS_DEVELOPMENT:
+        test_ground_truths = test_ground_truths[[PRED_IX]]
 
     # Load the trained model
     print("\n--- Loading trained model: {}".format(model_name_from_arguments()))
@@ -64,9 +67,10 @@ if __name__ == "__main__":
 
     print(" predictions.shape AFTER conv: {} ".format(predictions.shape))
 
-    # tmp_img = test_ground_truths[0]
-    # cv2.imshow("Ground truth", tmp_img)
-    # print("gr truth max {} type {}".format(np.max(tmp_img), tmp_img.dtype))
+    # if settings.IS_DEVELOPMENT:
+    #     tmp_img = test_ground_truths[0]
+    #     cv2.imshow("Ground truth", tmp_img)
+    #     print("gr truth max {} type {}".format(np.max(tmp_img), tmp_img.dtype))
 
     # tmp_img = test_imgs[0]
     # cv2.imshow("Original", tmp_img)
@@ -77,7 +81,9 @@ if __name__ == "__main__":
     # print("prediction {} type {}".format(np.max(tmp_img), tmp_img.dtype))
 
     print("\n--- Producing output images")
-    group_images(test_ground_truths[0:15], 5, 255, False, "../output/"+unet.title+"_grp_originals_w50")
-    group_images(predictions[0:15], 5, 1.0, False, "../output/"+unet.title+"_grp_predictions_w50")
+    if settings.IS_DEVELOPMENT:
+        group_images(test_ground_truths[0:15], 5, 255, False, "../output/"+unet.title+"_grp_originals")
+    group_images(test_imgs[0:15], 5, 1.0, False, "../output/"+unet.title+"_grp_images")
+    group_images(predictions[0:15], 5, 1.0, False, "../output/"+unet.title+"_grp_predictions")
 
     print("\n--- Predicting complete")
