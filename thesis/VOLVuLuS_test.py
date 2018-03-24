@@ -1,4 +1,4 @@
-import VOLVuLuS_settings as settings
+import lala as settings
 from thesis_common import read_preprocess_image, read_preprocess_groundtruth, group_images,\
     convert_pred_to_img_3D, model_name_from_arguments
 
