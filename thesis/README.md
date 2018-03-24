@@ -1,11 +1,36 @@
-# Thesis code
-
+# Thesis Code
 Work in progress.
 
+## Getting Started
+- Download/clone the repository to a local machine
+- Add the full path to the repository to the `PYTHONPATH` environment variable (if running code from the terminal)
+- Install prequisite packages (see below)
+
+### Prerequisites
+Install the Python packages listed below and any packages they may depend on:
+
+- scikit-learn
+- scikit-image
+- OpenCV 3.3
+- NumPy
+- Keras 2.1.4
+- Tensorflow 1.5
+- HDF5
+- graphviz
+- matplotlib
+
+All code is written in Python 3.6.3 using PyCharm Professional 2017.3.
+
+### Running the Examples
+To train a model first execute its training file, e.g. `DECiSION_training.py`. Training parameters, paths etc. are set in the settings file, e.g. `DECiSION_settings.py`. Upon completion use the trained model to predict on an unseen data set using its test file, e.g. `DECiSION_test.py`. Pass the full path to the trained model using the `-m` parameter. For example: `DECiSION_test.py -m="../savedmodels/UNet3D_paper_ep100.model`.
+
+Note that all code is currently setup to test the training and test pipelines by training the models on a **very small** training data set and making predictions on the **same dataset**.
+
+## Segmentation Models
 The research project pursues two semantic segmentation models:
 
-1. A U-Net named DECiSION
-2. A 3D U-Net named VOLVuLuS
+1. A U-Net named DECiSION [^fn1]
+2. A 3D U-Net named VOLVuLuS [^fn2]
 
 Code to train and test each model comes in three `.py` files:
 
@@ -14,3 +39,13 @@ Code to train and test each model comes in three `.py` files:
 - `_test.py`: apply a trained model to a test set
 
 In addition, `thesis_common.py` contains common code shared between the two models and `thesis_metric_loss.py` contains loss metrics used during training.
+
+[^fn1]: So Chris Krycho, "Not Exactly a Millennium," chriskrycho.com, July 22,
+
+2015, http://www.chriskrycho.com/2015/not-exactly-a-millennium.html
+(accessed July 25, 2015), ¶6.
+
+[^fn2]: So Chris Krycho, "Not Exactly a Millennium," chriskrycho.com, July 22,
+
+2015, http://www.chriskrycho.com/2015/not-exactly-a-millennium.html
+(accessed July 25, 2015), ¶6.
