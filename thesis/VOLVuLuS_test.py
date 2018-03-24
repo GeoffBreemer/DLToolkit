@@ -1,21 +1,11 @@
-import VOLVuLus_settings as settings
+import VOLVuLuS_settings as settings
 from thesis_common import read_preprocess_image, read_preprocess_groundtruth, group_images,\
-    convert_pred_to_img_5D
+    convert_pred_to_img_3D, model_name_from_arguments
 
 from dltoolkit.nn.segment import UNet_3D_NN
 
-import os, argparse, cv2
+import os, cv2
 import numpy as np
-
-
-def model_name_from_arguments():
-    """Return the full path of the model to be used for making predictions"""
-    ap = argparse.ArgumentParser()
-    ap.add_argument("-m", "--model", type=str, nargs='?',
-                    const=True, required=True, help="Set to the full path of the trained model to use")
-    args = vars(ap.parse_args())
-
-    return args["model"]
 
 
 if __name__ == "__main__":
@@ -61,7 +51,7 @@ if __name__ == "__main__":
     predictions = model.predict(test_imgs, batch_size=settings.TRN_BATCH_SIZE, verbose=2)
 
     # Convert predictions to images
-    predictions = convert_pred_to_img_5D(predictions)
+    predictions = convert_pred_to_img_3D(predictions)
     print(" predictions.shape AFTER conv: {} ".format(predictions.shape))
 
     tmp_img = test_ground_truths[0, :, :, 0]

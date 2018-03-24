@@ -17,7 +17,70 @@ class UNet_NN(BaseNN):
         self._dropout_rate = dropout_rate
         self._num_classes = num_classes
 
-    def build_model_4D_soft(self):
+    def build_model_DRIVE(self):
+        """Build the U-Net architecture used for the DRIVE retinal fundus images data set"""
+        self._title = "UNet_DRIVE"
+
+        # Set the input shape
+        if K.image_data_format() == "channels_first":
+            input_shape = (self._img_channels, self._img_width, self._img_height)
+        else:
+            input_shape = (self._img_height, self._img_width, self._img_channels)
+            print("CHANNELS LAST")
+
+        inputs = Input(input_shape)
+
+        # Contracting path
+        conv_contr1 = Conv2D(filters=32, kernel_size=(3, 3), activation='relu', padding='same',
+                             kernel_initializer="he_normal")(inputs)
+        conv_contr1 = Conv2D(filters=32, kernel_size=(3, 3), activation='relu', padding='same',
+                             kernel_initializer="he_normal")(conv_contr1)
+        pool_contr1 = MaxPooling2D(pool_size=(2, 2))(conv_contr1)
+
+        conv_contr2 = Conv2D(filters=64, kernel_size=(3, 3), activation='relu', padding='same',
+                             kernel_initializer="he_normal")(pool_contr1)
+        conv_contr2 = Conv2D(filters=64, kernel_size=(3, 3), activation='relu', padding='same',
+                             kernel_initializer="he_normal")(conv_contr2)
+        pool_contr2 = MaxPooling2D(pool_size=(2, 2))(conv_contr2)
+
+        # "Bottom" layer
+        conv_bottom = Conv2D(filters=128, kernel_size=(3, 3), activation='relu', padding='same',
+                             kernel_initializer="he_normal")(pool_contr2)
+        conv_bottom = Conv2D(filters=128, kernel_size=(3, 3), activation='relu', padding='same',
+                             kernel_initializer="he_normal")(conv_bottom)
+
+        # Crop outputs of each contracting path "layer" for use in their corresponding expansive path "layer"
+        crop_up1 = conv_contr1  # no cropping required
+        crop_up2 = conv_contr2  # no cropping required
+
+        # Expansive path
+        conv_scale_up2 = Conv2DTranspose(filters=64, kernel_size=(2, 2), strides=2, activation="relu", padding="same",
+                             kernel_initializer="he_normal")(conv_bottom)
+        merge_up2 = concatenate([conv_scale_up2, crop_up2], axis=3)
+        conv_up2 = Conv2D(filters=64, kernel_size=(3, 3), activation='relu', padding='same',
+                             kernel_initializer="he_normal")(merge_up2)
+        conv_up2 = Conv2D(filters=64, kernel_size=(3, 3), activation='relu', padding='same',
+                             kernel_initializer="he_normal")(conv_up2)
+
+        conv_scale_up1 = Conv2DTranspose(filters=32, kernel_size=(2, 2), strides=2, activation="relu", padding="same",
+                             kernel_initializer="he_normal")(conv_up2)
+        merge_up1 = concatenate([conv_scale_up1, crop_up1], axis=3)
+        conv_up1 = Conv2D(filters=32, kernel_size=(3, 3), activation='relu', padding='same',
+                             kernel_initializer="he_normal")(merge_up1)
+        conv_up1 = Conv2D(filters=32, kernel_size=(3, 3), activation='relu', padding='same',
+                             kernel_initializer="he_normal")(conv_up1)
+
+        # Final 1x1 conv layer
+        conv_final = Conv2D(self._num_classes, (1, 1), activation='relu', padding='same',
+                             kernel_initializer="he_normal")(conv_up1)
+        conv_final = Reshape((self._img_height * self._img_width, self._num_classes))(conv_final)
+        conv_final = Activation('softmax')(conv_final)
+
+        self._model = Model(inputs=[inputs], outputs=[conv_final])
+
+        return self._model
+
+    def build_model_softmax(self):
         """
         Build the U-Net architecture as defined by Ronneberger et al:
         https://lmb.informatik.uni-freiburg.de/people/ronneber/u-net/
@@ -88,70 +151,6 @@ class UNet_NN(BaseNN):
         # Final 1x1 conv layer
         conv_final = Conv2D(self._num_classes, (1, 1), activation='relu', padding='same',
                              kernel_initializer="he_normal")(conv_up1)
-        # conv_final = Reshape((self._img_height * self._img_width, self._num_classes))(conv_final)
-        conv_final = Activation('softmax')(conv_final)
-
-        self._model = Model(inputs=[inputs], outputs=[conv_final])
-
-        return self._model
-
-    def build_model_DRIVE(self):
-        """Build the U-Net architecture used for the DRIVE retinal fundus images data set"""
-        self._title = "UNet_DRIVE"
-
-        # Set the input shape
-        if K.image_data_format() == "channels_first":
-            input_shape = (self._img_channels, self._img_width, self._img_height)
-        else:
-            input_shape = (self._img_height, self._img_width, self._img_channels)
-            print("CHANNELS LAST")
-
-        inputs = Input(input_shape)
-
-        # Contracting path
-        conv_contr1 = Conv2D(filters=32, kernel_size=(3, 3), activation='relu', padding='same',
-                             kernel_initializer="he_normal")(inputs)
-        conv_contr1 = Conv2D(filters=32, kernel_size=(3, 3), activation='relu', padding='same',
-                             kernel_initializer="he_normal")(conv_contr1)
-        pool_contr1 = MaxPooling2D(pool_size=(2, 2))(conv_contr1)
-
-        conv_contr2 = Conv2D(filters=64, kernel_size=(3, 3), activation='relu', padding='same',
-                             kernel_initializer="he_normal")(pool_contr1)
-        conv_contr2 = Conv2D(filters=64, kernel_size=(3, 3), activation='relu', padding='same',
-                             kernel_initializer="he_normal")(conv_contr2)
-        pool_contr2 = MaxPooling2D(pool_size=(2, 2))(conv_contr2)
-
-        # "Bottom" layer
-        conv_bottom = Conv2D(filters=128, kernel_size=(3, 3), activation='relu', padding='same',
-                             kernel_initializer="he_normal")(pool_contr2)
-        conv_bottom = Conv2D(filters=128, kernel_size=(3, 3), activation='relu', padding='same',
-                             kernel_initializer="he_normal")(conv_bottom)
-
-        # Crop outputs of each contracting path "layer" for use in their corresponding expansive path "layer"
-        crop_up1 = conv_contr1  # no cropping required
-        crop_up2 = conv_contr2  # no cropping required
-
-        # Expansive path
-        conv_scale_up2 = Conv2DTranspose(filters=64, kernel_size=(2, 2), strides=2, activation="relu", padding="same",
-                             kernel_initializer="he_normal")(conv_bottom)
-        merge_up2 = concatenate([conv_scale_up2, crop_up2], axis=3)
-        conv_up2 = Conv2D(filters=64, kernel_size=(3, 3), activation='relu', padding='same',
-                             kernel_initializer="he_normal")(merge_up2)
-        conv_up2 = Conv2D(filters=64, kernel_size=(3, 3), activation='relu', padding='same',
-                             kernel_initializer="he_normal")(conv_up2)
-
-        conv_scale_up1 = Conv2DTranspose(filters=32, kernel_size=(2, 2), strides=2, activation="relu", padding="same",
-                             kernel_initializer="he_normal")(conv_up2)
-        merge_up1 = concatenate([conv_scale_up1, crop_up1], axis=3)
-        conv_up1 = Conv2D(filters=32, kernel_size=(3, 3), activation='relu', padding='same',
-                             kernel_initializer="he_normal")(merge_up1)
-        conv_up1 = Conv2D(filters=32, kernel_size=(3, 3), activation='relu', padding='same',
-                             kernel_initializer="he_normal")(conv_up1)
-
-        # Final 1x1 conv layer
-        conv_final = Conv2D(self._num_classes, (1, 1), activation='relu', padding='same',
-                             kernel_initializer="he_normal")(conv_up1)
-        conv_final = Reshape((self._img_height * self._img_width, self._num_classes))(conv_final)
         conv_final = Activation('softmax')(conv_final)
 
         self._model = Model(inputs=[inputs], outputs=[conv_final])
@@ -159,7 +158,7 @@ class UNet_NN(BaseNN):
         return self._model
 
     def build_model_sigmoid(self):
-        """Same as build_model_3D_soft but the output layer applies a sigmoid"""
+        """Same as build_model_flatten but the output layer applies a sigmoid"""
         self._title = "UNet_brain_MRI_sigmoid"
 
         # Set the input shape
@@ -220,8 +219,8 @@ class UNet_NN(BaseNN):
 
         return self._model
 
-    def build_model_3D_soft(self):
-        """Same as build_model_3D_soft but the output layer has shape (-1, height * width, num_classes)"""
+    def build_model_flatten(self):
+        """Same as build_model_flatten but the output layer has shape (-1, height * width, num_classes)"""
         self._title = "UNet_brain_MRI_3D"
 
         # Set the input shape

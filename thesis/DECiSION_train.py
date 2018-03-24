@@ -24,7 +24,7 @@
 #   Other approaches:
 #   https://www.kaggle.com/c/ultrasound-nerve-segmentation/discussion/22951
 #
-# AlexNet CHECK DEZE:
+#   AlexNet:
 #   https://github.com/heuritech/convnets-keras
 #   https://devblogs.nvidia.com/image-segmentation-using-digits-5/
 #   For the AlexNet, the images(for the mode without the heatmap) have to be of shape (227, 227).It is recommended to
@@ -32,7 +32,6 @@
 #
 # - cannot do pixel level softmax:
 #    https://stackoverflow.com/questions/42118821/cross-entropy-loss-for-semantic-segmentation-keras?noredirect=1&lq=1
-
 RANDOM_STATE = 42
 from numpy.random import seed
 seed(RANDOM_STATE)
@@ -50,8 +49,8 @@ from dltoolkit.nn.segment import UNet_NN
 from dltoolkit.utils.visual import plot_training_history
 
 from thesis_common import read_preprocess_image, read_preprocess_groundtruth,\
-    convert_img_to_pred_4D, convert_pred_to_img_4D, convert_to_hdf5
-from thesis_metric_loss import dice_coef, weighted_pixelwise_crossentropy_loss, focal_loss
+    convert_img_to_pred, convert_pred_to_img, convert_to_hdf5
+from thesis_metric_loss import dice_coef, weighted_pixelwise_crossentropy_loss
 
 from keras.callbacks import ModelCheckpoint, EarlyStopping, CSVLogger
 from keras.optimizers import Adam
@@ -91,6 +90,7 @@ def perform_hdf5_conversion(settings):
 
 if __name__ == "__main__":
     if settings.IS_DEVELOPMENT:
+        print("\n--- Converting images to HDF5")
         hdf5_paths, class_weights = perform_hdf5_conversion(settings)
     else:
         # During development avoid performing HDF5 conversion for every run
@@ -99,26 +99,26 @@ if __name__ == "__main__":
                       ]
 
     # Read the training images and ground truths
+    print("\n--- Read and preprocess images")
     train_imgs = read_preprocess_image(hdf5_paths[0], settings.HDF5_KEY)
     train_grndtr = read_preprocess_groundtruth(hdf5_paths[1], settings.HDF5_KEY)
 
     # Show one image plus its ground truth as a quick check
+    print("\n--- Show example image")
     IX = 69
     cv2.imshow("CHECK image", train_imgs[IX])
     cv2.imshow("CHECK ground truth", train_grndtr[IX])
-    print("       Max image intensity: {} - {} - {}".format(np.max(train_imgs[IX]), train_imgs.dtype, train_imgs.shape))
-    print("Max ground truth intensity: {} - {} - {}".format(np.max(train_grndtr[IX]), train_grndtr.dtype, train_grndtr.shape))
+    print("Max image intensity: {} - {} - {}".format(np.max(train_imgs[IX]), train_imgs.dtype, train_imgs.shape))
+    print("Max grtrh intensity: {} - {} - {}".format(np.max(train_grndtr[IX]), train_grndtr.dtype, train_grndtr.shape))
     cv2.waitKey(0)
 
     # Only train using a small number of images to test the pipeline
+    print("\n--- Limiting training set size for pipeline testing")
     PRED_IX = range(69, 79)
-    # PRED_IX = range(59, 89)
     train_imgs = train_imgs[[PRED_IX]]
     train_grndtr = train_grndtr[[PRED_IX]]
 
     # Print class distribution
-    # unique, counts = np.unique(train_grndtr[0], return_counts=True)
-    # print("Class distribution: {}, total: {}".format(dict(zip(unique, counts)), 320*320))
     class_weights = [settings.CLASS_WEIGHT_BACKGROUND, settings.CLASS_WEIGHT_BLOODVESSEL]
     print("Class distribution: {}".format(class_weights))
 
@@ -133,16 +133,14 @@ if __name__ == "__main__":
                    num_classes=settings.NUM_CLASSES)
 
     # model = unet.build_model_sigmoid()
-    # model = unet.build_model_3D_soft()
-    model = unet.build_model_4D_soft()
+    # model = unet.build_model_flatten()
+    model = unet.build_model_softmax()
 
     # Prepare some path strings
-    model_path = os.path.join(settings.MODEL_PATH,
-                              unet.title + "_ep{}.model".format(settings.TRN_NUM_EPOCH))
-    csv_path = os.path.join(settings.OUTPUT_PATH,
-                            unet.title + "_training_ep{}_bs{}.csv".format(settings.TRN_NUM_EPOCH,
-                                                                          settings.TRN_BATCH_SIZE))
+    model_path = os.path.join(settings.MODEL_PATH, unet.title + "_ep{}.model".format(settings.TRN_NUM_EPOCH))
     summ_path = os.path.join(settings.OUTPUT_PATH, unet.title + "_model_summary.txt")
+    csv_path = os.path.join(settings.OUTPUT_PATH, unet.title + "_training_ep{}_bs{}.csv".format(settings.TRN_NUM_EPOCH,
+                                                                                                settings.TRN_BATCH_SIZE))
 
     # Print the architecture to the console, a text file and an image
     model.summary()
@@ -152,14 +150,10 @@ if __name__ == "__main__":
     # Convert the ground truths into the same shape as the predictions the U-net produces
     print("--- \nEncoding training ground truths")
     print("Ground truth shape before conversion: {} of type {}".format(train_grndtr.shape, train_grndtr.dtype))
-
-    # train_grndtr_ext_conv = train_grndtr                                                                            # no conversion for sigmoid
-    # train_grndtr_ext_conv = convert_img_to_pred_3D(train_grndtr, settings, settings.VERBOSE)            # softmax: 3D
-    train_grndtr_ext_conv = convert_img_to_pred_4D(train_grndtr, settings, settings.VERBOSE)  # softmax: 4D
-
+    # train_grndtr_ext_conv = train_grndtr        # no conversion for sigmoid
+    # train_grndtr_ext_conv = convert_img_to_pred_flatten(train_grndtr, settings, settings.VERBOSE)  # softmax: 3D
+    train_grndtr_ext_conv = convert_img_to_pred(train_grndtr, settings, settings.VERBOSE)  # softmax: 4D
     print(" Ground truth shape AFTER conversion: {} of type {}\n".format(train_grndtr_ext_conv.shape, train_grndtr_ext_conv.dtype))
-
-    exit()
 
     # Train the model
     print("\n--- Start training")
@@ -172,18 +166,12 @@ if __name__ == "__main__":
     # Set the optimiser, loss function and metrics
     opt = Adam()
     metrics = [dice_coef]
-
-    # loss = "categorical_crossentropy"                             # Works only when MASK_BINARY_THRESHOLD is 1
-    # loss = weighted_pixelwise_crossentropy_loss([settings.CLASS_WEIGHT_BACKGROUND,
-    #                                              settings.CLASS_WEIGHT_BLOODVESSEL])
     loss = weighted_pixelwise_crossentropy_loss(class_weights)
-    # loss = focal_loss
 
     # Compile and fit
     model.compile(optimizer=opt, loss=loss, metrics=metrics)
     hist = model.fit(train_imgs, train_grndtr_ext_conv,
                      epochs=settings.TRN_NUM_EPOCH,
-                     # epochs=2,
                      batch_size=settings.TRN_BATCH_SIZE,
                      verbose=1,
                      shuffle=True,
@@ -201,12 +189,13 @@ if __name__ == "__main__":
     print("\n--- Training complete")
 
 
+    print("\n--- Pipeline test")
     # For pipeline testing only, predict on one training image
     predictions = model.predict(train_imgs[[0]], batch_size=settings.TRN_BATCH_SIZE, verbose=2)
 
     # predictions = predictions
-    # predictions = convert_pred_to_img_3D(predictions, settings.TRN_PRED_THRESHOLD)
-    predictions = convert_pred_to_img_4D(predictions, settings, settings.TRN_PRED_THRESHOLD)
+    # predictions = convert_pred_to_img_flatten(predictions, settings.TRN_PRED_THRESHOLD)
+    predictions = convert_pred_to_img(predictions, settings, settings.TRN_PRED_THRESHOLD)
 
     cv2.imshow("PRED org image", train_imgs[0])
     cv2.imshow("PRED org ground truth", train_grndtr[0])

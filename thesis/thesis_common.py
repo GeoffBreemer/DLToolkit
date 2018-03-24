@@ -1,27 +1,140 @@
-"""Common image handling and conversion methods"""
+"""Image handling and conversion methods"""
 from dltoolkit.io import HDF5Reader, HDF5Writer
-from dltoolkit.utils.image import normalise, standardise
+from dltoolkit.utils.image import standardise
 from dltoolkit.utils.generic import list_images
 
 import numpy as np
 import cv2
-import time, os, progressbar
+import time, os, progressbar, argparse
 import matplotlib.pyplot as plt
 
 
-# Note - OpenCV expects pixel intensities:
-#
-# 0.0 - 1.0 if dtype is float32
-# 0 - 255 if dtype is uint8
-#
-# otherwise it will not show images properly.
-
-
-# Converting images to HDF5 files
-def convert_to_hdf5(img_path, img_shape, img_exts, key, ext, settings, is_mask=False):
+# 3D U-Net conversions
+def convert_to_hdf5_3D(img_path, img_shape, img_exts, key, ext, settings, is_mask=False):
+    """Convert images present in `img_path` to HDF5 format. The HDF5 file is saved one sub folder up from where the
+    images are located. Masks are binary tresholded to be 0 for background pixels and 255 for blood vessels. Images
+    (slices) are expected to be stored in subfolders (volumes), one for each patient.
+    :param img_path: path to the folder containing images
+    :param img_shape: shape of each image (width, height, # of channels)
+    :param img_ext: image extension, e.g. ".jpg"
+    :param key: HDF5 data set key
+    :param settings: settings
+    :param is_mask: True when converting masks/ground truths, False when converting images
+    :return: full path to the generated HDF5 file, class_weights (masks/ground truths only)
     """
-    Convert images present in `img_path` to HDF5 format. The HDF5 file is one sub folder up from where the
-    images are located. Masks are binary tresholded to be 0 for background pixels and 255 for blood vessels.
+    # Path to the HDF5 file
+    output_path = os.path.join(os.path.dirname(img_path), os.path.basename(img_path)) + ext
+
+    # Create a list of paths to the individual patient folders
+    patient_folders = sorted([os.path.join(img_path, e.name) for e in os.scandir(img_path) if e.is_dir()])
+
+    # Prepare the HDF5 writer, which expects a label vector. Because this is a segmentation problem just pass None
+    hdf5_writer = HDF5Writer((len(patient_folders), settings.NUM_SLICES_TOTAL) + img_shape, output_path,
+                             feat_key=key,
+                             label_key=None,
+                             del_existing=True,
+                             buf_size=len(patient_folders),
+                             dtype_feat="f" if not is_mask else "i8")
+    classcounts = [0] * settings.NUM_CLASSES
+
+    # Loop through all images
+    widgets = ["Creating HDF5 database ", progressbar.Percentage(), " ", progressbar.Bar(), " ", progressbar.ETA()]
+    pbar = progressbar.ProgressBar(maxval=len(patient_folders), widgets=widgets).start()
+
+    # Loop through each patient subfolder
+    for patient_ix, p_folder in enumerate(patient_folders):
+        imgs_list = sorted(list(list_images(basePath=p_folder, validExts=img_exts)))
+        imgs = np.zeros((settings.NUM_SLICES_TOTAL, img_shape[0], img_shape[1], img_shape[2]), dtype=np.uint8)
+
+        # Read each slice in the current patient's folder
+        for slice_ix, slice_img in enumerate(imgs_list):
+            image = cv2.imread(slice_img, cv2.IMREAD_GRAYSCALE)
+
+            # Apply binary thresholding to ground truth masks
+            if is_mask:
+                _, image = cv2.threshold(image, settings.MASK_BINARY_THRESHOLD, settings.MASK_BLOODVESSEL, cv2.THRESH_BINARY)
+
+                # Count the number of class occurrences in the ground truth image
+                for ix, cl in enumerate([settings.MASK_BACKGROUND, settings.MASK_BLOODVESSEL]):
+                    classcounts[ix] += len(np.where(image == cl)[0])
+
+            # Reshape from (height, width) to (height, width, 1)
+            image = image.reshape((img_shape[0], img_shape[1], img_shape[2]))
+            imgs[slice_ix] = image
+
+        # Write all slices for the current patient
+        hdf5_writer.add([imgs], None)
+        pbar.update(patient_ix)
+
+    if is_mask:
+        total = sum(classcounts)
+        for ix in range(settings.NUM_CLASSES):
+            classcounts[ix] = int(total / classcounts[ix])
+
+    pbar.finish()
+    hdf5_writer.close()
+
+    if is_mask:
+        return output_path, classcounts
+    else:
+        return output_path
+
+
+def convert_img_to_pred_3D(ground_truths, num_classes, verbose=False):
+    """Convert an array of grayscale images with shape (-1, height, width, slices, 1) to an array of the same length with
+    shape (-1, height, width, slices, num_classes). Does not generalise to more than two classes, and requires the ground
+    truth image to only contain 0 (first class) or 255 (second class)
+    Helpful: https://stackoverflow.com/questions/36960320/convert-a-2d-matrix-to-a-3d-one-hot-matrix-numpy
+    """
+    start_time = time.time()
+
+    # Convert 0 to 0 and 255 to 1, then perform one-hot encoding and squeeze the single-dimension
+    tmp_truths = ground_truths/255
+    new_masks = (np.arange(num_classes) == tmp_truths[..., None]).astype(np.uint8)
+    new_masks = np.squeeze(new_masks, axis=4)
+
+    if verbose:
+        print("Elapsed time: {}".format(time.time() - start_time))
+
+    return new_masks
+
+
+def convert_pred_to_img_3D(pred, verbose=False):
+    """Convert 3D UNet predictions to images, changing the shape from (-1, height, width, slices, num_classes) to
+    (-1, slices, height, width, 1). The assumption is that only two classes are used and that they are 0 (background)
+    and 255 (blood vessels). This function will not generalize to more classes and/or different class labels in its
+    current state.
+    """
+    start_time = time.time()
+
+    # print("pred shape: {}".format(pred.shape))
+    # ix = 120
+    # print(pred[0, ix:(ix+11), 100, 0, :])
+
+    # Determine the class label for each pixel for all images
+    pred_images = (np.argmax(pred, axis=-1)*255).astype(np.uint8)
+
+    # print("pred images shape 1: {}".format(pred_images.shape))
+    # print(pred_images[0, ix:(ix+11), 100, 0])
+
+    # Add a dimension for the color channel
+    pred_images = np.reshape(pred_images, tuple(pred_images.shape[0:4]) + (1,))
+    # print("pred images shape 2: {}".format(pred_images.shape))
+
+    # Permute the dimensions
+    pred_images = np.transpose(pred_images, axes=(0, 3, 1, 2, 4))
+
+    if verbose:
+        print("Elapsed time: {}".format(time.time() - start_time))
+
+    return pred_images
+
+
+# U-Net conversions
+def convert_to_hdf5(img_path, img_shape, img_exts, key, ext, settings, is_mask=False):
+    """Convert images present in `img_path` to HDF5 format. The HDF5 file is saved one sub folder up from where the
+    images are located. Masks are binary tresholded to be 0 for background pixels and 255 for blood vessels. All
+    images (slices) are expected to be in one single folder, regardless of the patient
     :param img_path: path to the folder containing images
     :param img_shape: shape of each image (width, height, # of channels)
     :param img_ext: image extension, e.g. ".jpg"
@@ -34,7 +147,8 @@ def convert_to_hdf5(img_path, img_shape, img_exts, key, ext, settings, is_mask=F
     imgs_list = sorted(list(list_images(basePath=img_path, validExts=img_exts)))
 
     # Prepare the HDF5 writer, which expects a label vector. Because this is a segmentation problem just pass None
-    hdf5_writer = HDF5Writer((len(imgs_list), img_shape[0], img_shape[1], img_shape[2]), output_path,
+    # hdf5_writer = HDF5Writer((len(imgs_list), img_shape[0], img_shape[1], img_shape[2]), output_path,
+    hdf5_writer = HDF5Writer(((len(imgs_list),) + img_shape), output_path,
                              feat_key=key,
                              label_key=None,
                              del_existing=True,
@@ -58,9 +172,7 @@ def convert_to_hdf5(img_path, img_shape, img_exts, key, ext, settings, is_mask=F
                 classcounts[ix] += len(np.where(image == cl)[0])
 
         # Reshape from (height, width) to (height, width, 1)
-        image = image.reshape((img_shape[0],
-                               img_shape[1],
-                               img_shape[2]))
+        image = image.reshape((img_shape[0], img_shape[1], img_shape[2]))
 
         hdf5_writer.add([image], None)
         pbar.update(i)
@@ -79,102 +191,8 @@ def convert_to_hdf5(img_path, img_shape, img_exts, key, ext, settings, is_mask=F
         return output_path
 
 
-def convert_to_hdf5_3D(img_path, img_shape, img_exts, key, ext, settings, is_mask=False):
-    """
-    Convert images present in `img_path` to HDF5 format. The HDF5 file is one sub folder up from where the
-    images are located. Masks are binary tresholded to be 0 for background pixels and 255 for blood vessels.
-    :param img_path: path to the folder containing images
-    :param img_shape: shape of each image (width, height, # of channels)
-    :param img_ext: image extension, e.g. ".jpg"
-    :param key: HDF5 data set key
-    :param settings: settings
-    :param is_mask: True when converting masks/ground truths, False when converting images
-    :return: full path to the generated HDF5 file, class_weights (masks/ground truths only)
-    """
-    # Path to the HDF5 file
-    output_path = os.path.join(os.path.dirname(img_path), os.path.basename(img_path)) + ext
-
-    # Create a list of paths to the individual patient folders
-    patient_folders = sorted([os.path.join(img_path, e.name) for e in os.scandir(img_path) if e.is_dir()])
-
-    # Prepare the HDF5 writer, which expects a label vector. Because this is a segmentation problem just pass None
-    hdf5_writer = HDF5Writer((len(patient_folders), settings.NUM_SLICES_TOTAL, img_shape[0], img_shape[1], img_shape[2]), output_path,
-                             feat_key=key,
-                             label_key=None,
-                             del_existing=True,
-                             buf_size=len(patient_folders),
-                             dtype_feat="f" if not is_mask else "i8"
-                             )
-    classcounts = [0] * settings.NUM_CLASSES
-
-    # Loop through all images
-    widgets = ["Creating HDF5 database ", progressbar.Percentage(), " ", progressbar.Bar(), " ", progressbar.ETA()]
-    pbar = progressbar.ProgressBar(maxval=len(patient_folders), widgets=widgets).start()
-
-    for patient_ix, p_folder in enumerate(patient_folders):
-        # Loop through each patient subfolder
-        imgs_list = sorted(list(list_images(basePath=p_folder, validExts=img_exts)))
-        imgs = np.zeros((settings.NUM_SLICES_TOTAL, img_shape[0], img_shape[1], img_shape[2]), dtype=np.uint8)
-
-        for slice_ix, slice_img in enumerate(imgs_list):
-            image = cv2.imread(slice_img, cv2.IMREAD_GRAYSCALE)
-
-            # Apply binary thresholding to ground truth masks
-            if is_mask:
-                _, image = cv2.threshold(image, settings.MASK_BINARY_THRESHOLD, settings.MASK_BLOODVESSEL, cv2.THRESH_BINARY)
-
-                # Count the number of class occurrences in the ground truth image
-                for ix, cl in enumerate([settings.MASK_BACKGROUND, settings.MASK_BLOODVESSEL]):
-                    classcounts[ix] += len(np.where(image == cl)[0])
-
-            # Reshape from (height, width) to (height, width, 1)
-            image = image.reshape((img_shape[0],
-                                   img_shape[1],
-                                   img_shape[2]))
-
-            if is_mask:
-                total = sum(classcounts)
-                for ix in range(settings.NUM_CLASSES):
-                    classcounts[ix] = int(total / classcounts[ix])
-
-            imgs[slice_ix] = image
-
-        # Write all slices for the current patient
-        hdf5_writer.add([imgs], None)
-        pbar.update(patient_ix)
-
-    pbar.finish()
-    hdf5_writer.close()
-
-    if is_mask:
-        return output_path, classcounts
-    else:
-        return output_path
-
-# Converting images to predictions
-def convert_img_to_pred_5D(ground_truths, num_classes, verbose=False):
-    """
-    Convert an array of grayscale images with shape (-1, height, width, 1) to an array of the same length with
-    shape (-1, height, width, num_classes). Does not generalise to more than two classes, and requires the ground
-    truth image to only contain 0 (first class) or 255 (second class)
-    Helpful: https://stackoverflow.com/questions/36960320/convert-a-2d-matrix-to-a-3d-one-hot-matrix-numpy
-    """
-    start_time = time.time()
-
-    # Convert 0 to 0 and 255 to 1, then perform one-hot encoding and squeeze the single-dimension
-    tmp_truths = ground_truths/255
-    new_masks = (np.arange(num_classes) == tmp_truths[..., None]).astype(np.uint8)
-    new_masks = np.squeeze(new_masks, axis=4)
-
-    if verbose:
-        print("Elapsed time: {}".format(time.time() - start_time))
-
-    return new_masks
-
-
-def convert_img_to_pred_4D(ground_truths, settings, verbose=False):
-    """
-    Convert an array of grayscale images with shape (-1, height, width, 1) to an array of the same length with
+def convert_img_to_pred(ground_truths, settings, verbose=False):
+    """Convert an array of grayscale images with shape (-1, height, width, 1) to an array of the same length with
     shape (-1, height, width, num_classes).
     :param ground_truths: array of grayscale images, pixel values are integers 0 (background) or 255 (blood vessels)
     :param settings:
@@ -207,9 +225,33 @@ def convert_img_to_pred_4D(ground_truths, settings, verbose=False):
     return new_masks
 
 
-def convert_img_to_pred_3D(ground_truths, settings, verbose=False):
-    # from (-1, height, width, 1) to (-1, height * width, num_classes)
-    # last axis: 0 = background, 1 = blood vessel
+def convert_pred_to_img(pred, settings, threshold=0.5, verbose=False):
+    """Convert U-Net predictions from (-1, height, width, num_classes) to (-1, height, width, 1)"""
+    start_time = time.time()
+
+    pred_images = np.empty((pred.shape[0], pred.shape[1], pred.shape[2]), dtype=np.uint8)
+    # pred = np.reshape(pred, newshape=(pred.shape[0], pred.shape[1] * pred.shape[2]))
+
+    for i in range(pred.shape[0]):
+        for pix in range(pred.shape[1]):
+            for pix_w in range(pred.shape[2]):
+                if pred[i, pix, pix_w, settings.ONEHOT_BLOODVESSEL] > threshold:
+                    # print("from {} to {}".format(pred[i, pix, 1], 1))
+                    pred_images[i, pix, pix_w] = settings.MASK_BLOODVESSEL
+                else:
+                    # print("from {} to {}".format(pred[i, pix, 1], 0))
+                    pred_images[i, pix, pix_w] = settings.MASK_BACKGROUND
+
+    pred_images = np.reshape(pred_images, (pred.shape[0], settings.IMG_HEIGHT, settings.IMG_WIDTH, 1))
+
+    if verbose:
+        print("Elapsed time: {}".format(time.time() - start_time))
+
+    return pred_images
+
+
+def convert_img_to_pred_flatten(ground_truths, settings, verbose=False):
+    """Similar to convert_img_to_pred, but converts from (-1, height, width, 1) to (-1, height * width, num_classes)"""
     start_time = time.time()
 
     img_height = ground_truths.shape[1]
@@ -238,64 +280,9 @@ def convert_img_to_pred_3D(ground_truths, settings, verbose=False):
 
     return new_masks
 
-# Converting predictions to images
-def convert_pred_to_img_5D(pred, verbose=False):
-    """Convert 3D UNet predictions to images, changing the shape from (-1, height, width, slices, num_classes) to
-    (-1, slices, height, width, 1). The assumption is that only two classes are used and that they are 0 (background)
-    and 255 (blood vessels). This function will not generalize to more classes and/or different class labels
-    """
-    start_time = time.time()
 
-    # print("pred shape: {}".format(pred.shape))
-    # ix = 120
-    # print(pred[0, ix:(ix+11), 100, 0, :])
-
-    # Determine the class label for each pixel for all images
-    pred_images = (np.argmax(pred, axis=-1)*255).astype(np.uint8)
-
-    # print("pred images shape 1: {}".format(pred_images.shape))
-    # print(pred_images[0, ix:(ix+11), 100, 0])
-
-    # Add a dimension for the color channel
-    pred_images = np.reshape(pred_images, tuple(pred_images.shape[0:4]) + (1,))
-    # print("pred images shape 2: {}".format(pred_images.shape))
-
-    # Permute the dimensions
-    pred_images = np.transpose(pred_images, axes=(0, 3, 1, 2, 4))
-
-    if verbose:
-        print("Elapsed time: {}".format(time.time() - start_time))
-
-    return pred_images
-
-
-def convert_pred_to_img_4D(pred, settings, threshold=0.5, verbose=False):
-    # from (-1, height, width, num_classes) to (-1, height, width, 1)
-    start_time = time.time()
-
-    pred_images = np.empty((pred.shape[0], pred.shape[1], pred.shape[2]), dtype=np.uint8)
-    # pred = np.reshape(pred, newshape=(pred.shape[0], pred.shape[1] * pred.shape[2]))
-
-    for i in range(pred.shape[0]):
-        for pix in range(pred.shape[1]):
-            for pix_w in range(pred.shape[2]):
-                if pred[i, pix, pix_w, settings.ONEHOT_BLOODVESSEL] > threshold:        # TODO for multiple classes > 2 use argmax
-                    # print("from {} to {}".format(pred[i, pix, 1], 1))
-                    pred_images[i, pix, pix_w] = settings.MASK_BLOODVESSEL
-                else:
-                    # print("from {} to {}".format(pred[i, pix, 1], 0))
-                    pred_images[i, pix, pix_w] = settings.MASK_BACKGROUND
-
-    pred_images = np.reshape(pred_images, (pred.shape[0], settings.IMG_HEIGHT, settings.IMG_WIDTH, 1))
-
-    if verbose:
-        print("Elapsed time: {}".format(time.time() - start_time))
-
-    return pred_images
-
-
-def convert_pred_to_img_3D(pred, settings, threshold=0.5, verbose=False):
-    # from (-1, height * width, num_classes) to (-1, height, width, 1)
+def convert_pred_to_img_flatten(pred, settings, threshold=0.5, verbose=False):
+    """Convert U-Net predictions from (-1, height * width, num_classes) to (-1, height, width, 1)"""
     start_time = time.time()
 
     pred_images = np.empty((pred.shape[0], pred.shape[1]), dtype=np.uint8)
@@ -303,7 +290,7 @@ def convert_pred_to_img_3D(pred, settings, threshold=0.5, verbose=False):
 
     for i in range(pred.shape[0]):
         for pix in range(pred.shape[1]):
-            if pred[i, pix, settings.ONEHOT_BLOODVESSEL] > threshold:        # TODO for multiple classes > 2 use argmax
+            if pred[i, pix, settings.ONEHOT_BLOODVESSEL] > threshold:
                 # print("from {} to {}".format(pred[i, pix, 1], 1))
                 pred_images[i, pix] = settings.MASK_BLOODVESSEL
             else:
@@ -328,7 +315,7 @@ def read_preprocess_image(image_path, key, is_3D=False):
     imgs = standardise(imgs)
     print("Image dtype after preprocessing = {}\n".format(imgs.dtype))
 
-    # Permute array dimensions when using a 3D model
+    # Permute array dimensions for the 3D U-Net model so that the shape becomes: (-1, height, width, slices, channels)
     if is_3D:
         imgs = np.transpose(imgs, axes=(0, 2, 3, 1, 4))
 
@@ -340,19 +327,18 @@ def read_preprocess_groundtruth(ground_truth_path, key, is_3D=False):
     imgs = HDF5Reader().load_hdf5(ground_truth_path, key).astype("uint8")
     print("Loading ground truth HDF5: {} with dtype = {}\n".format(ground_truth_path, imgs.dtype))
 
-    # Permute array dimensions when using a 3D model
+    # Permute array dimensions for the 3D U-Net model so that the shape becomes: (-1, height, width, slices, channels)
     if is_3D:
         imgs = np.transpose(imgs, axes=(0, 2, 3, 1, 4))
 
     return imgs
 
 
-# Visualisationg
+# Visualisation
 def group_images(imgs, num_per_row, empty_color=255, show=False, save_path=None):
-    """
-    Combines an array of images into a single image using a grid with num_per_row columns, the number of rows is
+    """Combines an array of images into a single image using a grid with num_per_row columns, the number of rows is
     calculated using the number of images in the array and the number of requested columns. Grid cells without an
-    image are replaced with an empty image using
+    image are replaced with an empty image using a specified color.
     :param imgs: numpy array of images , shape: (-1, height, width, channels)
     :param num_per_row: number of images shown in each row
     :param empty_color: color to use for empty grid cells, e.g. 255 for white (grayscale images)
@@ -361,16 +347,9 @@ def group_images(imgs, num_per_row, empty_color=255, show=False, save_path=None)
     :return: resulting grid image
     """
     all_rows= []
-    print(imgs.shape)
     img_height = imgs.shape[1]
     img_width = imgs.shape[2]
     img_channels = imgs.shape[3]
-
-    print("====")
-    print("h={}".format(img_height))
-    print("w={}".format(img_width))
-    print("c={}".format(img_channels))
-    print("====")
 
     num_rows = (imgs.shape[0] // num_per_row) + (1 if imgs.shape[0] % num_per_row else 0)
     for i in range(num_rows):
@@ -390,10 +369,9 @@ def group_images(imgs, num_per_row, empty_color=255, show=False, save_path=None)
 
         if i == (num_rows-1):
             # For the last row use white images for any empty cells
-            row = np.concatenate((row,
-                                  np.full((img_height, remaining*img_width, img_channels),
-                                          empty_color,
-                                          dtype=imgs[0].dtype)),
+            row = np.concatenate((row, np.full((img_height, remaining*img_width, img_channels),
+                                               empty_color,
+                                               dtype=imgs[0].dtype)),
                                  axis=1)
 
         all_rows.append(row)
@@ -406,7 +384,7 @@ def group_images(imgs, num_per_row, empty_color=255, show=False, save_path=None)
     # Plot the image
     plt.figure(figsize=(20.48, 15.36))
     plt.axis('off')
-    plt.imshow(final_image[:,:,0], cmap="gray")
+    plt.imshow(final_image[:, :, 0], cmap="gray")
 
     # Save the plot to a file if desired
     if save_path is not None:
@@ -420,3 +398,14 @@ def group_images(imgs, num_per_row, empty_color=255, show=False, save_path=None)
     plt.close()
 
     return final_image
+
+
+# Parameter parsing
+def model_name_from_arguments():
+    """Return the full path of the model to be used for making predictions"""
+    ap = argparse.ArgumentParser()
+    ap.add_argument("-m", "--model", type=str, nargs='?',
+                    const=True, required=True, help="Set to the full path of the trained model to use")
+    args = vars(ap.parse_args())
+
+    return args["model"]

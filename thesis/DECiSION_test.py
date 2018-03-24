@@ -1,30 +1,19 @@
 import DECiSION_settings as settings
 from thesis_common import read_preprocess_image, read_preprocess_groundtruth,\
-    convert_img_to_pred_4D, convert_pred_to_img_4D,\
-    convert_img_to_pred_3D, convert_pred_to_img_3D, group_images
+    convert_img_to_pred, convert_pred_to_img,\
+    convert_img_to_pred_flatten, convert_pred_to_img_flatten, group_images, model_name_from_arguments
 
 from dltoolkit.nn.segment import UNet_NN
 
 from keras.models import load_model
 
-import os, cv2, argparse
-import numpy as np
-
-
-def model_name_from_arguments():
-    """Return the full path of the model to be used for making predictions"""
-    ap = argparse.ArgumentParser()
-    ap.add_argument("-m", "--model", type=str, nargs='?',
-                    const=True, required=True, help="Set to the full path of the trained model to use")
-    args = vars(ap.parse_args())
-
-    return args["model"]
+import os, cv2
 
 
 if __name__ == "__main__":
     # Load and preprocess the test and ground truth images (the latter will not be used during inference,
     # only for visualisation)
-    print("--- Pre-processing test NO TRAINING images")
+    print("--- Pre-processing test ***NO*** TRAINING images")
     test_imgs = read_preprocess_image(os.path.join(settings.TRAINING_PATH,
                                                    settings.FLDR_IMAGES + settings.HDF5_EXT),
                                       settings.HDF5_KEY)
@@ -34,7 +23,7 @@ if __name__ == "__main__":
 
 
     # Show an image plus its ground truth to check
-    IX = 69
+    # IX = 69
     # cv2.imshow("CHECK image", test_imgs[IX])
     # cv2.imshow("CHECK ground truth", test_ground_truths[IX])
     # print("       Max image intensity: {} - {} - {}".format(np.max(test_imgs[IX]), test_imgs.dtype, test_imgs.shape))
@@ -53,8 +42,8 @@ if __name__ == "__main__":
     # Create the UNet model and load its saved weights
     unet = UNet_NN(settings.IMG_HEIGHT, settings.IMG_WIDTH, settings.IMG_CHANNELS, settings.NUM_CLASSES)
     # model = unet.build_model()
-    # model = unet.build_model_3D_soft()
-    model = unet.build_model_4D_soft()
+    # model = unet.build_model_flatten()
+    model = unet.build_model_softmax()
     model.load_weights(model_name_from_arguments())
 
     # Load the entire model (incl. loss function etc.), does not require prior instantiation
@@ -69,8 +58,8 @@ if __name__ == "__main__":
     predictions = model.predict(test_imgs, batch_size=settings.TRN_BATCH_SIZE, verbose=2)
 
     # Convert predictions to images
-    predictions = convert_pred_to_img_4D(predictions, settings, settings.TRN_PRED_THRESHOLD)
-    # predictions = convert_pred_to_img_3D(predictions, settings, settings.TRN_PRED_THRESHOLD)
+    predictions = convert_pred_to_img(predictions, settings, settings.TRN_PRED_THRESHOLD)
+    # predictions = convert_pred_to_img_flatten(predictions, settings, settings.TRN_PRED_THRESHOLD)
     # print(predictions[0, 100:110, 100:110])
 
     print(" predictions.shape AFTER conv: {} ".format(predictions.shape))
