@@ -121,10 +121,10 @@ def train_alexnet(model):
     itoa_pre = ImgToArrayPreprocessor()
 
     # Init data generators
-    train_gen = HDF5Generator(settings.TRAIN_SET_HDF5_PATH, batchsize=settings.BATCH_SIZE, augment=aug,
+    train_gen = HDF5Generator(settings.TRAIN_SET_HDF5_PATH, batch_size=settings.BATCH_SIZE, augment=aug,
                               preprocessors=[patch_pre, mean_pre, itoa_pre], num_classes=settings.NUM_CLASSES)
 
-    val_gen = HDF5Generator(settings.VAL_SET_HDF5_PATH, batchsize=settings.BATCH_SIZE, augment=aug,
+    val_gen = HDF5Generator(settings.VAL_SET_HDF5_PATH, batch_size=settings.BATCH_SIZE, augment=aug,
                             preprocessors=[res_pre, mean_pre, itoa_pre], num_classes=settings.NUM_CLASSES)
 
     # Train the model
@@ -172,7 +172,7 @@ def evaluate_model():
     model = load_model(settings.MODEL_PATH)
 
     # Create the data generator
-    test_gen = HDF5Generator(settings.TEST_SET_HDF5_PATH, batchsize=settings.BATCH_SIZE,
+    test_gen = HDF5Generator(settings.TEST_SET_HDF5_PATH, batch_size=settings.BATCH_SIZE,
                              preprocessors=[res_pre, mean_pre, itoa_pre], num_classes=settings.NUM_CLASSES)
 
     # Make predictions

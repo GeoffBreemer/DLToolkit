@@ -96,26 +96,3 @@ class HDF5Writer:
             self.flush()
 
         self.db.close()
-
-
-class HDF5Reader:
-    """Simple HDF5 reader that assumes the entire contents can fit in memory. Closes the file right after retuning
-    the data.
-    """
-    def load_hdf5(self, file_path, key):
-        with h5py.File(file_path, "r") as f:
-            return np.array(f[key][()])
-
-
-# class HDF5Reader_org:
-#     _db = None
-#
-#     def load_hdf5(self, file_path, key):
-#         self._db = h5py.File(file_path, "r")
-#         data = self._db[key]
-#         return np.array(data)
-#
-#     def close(self):
-#         self._db.close()
-
-

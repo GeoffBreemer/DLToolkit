@@ -50,13 +50,18 @@ def convert_to_hdf5_3D(img_path, img_shape, img_exts, key, ext, settings, is_mas
         for slice_ix, slice_img in enumerate(imgs_list):
             image = cv2.imread(slice_img, cv2.IMREAD_GRAYSCALE)
 
-            # Apply binary thresholding to ground truth masks
+            # Apply any preprocessing
             if is_mask:
+                # Apply binary thresholding to ground truth masks
                 _, image = cv2.threshold(image, settings.MASK_BINARY_THRESHOLD, settings.MASK_BLOODVESSEL, cv2.THRESH_BINARY)
 
                 # Count the number of class occurrences in the ground truth image
                 for ix, cl in enumerate([settings.MASK_BACKGROUND, settings.MASK_BLOODVESSEL]):
                     classcounts[ix] += len(np.where(image == cl)[0])
+            else:
+                # Standardise the images
+                # image = standardise(image)
+                pass
 
             # Reshape from (height, width) to (height, width, 1)
             image = image.reshape((img_shape[0], img_shape[1], img_shape[2]))

@@ -45,15 +45,17 @@ random.seed = RANDOM_STATE
 import DECiSION_settings as settings
 
 from dltoolkit.utils.generic import model_architecture_to_file, model_summary_to_file
+from dltoolkit.utils.image import standardise
 from dltoolkit.nn.segment import UNet_NN
 from dltoolkit.utils.visual import plot_training_history
 
 from thesis_common import read_preprocess_image, read_preprocess_groundtruth,\
-    convert_img_to_pred, convert_pred_to_img, convert_to_hdf5
+    convert_img_to_pred, convert_pred_to_img, convert_to_hdf5, group_images
 from thesis_metric_loss import dice_coef, weighted_pixelwise_crossentropy_loss
 
 from keras.callbacks import ModelCheckpoint, EarlyStopping, CSVLogger
 from keras.optimizers import Adam
+from keras.preprocessing.image import ImageDataGenerator
 
 import numpy as np
 import os, cv2
@@ -88,6 +90,48 @@ def perform_hdf5_conversion(settings):
     return output_paths, class_weights
 
 
+# def create_data_generators(X, Y, batch_size):
+#     """Create Keras image data generators"""
+#     # Split the training set into a training and validation set
+#     # X_train, X_val, Y_train, Y_val = train_test_split(X, Y, test_size=TRAIN_VAL_SPLIT, random_state=RANDOM_STATE)
+#
+#     RANDOM_STATE = 122177
+#     # Create generator arguments
+#     data_gen_args = dict(
+#         rotation_range=2.,
+#                          width_shift_range=0.01,
+#                          height_shift_range=0.01,
+#                          shear_range=1.2,
+#                          zoom_range=0.01,
+#                          # horizontal_flip=False,
+#                          # vertical_flip=False,
+#                          fill_mode='nearest')
+#
+#     # Create and fit the training data generators
+#     train_image_datagen = ImageDataGenerator(**data_gen_args)
+#     train_mask_datagen = ImageDataGenerator(**data_gen_args)
+#
+#     # train_image_datagen.fit(X, augment=True, seed=RANDOM_STATE)
+#     # train_mask_datagen.fit(Y, augment=True, seed=RANDOM_STATE)
+#
+#     train_image_gen = train_image_datagen.flow(X, batch_size=batch_size, shuffle=True, seed=RANDOM_STATE)
+#     train_mask_gen = train_mask_datagen.flow(Y, batch_size=batch_size, shuffle=True, seed=RANDOM_STATE)
+#
+#     train_generator = zip(train_image_gen, train_mask_gen)
+#
+#     # Create the validation data generators (do not apply any augmentation)
+#     val_image_datagen = ImageDataGenerator()
+#     val_mask_datagen = ImageDataGenerator()
+#
+#     # val_image_gen = val_image_datagen.flow(X_val, batch_size=BATCH_SIZE, shuffle=True, seed=RANDOM_STATE)
+#     # val_mask_gen = val_mask_datagen.flow(Y_val, batch_size=BATCH_SIZE, shuffle=True, seed=RANDOM_STATE)
+#
+#     # val_generator = zip(val_image_gen, val_mask_gen)
+#
+#     return train_generator
+#     # return train_image_gen, train_mask_gen
+
+
 if __name__ == "__main__":
     if settings.IS_DEVELOPMENT:
         print("\n--- Converting images to HDF5")
@@ -104,19 +148,33 @@ if __name__ == "__main__":
     train_grndtr = read_preprocess_groundtruth(hdf5_paths[1], settings.HDF5_KEY)
 
     # Show one image plus its ground truth as a quick check
-    print("\n--- Show example image")
-    IX = 69
-    cv2.imshow("CHECK image", train_imgs[IX])
-    cv2.imshow("CHECK ground truth", train_grndtr[IX])
-    print("Max image intensity: {} - {} - {}".format(np.max(train_imgs[IX]), train_imgs.dtype, train_imgs.shape))
-    print("Max grtrh intensity: {} - {} - {}".format(np.max(train_grndtr[IX]), train_grndtr.dtype, train_grndtr.shape))
-    cv2.waitKey(0)
+    # print("\n--- Show example image")
+    # IX = 69
+    # cv2.imshow("CHECK image", train_imgs[IX])
+    # cv2.imshow("CHECK ground truth", train_grndtr[IX])
+    # print("Max image intensity: {} - {} - {}".format(np.max(train_imgs[IX]), train_imgs.dtype, train_imgs.shape))
+    # print("Max grtrh intensity: {} - {} - {}".format(np.max(train_grndtr[IX]), train_grndtr.dtype, train_grndtr.shape))
+    # cv2.waitKey(0)
 
     # Only train using a small number of images to test the pipeline
     print("\n--- Limiting training set size for pipeline testing")
     PRED_IX = range(69, 79)
+    # PRED_IX = range(0, 95)
     train_imgs = train_imgs[[PRED_IX]]
     train_grndtr = train_grndtr[[PRED_IX]]
+
+    #############################
+    # Create data generators
+    # train_gen, train_mask_gen = create_data_generators(train_imgs, train_grndtr, 16)
+    # batch = next(train_gen)
+    # print(batch.shape)
+    # group_images(batch, 4, 0.0, True, None)
+    # batch = next(train_gen)
+    # group_images(batch, 4, 0.0, True, None)
+    # batch = next(train_gen)
+    # group_images(batch, 4, 0.0, True, None)
+    # exit()
+    #############################
 
     # Print class distribution
     class_weights = [settings.CLASS_WEIGHT_BACKGROUND, settings.CLASS_WEIGHT_BLOODVESSEL]
@@ -170,6 +228,9 @@ if __name__ == "__main__":
 
     # Compile and fit
     model.compile(optimizer=opt, loss=loss, metrics=metrics)
+
+    # train_gen, train_mask_gen = create_data_generators(train_imgs, train_grndtr, settings.TRN_BATCH_SIZE)
+
     hist = model.fit(train_imgs, train_grndtr_ext_conv,
                      epochs=settings.TRN_NUM_EPOCH,
                      batch_size=settings.TRN_BATCH_SIZE,
@@ -177,6 +238,14 @@ if __name__ == "__main__":
                      shuffle=True,
                      validation_split=settings.TRN_TRAIN_VAL_SPLIT,
                      callbacks=callbacks)
+
+    # hist = model.fit_generator(train_imgs, train_grndtr_ext_conv,
+    #                  epochs=settings.TRN_NUM_EPOCH,
+    #                  batch_size=settings.TRN_BATCH_SIZE,
+    #                  verbose=1,
+    #                  shuffle=True,
+    #                  validation_split=settings.TRN_TRAIN_VAL_SPLIT,
+    #                  callbacks=callbacks)
 
     # Plot the training results
     plot_training_history(hist,
