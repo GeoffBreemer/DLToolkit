@@ -8,7 +8,7 @@ set_random_seed(RANDOM_STATE)
 import random
 random.seed = RANDOM_STATE
 
-import lala as settings
+import VOLVuLuS_settings as settings
 
 from dltoolkit.utils.generic import model_architecture_to_file, model_summary_to_file
 from dltoolkit.nn.segment import UNet_3D_NN
