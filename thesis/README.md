@@ -29,8 +29,8 @@ Note that all code is currently setup to test the training and test pipelines by
 ## Segmentation Models
 The research project pursues two semantic segmentation models:
 
-1. A U-Net named DECiSION [^fn1]
-2. A 3D U-Net named VOLVuLuS [^fn2]
+1. A U-Net named DECiSION [Ronneberger:2015aa]
+2. A 3D U-Net named VOLVuLuS [Cicek:2016aa]
 
 Code to train and test each model comes in three `.py` files:
 
@@ -40,12 +40,6 @@ Code to train and test each model comes in three `.py` files:
 
 In addition, `thesis_common.py` contains common code shared between the two models and `thesis_metric_loss.py` contains loss metrics used during training.
 
-[^fn1]: So Chris Krycho, "Not Exactly a Millennium," chriskrycho.com, July 22,
+[Ronneberger:2015aa]: Olaf Ronneberger, Philipp Fischer, and Thomas Brox. U-net: Convolutional networks for biomedical image segmentation. In International Conference on Medical Image Computing and Computer-Assisted Intervention, pages 234–241. Springer, 2015.
 
-2015, http://www.chriskrycho.com/2015/not-exactly-a-millennium.html
-(accessed July 25, 2015), ¶6.
-
-[^fn2]: So Chris Krycho, "Not Exactly a Millennium," chriskrycho.com, July 22,
-
-2015, http://www.chriskrycho.com/2015/not-exactly-a-millennium.html
-(accessed July 25, 2015), ¶6.
+[Cicek:2016aa]: Özgün Çiçek, Ahmed Abdulkadir, Soeren S Lienkamp, Thomas Brox, and Olaf Ronneberger. 3d u-net: learning dense volumetric segmentation from sparse annotation. In International Conference on Medical Image Computing and Computer- Assisted Intervention, pages 424–432. Springer, 2016.
