@@ -29,8 +29,8 @@ Note that all code is currently setup to test the training and test pipelines by
 ## Segmentation Models
 The research project pursues two semantic segmentation models:
 
-1. A **U-Net** named DECiSION ([Ronneberger 2015])(#references)
-2. A **3D U-Net** named VOLVuLuS ([Cicek 2016])(#references)
+1. A **U-Net** named DECiSION ([Ronneberger 2015](#references))
+2. A **3D U-Net** named VOLVuLuS ([Cicek 2016](#references))
 
 Code to train and test each model comes in three `.py` files:
 
