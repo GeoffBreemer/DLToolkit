@@ -60,8 +60,7 @@ def convert_to_hdf5_3D(img_path, img_shape, img_exts, key, ext, settings, is_mas
                     classcounts[ix] += len(np.where(image == cl)[0])
             else:
                 # Standardise the images
-                # image = standardise(image)
-                pass
+                image = standardise(image)
 
             # Reshape from (height, width) to (height, width, 1)
             image = image.reshape((img_shape[0], img_shape[1], img_shape[2]))
@@ -169,12 +168,16 @@ def convert_to_hdf5(img_path, img_shape, img_exts, key, ext, settings, is_mask=F
     for i, img in enumerate(imgs_list):
         image = cv2.imread(img, cv2.IMREAD_GRAYSCALE)
 
-        # Apply binary thresholding to ground truth masks
+        # Apply any preprocessing
         if is_mask:
+            # Apply binary thresholding to ground truth masks
             _, image = cv2.threshold(image, settings.MASK_BINARY_THRESHOLD, settings.MASK_BLOODVESSEL, cv2.THRESH_BINARY)
 
             for ix, cl in enumerate([settings.MASK_BACKGROUND, settings.MASK_BLOODVESSEL]):
                 classcounts[ix] += len(np.where(image == cl)[0])
+        else:
+            # Standardise the images
+            image = standardise(image)
 
         # Reshape from (height, width) to (height, width, 1)
         image = image.reshape((img_shape[0], img_shape[1], img_shape[2]))
@@ -317,7 +320,7 @@ def read_preprocess_image(image_path, key, is_3D=False):
     print("Loading image HDF5: {} with dtype = {}\n".format(image_path, imgs.dtype))
 
     # Standardise
-    imgs = standardise(imgs)
+    # imgs = standardise(imgs)
     print("Image dtype after preprocessing = {}\n".format(imgs.dtype))
 
     # Permute array dimensions for the 3D U-Net model so that the shape becomes: (-1, height, width, slices, channels)
