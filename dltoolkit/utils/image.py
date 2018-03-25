@@ -10,19 +10,23 @@ def rgb_to_gray(rgb):
     """
     bn_imgs = rgb[:,:,:,0]*0.299 + rgb[:,:,:,1]*0.587 + rgb[:,:,:,2]*0.114
     bn_imgs = np.reshape(bn_imgs,(rgb.shape[0], rgb.shape[1], rgb.shape[2], 1))
-    # bn_imgs = np.reshape(bn_imgs,(rgb.shape[0], rgb.shape[1], rgb.shape[2]))
 
-    # return bn_imgs
     return bn_imgs.astype("uint8")
 
 
-# def rgb2gray(rgb):
-#     return np.dot(rgb[...,:3], [0.299, 0.587, 0.114])
+def standardise_single(image):
+    """Standardise a single images, values are float32 between 0.0 and 1.0"""
+    imgs_std = np.std(image)
+    imgs_mean = np.mean(image)
+    imgs_standardised = (image - imgs_mean) / imgs_std
+
+    imgs_standardised = ((imgs_standardised - np.min(imgs_standardised)) / (np.max(imgs_standardised)-np.min(imgs_standardised)))
+
+    return imgs_standardised.astype("float32")
+
 
 def standardise(imgs):
-    """Standardise an array of RGB images, values are float32 between 0.0 and 1.0"""
-    # imgs_standardised = np.empty(imgs.shape)
-
+    """Standardise an array of images, values are float32 between 0.0 and 1.0"""
     imgs_std = np.std(imgs)
     imgs_mean = np.mean(imgs)
     imgs_standardised = (imgs-imgs_mean)/imgs_std

@@ -34,4 +34,4 @@ TRN_PRED_THRESHOLD = 0.5        # Pixel intensities that exceed the threshold ar
 
 # Miscellaneous
 VERBOSE = True
-IS_DEVELOPMENT = False
+IS_DEVELOPMENT = True

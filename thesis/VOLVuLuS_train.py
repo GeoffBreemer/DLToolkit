@@ -57,6 +57,7 @@ def perform_hdf5_conversion_3D(settings):
     output_paths.append(path)
 
     # Do the same for the test images
+    print("test images")
     output_paths.append(convert_to_hdf5_3D(os.path.join(settings.TEST_PATH, settings.FLDR_IMAGES),
                                         (settings.IMG_HEIGHT, settings.IMG_WIDTH, settings.IMG_CHANNELS),
                                         img_exts=".jpg", key=settings.HDF5_KEY, ext=settings.HDF5_EXT,
@@ -84,6 +85,7 @@ if __name__ == "__main__":
     print("\n--- Show example image")
     PATIENT_ID = 0
     IX_START = 69
+    print(train_imgs.shape)
     cv2.imshow("CHECK image", train_imgs[PATIENT_ID, :, :, IX_START, :])
     cv2.imshow("CHECK ground truth", train_grndtr[PATIENT_ID, :, :, IX_START, :])
     print("Max image intensity: {} - {} - {}".format(np.max(train_imgs[PATIENT_ID, :, :, IX_START, :]),
@@ -179,8 +181,6 @@ if __name__ == "__main__":
                      # validation_split=settings.TRN_TRAIN_VAL_SPLIT,
                      callbacks=callbacks)
 
-    print("Elapsed training time: {} min".format((time.time() - start_time))/60)
-
     # Save the last model
     # model.save_weights(model_path)
 
@@ -222,3 +222,5 @@ if __name__ == "__main__":
     print("  gr truth {} dtype {}".format(np.max(train_grndtr[0, 0]), train_grndtr[0, 0].dtype))
     print("prediction {} dtype {}".format(np.max(predictions[0, 0]), predictions[0, 0].dtype))
     cv2.waitKey(0)
+
+    print("Elapsed training time: {} min".format(int((time.time() - start_time))/60))
