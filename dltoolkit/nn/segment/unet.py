@@ -98,7 +98,7 @@ class UNet_NN(BaseNN):
         - add Dropout/BN layers at the end of the contracting path
         - add kernel initialisers: kernel_initializer=RandomNormal(stddev=sqrt(2 / (prev. kernel**2 * filters)))
         """
-        self._title = "UNet_brain_MRI_4D"
+        self._title = "UNet_brain_softmax"
 
         # Set the input shape
         if K.image_data_format() == "channels_first":
@@ -159,7 +159,7 @@ class UNet_NN(BaseNN):
 
     def build_model_sigmoid(self):
         """Same as build_model_flatten but the output layer applies a sigmoid"""
-        self._title = "UNet_brain_MRI_sigmoid"
+        self._title = "UNet_brain_sigmoid"
 
         # Set the input shape
         if K.image_data_format() == "channels_first":
@@ -221,7 +221,7 @@ class UNet_NN(BaseNN):
 
     def build_model_flatten(self):
         """Same as build_model_flatten but the output layer has shape (-1, height * width, num_classes)"""
-        self._title = "UNet_brain_MRI_3D"
+        self._title = "UNet_brain_flatten"
 
         # Set the input shape
         if K.image_data_format() == "channels_first":

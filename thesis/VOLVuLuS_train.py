@@ -1,4 +1,4 @@
-RANDOM_STATE = 42
+RANDOM_STATE = 421
 from numpy.random import seed
 seed(RANDOM_STATE)
 
@@ -94,6 +94,12 @@ if __name__ == "__main__":
     print("Max grtrh intensity: {} - {} - {}".format(np.max(train_grndtr[PATIENT_ID, :, :, IX_START, :]),
                                                             train_grndtr.dtype,
                                                             train_grndtr.shape))
+
+
+    lala = train_imgs[PATIENT_ID, :, :, IX_START, :]
+    print(lala.shape)
+    print(lala[120:120+10, 100])
+
     cv2.waitKey(0)
 
     # Only train using a small number of images to test the pipeline
@@ -120,15 +126,15 @@ if __name__ == "__main__":
     print("Input shape: {}, output shape: {}".format(model.input_shape, model.output_shape))
 
     # Prepare some path strings
-    model_path = os.path.join(settings.MODEL_PATH, unet.title + "_ep{}.model".format(settings.TRN_NUM_EPOCH))
-    summ_path = os.path.join(settings.OUTPUT_PATH, unet.title + "_model_summary.txt")
-    csv_path = os.path.join(settings.OUTPUT_PATH, unet.title + "_training_ep{}_bs{}.csv".format(settings.TRN_NUM_EPOCH,
+    model_path = os.path.join(settings.MODEL_PATH, "VOLVuLuS_" + unet.title + "_ep{}.model".format(settings.TRN_NUM_EPOCH))
+    summ_path = os.path.join(settings.OUTPUT_PATH, "VOLVuLuS_" + unet.title + "_model_summary.txt")
+    csv_path = os.path.join(settings.OUTPUT_PATH, "VOLVuLuS_" + unet.title + "_training_ep{}_bs{}.csv".format(settings.TRN_NUM_EPOCH,
                                                                                                 settings.TRN_BATCH_SIZE))
 
     # Print the architecture to the console, a text file and an image
     model.summary()
     model_summary_to_file(model, summ_path)
-    model_architecture_to_file(unet.model, settings.OUTPUT_PATH + unet.title + "_BRAIN_base_training")
+    model_architecture_to_file(unet.model, settings.OUTPUT_PATH + "VOLVuLuS_" + unet.title)
 
     # Convert the ground truths into the same shape as the predictions the 3D U-net produces
     print("\n--- Encoding training ground truths")

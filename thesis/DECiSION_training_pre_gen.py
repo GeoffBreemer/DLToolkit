@@ -148,13 +148,13 @@ if __name__ == "__main__":
     train_grndtr = read_preprocess_groundtruth(hdf5_paths[1], settings.HDF5_KEY)
 
     # Show one image plus its ground truth as a quick check
-    # print("\n--- Show example image")
-    # IX = 69
-    # cv2.imshow("CHECK image", train_imgs[IX])
-    # cv2.imshow("CHECK ground truth", train_grndtr[IX])
-    # print("Max image intensity: {} - {} - {}".format(np.max(train_imgs[IX]), train_imgs.dtype, train_imgs.shape))
-    # print("Max grtrh intensity: {} - {} - {}".format(np.max(train_grndtr[IX]), train_grndtr.dtype, train_grndtr.shape))
-    # cv2.waitKey(0)
+    print("\n--- Show example image")
+    IX = 69
+    cv2.imshow("CHECK image", train_imgs[IX])
+    cv2.imshow("CHECK ground truth", train_grndtr[IX])
+    print("Max image intensity: {} - {} - {}".format(np.max(train_imgs[IX]), train_imgs.dtype, train_imgs.shape))
+    print("Max grtrh intensity: {} - {} - {}".format(np.max(train_grndtr[IX]), train_grndtr.dtype, train_grndtr.shape))
+    cv2.waitKey(0)
 
     # Only train using a small number of images to test the pipeline
     print("\n--- Limiting training set size for pipeline testing")

@@ -14,6 +14,15 @@ def rgb_to_gray(rgb):
     return bn_imgs.astype("uint8")
 
 
+def mean_subtraction(img):
+    # print(img.shape, img.dtype)
+    # lala = np.mean(img.astype("float32"), axis=0)
+    # img = img.astype("float32")
+    # img-= np.mean(img)
+    lala = img - np.mean(img)
+    return lala/255.
+
+
 def standardise_single(image):
     """Standardise a single images, values are float32 between 0.0 and 1.0"""
     imgs_std = np.std(image)

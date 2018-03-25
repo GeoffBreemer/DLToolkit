@@ -21,7 +21,7 @@ class UNet_3D_NN(BaseNN):
         Build the 3D U-Net architecture as defined by Cicek et al:
         https://arxiv.org/abs/1606.06650
         """
-        self._title = "UNet3D_paper"
+        self._title = "UNet3D_brain_no_BN"
 
         # Set the input shape
         if K.image_data_format() == "channels_first":
@@ -30,7 +30,6 @@ class UNet_3D_NN(BaseNN):
             input_shape = (self._img_height, self._img_width, self._num_slices, self._img_channels)
 
         inputs = Input(input_shape)
-        print("\n", inputs)
 
         # Contracting path, from the paper:
         conv_contr1 = Conv3D(filters=32, kernel_size=(3, 3, 3), activation='relu', padding='same', name="contr1_1")(inputs)

@@ -1,6 +1,6 @@
 """Image handling and conversion methods"""
 from dltoolkit.io import HDF5Reader, HDF5Writer
-from dltoolkit.utils.image import standardise_single, standardise
+from dltoolkit.utils.image import standardise_single, standardise, mean_subtraction
 from dltoolkit.utils.generic import list_images
 
 import numpy as np
@@ -44,8 +44,8 @@ def convert_to_hdf5_3D(img_path, img_shape, img_exts, key, ext, settings, is_mas
     # Loop through each patient subfolder
     for patient_ix, p_folder in enumerate(patient_folders):
         imgs_list = sorted(list(list_images(basePath=p_folder, validExts=img_exts)))
-        imgs = np.zeros((settings.NUM_SLICES_TOTAL, img_shape[0], img_shape[1], img_shape[2]), dtype=np.float32)
-        # imgs = np.zeros((settings.NUM_SLICES_TOTAL, img_shape[0], img_shape[1], img_shape[2]), dtype=np.uint8)
+        # imgs = np.zeros((settings.NUM_SLICES_TOTAL, img_shape[0], img_shape[1], img_shape[2]), dtype=np.float32)
+        imgs = np.zeros((settings.NUM_SLICES_TOTAL, img_shape[0], img_shape[1], img_shape[2]), dtype=np.uint8)
 
         # Read each slice in the current patient's folder
         for slice_ix, slice_img in enumerate(imgs_list):
@@ -60,13 +60,22 @@ def convert_to_hdf5_3D(img_path, img_shape, img_exts, key, ext, settings, is_mas
                 for ix, cl in enumerate([settings.MASK_BACKGROUND, settings.MASK_BLOODVESSEL]):
                     classcounts[ix] += len(np.where(image == cl)[0])
             # else:
-                # Standardise the images
+            # Standardise the images
+            #     image = mean_subtraction(image)
+            #     image = image/255.
                 # image = standardise_single(image)
                 # pass
 
             # Reshape from (height, width) to (height, width, 1)
             image = image.reshape((img_shape[0], img_shape[1], img_shape[2]))
             imgs[slice_ix] = image
+
+        ########################################
+        # if not is_mask:
+        #     print("prior group std during CONV:{} - {}".format(imgs.shape, imgs.dtype))
+        #     imgs = standardise(imgs)
+        #     print("after group std during CONV:{} - {}".format(imgs.shape, imgs.dtype))
+        ########################################
 
         # Write all slices for the current patient
         hdf5_writer.add([imgs], None)
@@ -137,75 +146,6 @@ def convert_pred_to_img_3D(pred, verbose=False):
 
 
 # U-Net conversions
-def convert_to_hdf5(img_path, img_shape, img_exts, key, ext, settings, is_mask=False):
-    """Convert images present in `img_path` to HDF5 format. The HDF5 file is saved one sub folder up from where the
-    images are located. Masks are binary tresholded to be 0 for background pixels and 255 for blood vessels. All
-    images (slices) are expected to be in one single folder, regardless of the patient
-    :param img_path: path to the folder containing images
-    :param img_shape: shape of each image (width, height, # of channels)
-    :param img_ext: image extension, e.g. ".jpg"
-    :param key: HDF5 data set key
-    :param settings: settings
-    :param is_mask: True when converting masks/ground truths, False when converting images
-    :return: full path to the generated HDF5 file, class_weights (masks/ground truths only)
-    """
-    output_path = os.path.join(os.path.dirname(img_path), os.path.basename(img_path)) + ext
-    imgs_list = sorted(list(list_images(basePath=img_path, validExts=img_exts)))
-
-    # Prepare the HDF5 writer, which expects a label vector. Because this is a segmentation problem just pass None
-    # hdf5_writer = HDF5Writer((len(imgs_list), img_shape[0], img_shape[1], img_shape[2]), output_path,
-    hdf5_writer = HDF5Writer(((len(imgs_list),) + img_shape), output_path,
-                             feat_key=key,
-                             label_key=None,
-                             del_existing=True,
-                             buf_size=len(imgs_list),
-                             dtype_feat="f" if not is_mask else "i8"
-                             )
-
-    classcounts = [0] * settings.NUM_CLASSES
-
-    # Loop through all images
-    widgets = ["Creating HDF5 database ", progressbar.Percentage(), " ", progressbar.Bar(), " ", progressbar.ETA()]
-    pbar = progressbar.ProgressBar(maxval=len(imgs_list), widgets=widgets).start()
-    for i, img in enumerate(imgs_list):
-        image = cv2.imread(img, cv2.IMREAD_GRAYSCALE)
-
-        # Apply binary thresholding to ground truth masks
-        if is_mask:
-            _, image = cv2.threshold(image, settings.MASK_BINARY_THRESHOLD, settings.MASK_BLOODVESSEL, cv2.THRESH_BINARY)
-
-            for ix, cl in enumerate([settings.MASK_BACKGROUND, settings.MASK_BLOODVESSEL]):
-                classcounts[ix] += len(np.where(image == cl)[0])
-        else:
-            # Apply preprocessing to images (not to ground truth masks)
-            # print("before, min {} max {}".format(np.min(image), np.max(image)))
-            image = standardise_single(image)
-            # print(" after, min {} max {}".format(np.min(image), np.max(image)))
-            pass
-
-        # Reshape from (height, width) to (height, width, 1)
-        image = image.reshape((img_shape[0], img_shape[1], img_shape[2]))
-
-        if not is_mask:
-            image = standardise_single(image)
-
-        hdf5_writer.add([image], None)
-        pbar.update(i)
-
-    if is_mask:
-        total = sum(classcounts)
-        for i in range(settings.NUM_CLASSES):
-            classcounts[i] = int(total / classcounts[i])
-
-    pbar.finish()
-    hdf5_writer.close()
-
-    if is_mask:
-        return output_path, classcounts
-    else:
-        return output_path
-
-
 def convert_img_to_pred(ground_truths, settings, verbose=False):
     """Convert an array of grayscale images with shape (-1, height, width, 1) to an array of the same length with
     shape (-1, height, width, num_classes).
@@ -326,12 +266,14 @@ def read_preprocess_image(image_path, key, is_3D=False):
     imgs = HDF5Reader().load_hdf5(image_path, key)
     print("Loading image HDF5: {} with dtype = {}\n".format(image_path, imgs.dtype))
 
-    # Standardise
-    imgs = standardise(imgs)
-    print("Image dtype after preprocessing = {}\n".format(imgs.dtype))
-
     # Permute array dimensions for the 3D U-Net model so that the shape becomes: (-1, height, width, slices, channels)
     if is_3D:
+        # Standardise
+        # print("prior group std during READ:{} - {}".format(imgs.shape, imgs.dtype))
+        imgs = standardise(imgs)
+        # imgs = mean_subtraction(imgs)
+        # print("after group std during READ:{} - {}".format(imgs.shape, imgs.dtype))
+
         imgs = np.transpose(imgs, axes=(0, 2, 3, 1, 4))
 
     return imgs

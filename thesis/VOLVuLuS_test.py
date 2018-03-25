@@ -70,17 +70,16 @@ if __name__ == "__main__":
                  num_per_row=4,
                  empty_color=1.0,
                  show=False,
-                 save_path="../output/"+unet.title+"_grp_images")
+                 save_path="../output/VOLVuLuS_"+unet.title+"_grp_images")
 
     tmp_img = predictions[0, 0]
     cv2.imshow("Prediction", tmp_img)
     print("prediction {} type {} shape {}".format(np.max(tmp_img), tmp_img.dtype, tmp_img.shape))
-    cv2.waitKey(0)
     group_images(imgs=predictions[0, 0:settings.NUM_SLICES],
                  num_per_row=4,
                  empty_color=1.0,
                  show=False,
-                 save_path="../output/"+unet.title+"_grp_predictions")
+                 save_path="../output/VOLVuLuS_"+unet.title+"_grp_predictions")
 
     if settings.IS_DEVELOPMENT:
         test_ground_truths = np.transpose(test_ground_truths, axes=(0, 3, 1, 2, 4))
@@ -91,6 +90,8 @@ if __name__ == "__main__":
                      num_per_row=4,
                      empty_color=255,
                      show=False,
-                     save_path="../output/"+unet.title+"_grp_originals")
+                     save_path="../output/VOLVuLuS_"+unet.title+"_grp_originals")
+
+    cv2.waitKey(0)
 
     print("\n--- Predicting complete")

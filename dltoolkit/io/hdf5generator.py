@@ -62,7 +62,7 @@ class HDF5Generator:
 
 
 class HDF5Generator_Segment:
-    def __init__(self, image_db_path, mask_db_path, data_gen_args, batch_size, augment=None, label_key="Y"):
+    def __init__(self, image_db_path, mask_db_path, batch_size, data_gen_args=None, augment=None, label_key="Y"):
         self._batch_size = batch_size
         self._augment = augment
 

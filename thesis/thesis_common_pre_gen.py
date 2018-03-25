@@ -1,6 +1,6 @@
 """Image handling and conversion methods"""
 from dltoolkit.io import HDF5Reader, HDF5Writer
-from dltoolkit.utils.image import standardise
+from dltoolkit.utils.image import standardise_single, standardise
 from dltoolkit.utils.generic import list_images
 
 import numpy as np
@@ -44,7 +44,8 @@ def convert_to_hdf5_3D(img_path, img_shape, img_exts, key, ext, settings, is_mas
     # Loop through each patient subfolder
     for patient_ix, p_folder in enumerate(patient_folders):
         imgs_list = sorted(list(list_images(basePath=p_folder, validExts=img_exts)))
-        imgs = np.zeros((settings.NUM_SLICES_TOTAL, img_shape[0], img_shape[1], img_shape[2]), dtype=np.uint8)
+        imgs = np.zeros((settings.NUM_SLICES_TOTAL, img_shape[0], img_shape[1], img_shape[2]), dtype=np.float32)
+        # imgs = np.zeros((settings.NUM_SLICES_TOTAL, img_shape[0], img_shape[1], img_shape[2]), dtype=np.uint8)
 
         # Read each slice in the current patient's folder
         for slice_ix, slice_img in enumerate(imgs_list):
@@ -58,9 +59,9 @@ def convert_to_hdf5_3D(img_path, img_shape, img_exts, key, ext, settings, is_mas
                 # Count the number of class occurrences in the ground truth image
                 for ix, cl in enumerate([settings.MASK_BACKGROUND, settings.MASK_BLOODVESSEL]):
                     classcounts[ix] += len(np.where(image == cl)[0])
-            else:
+            # else:
                 # Standardise the images
-                image = standardise(image)
+                # image = standardise_single(image)
                 # pass
 
             # Reshape from (height, width) to (height, width, 1)
@@ -177,11 +178,16 @@ def convert_to_hdf5(img_path, img_shape, img_exts, key, ext, settings, is_mask=F
                 classcounts[ix] += len(np.where(image == cl)[0])
         else:
             # Apply preprocessing to images (not to ground truth masks)
-            image = standardise(image)
-            # pass
+            # print("before, min {} max {}".format(np.min(image), np.max(image)))
+            image = standardise_single(image)
+            # print(" after, min {} max {}".format(np.min(image), np.max(image)))
+            pass
 
         # Reshape from (height, width) to (height, width, 1)
         image = image.reshape((img_shape[0], img_shape[1], img_shape[2]))
+
+        if not is_mask:
+            image = standardise_single(image)
 
         hdf5_writer.add([image], None)
         pbar.update(i)
@@ -321,7 +327,7 @@ def read_preprocess_image(image_path, key, is_3D=False):
     print("Loading image HDF5: {} with dtype = {}\n".format(image_path, imgs.dtype))
 
     # Standardise
-    # imgs = standardise(imgs)
+    imgs = standardise(imgs)
     print("Image dtype after preprocessing = {}\n".format(imgs.dtype))
 
     # Permute array dimensions for the 3D U-Net model so that the shape becomes: (-1, height, width, slices, channels)
