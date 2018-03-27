@@ -210,17 +210,17 @@ class UNet_NN(BaseNN):
                              kernel_initializer="he_normal")(conv_up1)
 
         # Final 1x1 conv layer
-        conv_final = Conv2D(1, (1, 1), activation='sigmoid', padding='same',
+        conv_final = Conv2D(1, (1, 1), activation='relu', padding='same',
                              kernel_initializer="he_normal")(conv_up1)
         # conv_final = Reshape((self._img_height * self._img_width, self._num_classes))(conv_final)
-        # conv_final = Activation('sigmoid')(conv_final)
+        conv_final = Activation('sigmoid')(conv_final)
 
         self._model = Model(inputs=[inputs], outputs=[conv_final])
 
         return self._model
 
     def build_model_flatten(self):
-        """Same as build_model_flatten but the output layer has shape (-1, height * width, num_classes)"""
+        """Same as build_model_sigmoid but the output layer has shape (-1, height * width, num_classes)"""
         self._title = "UNet_brain_flatten"
 
         # Set the input shape

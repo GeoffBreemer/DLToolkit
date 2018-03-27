@@ -8,6 +8,8 @@ from dltoolkit.nn.segment import UNet_NN
 import os, cv2
 import numpy as np
 
+import matplotlib.pyplot as plt
+# %matplotlib inline
 
 if __name__ == "__main__":
     # Load and preprocess the test and ground truth images (the latter will not be used during inference,
@@ -31,7 +33,7 @@ if __name__ == "__main__":
     cv2.waitKey(0)
 
     # Only predict for some images
-    PRED_IX = range(0, 9)
+    PRED_IX = range(0, 16)
     test_imgs = test_imgs[[PRED_IX]]
     if settings.IS_DEVELOPMENT:
         test_ground_truths = test_ground_truths[[PRED_IX]]
@@ -40,8 +42,12 @@ if __name__ == "__main__":
     print("\n--- Loading trained model: {}".format(model_name_from_arguments()))
 
     # Create the UNet model and load its saved weights
-    unet = UNet_NN(settings.IMG_HEIGHT, settings.IMG_WIDTH, settings.IMG_CHANNELS, settings.NUM_CLASSES)
+    unet = UNet_NN(img_height=settings.IMG_HEIGHT,
+                   img_width=settings.IMG_WIDTH,
+                   img_channels=settings.IMG_CHANNELS,
+                   num_classes=settings.NUM_CLASSES)
     model = unet.build_model_softmax()
+    # model = unet.build_model_sigmoid()
     model.load_weights(model_name_from_arguments())
     model.summary()
 
@@ -49,9 +55,12 @@ if __name__ == "__main__":
     print("\n--- Making predictions")
     predictions = model.predict(test_imgs, batch_size=settings.TRN_BATCH_SIZE, verbose=2)
 
+    # print(predictions[0, 100:110, 100])
+    # predictions = np.where(predictions > 0.9, 1., 0.)
+
     # Convert predictions to images
     predictions = convert_pred_to_img(predictions, settings, settings.TRN_PRED_THRESHOLD)
-    print(" predictions.shape AFTER conv: {} ".format(predictions.shape))
+    # print(" predictions.shape AFTER conv: {} ".format(predictions.shape))
 
     if settings.IS_DEVELOPMENT:
         tmp_img = test_ground_truths[0]
@@ -69,8 +78,8 @@ if __name__ == "__main__":
 
     print("\n--- Producing output images")
     if settings.IS_DEVELOPMENT:
-        group_images(test_ground_truths[0:9], 3, 255, False, "../output/DECISION_"+unet.title+"_grp_originals")
-    group_images(test_imgs[0:9], 3, 1.0, False, "../output/DECISION_" + unet.title+"_grp_images")
-    group_images(predictions[0:9], 3, 1.0, False, "../output/DECISION_" + unet.title+"_grp_predictions")
+        group_images(test_ground_truths[0:16], 4, 255, False, "../output/DECISION_"+unet.title+"_grp_originals")
+    group_images(test_imgs[0:16], 4, 1.0, False, "../output/DECISION_" + unet.title+"_grp_images")
+    group_images(predictions[0:16], 4, 1.0, False, "../output/DECISION_" + unet.title+"_grp_predictions")
 
     print("\n--- Predicting complete")

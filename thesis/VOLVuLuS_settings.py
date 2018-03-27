@@ -14,7 +14,7 @@ IMG_HEIGHT = 320            # original image height (prior to any pre-processing
 IMG_WIDTH = 320             # original image width (prior to any pre-processing)
 IMG_CHANNELS = 1            # number of channels for the images and ground truths (i.e. gray scale)
 NUM_CLASSES = 2             # number of classes to segment
-NUM_SLICES = 8              # number of slices fed to the 3D UNet during training
+NUM_SLICES = 24              # number of slices fed to the 3D UNet during training
 NUM_SLICES_TOTAL = 246      # total number of slices available in volume
 
 MASK_BINARY_THRESHOLD = 20  # Pixel intensities above this value are considered blood vessels
@@ -26,7 +26,7 @@ MASK_BLOODVESSEL = 255      # pixel intensity for vessel pixels (i.e. white)
 # Training hyper parameters
 TRN_BATCH_SIZE = 1
 TRN_LEARNING_RATE = 0.001
-TRN_NUM_EPOCH = 100
+TRN_NUM_EPOCH = 200
 TRN_TRAIN_VAL_SPLIT = 0.0       # Percentage of training data to use for the validation set
 TRN_DROPOUT_RATE = 0.0          # Dropout rate used for all DropOut layers
 TRN_MOMENTUM = 0.99

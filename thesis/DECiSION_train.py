@@ -32,6 +32,10 @@
 #
 # - cannot do pixel level softmax:
 #    https://stackoverflow.com/questions/42118821/cross-entropy-loss-for-semantic-segmentation-keras?noredirect=1&lq=1
+#
+#   Data generator:
+#   https://github.com/aurora95/Keras-FCN/blob/master/utils/SegDataGenerator.py
+#
 RANDOM_STATE = 42
 from numpy.random import seed
 seed(RANDOM_STATE)
@@ -62,6 +66,8 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 import os, cv2, time, progressbar
 
+import matplotlib.pyplot as plt
+# %matplotlib inline
 
 # Image loading and preprocessing
 def read_preprocess_image(image_path, key, is_3D=False):
@@ -136,9 +142,9 @@ def create_hdf5_db(imgs_list, dn_name, img_path, img_shape, key, ext, settings, 
             _, image = cv2.threshold(image, settings.MASK_BINARY_THRESHOLD, settings.MASK_BLOODVESSEL, cv2.THRESH_BINARY)
 
             # Convert to the format produced by the model
-            print(image.shape)
-            print(np.array([image]).shape)
-            image = convert_img_to_pred(np.array([image]), settings, settings.VERBOSE)
+            # print(image.shape)
+            # print(np.array([image]).shape)
+            # image = convert_img_to_pred(np.array([image]), settings, settings.VERBOSE)
 
             for ix, cl in enumerate([settings.MASK_BACKGROUND, settings.MASK_BLOODVESSEL]):
                 classcounts[ix] += len(np.where(image == cl)[0])
@@ -246,6 +252,16 @@ def perform_hdf5_conversion(settings):
     return output_paths
 
 
+
+
+# Options:
+#
+# - preprocess prior then HDF5GeneratorSegment -> fast, but less flexible, but fast to create new ones?
+# - preprocess inside HDF5GeneratorSegment -> slow?
+# - try make it work with sigmoid -> realistic?
+# - check aurora95 and ellisdg approach -> too complex?
+# - write custom generator i.e. behavioural cloning -> slow?
+
 # Read all into memory:
 if __name__ == "__main__":
     if settings.IS_DEVELOPMENT:
@@ -293,10 +309,6 @@ if __name__ == "__main__":
     class_weights = [settings.CLASS_WEIGHT_BACKGROUND, settings.CLASS_WEIGHT_BLOODVESSEL]
     print("Class distribution: {}".format(class_weights))
 
-    # Shuffle the data set
-    # idx = np.random.permutation(len(train_imgs))
-    # train_imgs, train_grndtr= train_imgs[idx], train_grndtr[idx]
-
     # Instantiate the U-Net model
     unet = UNet_NN(img_height=settings.IMG_HEIGHT,
                    img_width=settings.IMG_WIDTH,
@@ -322,7 +334,11 @@ if __name__ == "__main__":
     print("--- \nEncoding training ground truths")
     print("Ground truth shape before conversion: {} of type {}".format(train_grndtr.shape, train_grndtr.dtype))
     # train_grndtr_ext_conv = train_grndtr        # no conversion for sigmoid
+    # val_grndtr_ext_conv = val_grndtr        # no conversion for sigmoid
+
     # train_grndtr_ext_conv = convert_img_to_pred_flatten(train_grndtr, settings, settings.VERBOSE)  # softmax: 3D
+    # val_grndtr_ext_conv = convert_img_to_pred_flatten(val_grndtr, settings, settings.VERBOSE)  # softmax: 3D
+
     train_grndtr_ext_conv = convert_img_to_pred(train_grndtr, settings, settings.VERBOSE)  # softmax: 4D
     val_grndtr_ext_conv = convert_img_to_pred(val_grndtr, settings, settings.VERBOSE)  # softmax: 4D
     print(" Ground truth shape AFTER conversion: {} of type {}\n".format(train_grndtr_ext_conv.shape, train_grndtr_ext_conv.dtype))
@@ -331,11 +347,18 @@ if __name__ == "__main__":
     print("\n--- Start training")
     # Prepare callbacks
     callbacks = [ModelCheckpoint(model_path, monitor="val_loss", mode="min", save_best_only=True, verbose=1),
-                 EarlyStopping(monitor='val_loss', min_delta=0, patience=4, verbose=0, mode="auto"),
+                 EarlyStopping(monitor='val_loss',
+                               min_delta=0,
+                               patience=settings.TRN_EARLY_PATIENCE,
+                               verbose=0,
+                               mode="auto"),
                  CSVLogger(csv_path, append=False),
                  ]
 
     # Set the optimiser, loss function and metrics
+    # opt = Adam()
+    # metrics = [dice_coef]
+    # loss = "binary_crossentropy"
     opt = Adam()
     metrics = [dice_coef]
     loss = weighted_pixelwise_crossentropy_loss(class_weights)
@@ -351,6 +374,7 @@ if __name__ == "__main__":
                      batch_size=settings.TRN_BATCH_SIZE,
                      verbose=1,
                      shuffle=True,
+                     # class_weight={0: 0.11, 255: 0.89},
                      validation_data=(val_imgs, val_grndtr_ext_conv),
                      # validation_split=settings.TRN_TRAIN_VAL_SPLIT,
                      callbacks=callbacks)

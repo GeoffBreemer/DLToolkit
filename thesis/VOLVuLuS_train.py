@@ -104,7 +104,8 @@ if __name__ == "__main__":
 
     # Only train using a small number of images to test the pipeline
     print("\n--- Limiting training set size for pipeline testing")
-    PRED_IX = range(IX_START, IX_START + settings.NUM_SLICES)
+    # PRED_IX = range(IX_START, IX_START + settings.NUM_SLICES)
+    PRED_IX = range(45, 45+settings.NUM_SLICES)
     train_imgs = train_imgs[:, :, :, PRED_IX]
     train_grndtr = train_grndtr[:, :, :, PRED_IX]
 
@@ -199,7 +200,6 @@ if __name__ == "__main__":
     #                       metric="dice_coef")
 
     print("\n--- Training complete")
-
 
     # For pipeline testing only, predict on one training image
     print("\n--- Predicting")

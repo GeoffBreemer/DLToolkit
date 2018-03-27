@@ -62,7 +62,7 @@ class HDF5Generator:
 
 
 class HDF5Generator_Segment:
-    def __init__(self, image_db_path, mask_db_path, batch_size, data_gen_args=None, augment=None, label_key="Y"):
+    def __init__(self, image_db_path, mask_db_path, batch_size, num_classes, data_gen_args=None, augment=None, label_key="Y"):
         self._batch_size = batch_size
         self._augment = augment
 
@@ -70,6 +70,7 @@ class HDF5Generator_Segment:
         self._db_image = h5py.File(image_db_path, "r")
         self._db_mask = h5py.File(mask_db_path, "r")
         self._num_images = self._db_image[label_key].shape[0]
+        self._num_classes = num_classes
 
         self.data_gen_args = data_gen_args
 
@@ -77,7 +78,7 @@ class HDF5Generator_Segment:
         self.mask_datagen = ImageDataGenerator(**data_gen_args)
 
 
-    def generator(self, num_epochs=np.inf, feat_key="X"):
+    def generator(self, converter, num_epochs=np.inf, feat_key="X"):
         """Generate batches of data"""
         epochs = 0
         RANDOM_STATE = 122177
@@ -89,13 +90,15 @@ class HDF5Generator_Segment:
                 masks = self._db[feat_key][i:i + self._batch_size]
 
                 # Apply augmentation
-                train_image_gen = self.image_datagen.flow(imgs, batch_size=self._batch_size, shuffle=True, seed=RANDOM_STATE)
-                train_mask_gen = self.mask_datagen.flow(masks, batch_size=self._batch_size, shuffle=True, seed=RANDOM_STATE)
+                # train_image_gen = self.image_datagen.flow(imgs, batch_size=self._batch_size, shuffle=True, seed=RANDOM_STATE)
+                # train_mask_gen = self.mask_datagen.flow(masks, batch_size=self._batch_size, shuffle=True, seed=RANDOM_STATE)
 
-                the_generator = zip(train_image_gen, train_mask_gen)
-                (imgs, masks) = next(the_generator)
-                # imgs = next(train_image_gen.flow(imgs, batch_size=self._batch_size))
-                # masks = next(train_mask_gen.flow(masks, batch_size=self._batch_size))
+                # the_generator = zip(train_image_gen, train_mask_gen)
+                # (imgs, masks) = next(the_generator)
+
+                # Convert masks to UNet format
+                # TODO TODO TODO TODO
+                masks = converter(masks, self._num_classes )
 
                 # Return
                 yield (imgs, masks)
