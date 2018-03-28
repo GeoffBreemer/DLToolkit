@@ -69,12 +69,12 @@ Includes a separate second EBS Volume containing `DLToolkit` data and source fil
       - `nano ~/.jupyter/jupyter_notebook_config.py`
       - Paste at the end of the file:
       - `c = get_config()  
-  c.NotebookApp.certfile = u'/home/ubuntu/ssl/cert.pem'
-  c.NotebookApp.keyfile = u'/home/ubuntu/ssl/cert.key'
-  c.IPKernelApp.pylab = 'inline'
-  c.NotebookApp.ip = '*'  
-  c.NotebookApp.open_browser = False
-  c.NotebookApp.password = <ENTER PASSWORD HASH>`
+      c.NotebookApp.certfile = u'/home/ubuntu/ssl/cert.pem'
+      c.NotebookApp.keyfile = u'/home/ubuntu/ssl/cert.key'
+      c.IPKernelApp.pylab = 'inline'
+      c.NotebookApp.ip = '*'
+      c.NotebookApp.open_browser = False
+      c.NotebookApp.password = <ENTER PASSWORD HASH>`
 
 6. Check devices: `lsblk`
 
