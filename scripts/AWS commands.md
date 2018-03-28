@@ -104,6 +104,7 @@ Includes a separate second EBS Volume containing `DLToolkit` data and source fil
 
 19. Exit the instance
 
+
 ## 2. Copy all `DLToolkit` files (local machine to server, +/-8 minutes)
 Copy all relevant files and subfolders:
 
@@ -112,23 +113,25 @@ Copy all relevant files and subfolders:
 3. Copy all files in the root folder: `scp -i $my_pem * ubuntu@$my_dns:~/dl`
 
 
-## 3. Manually mount a previously mounted EBS volume (optional)
+## 3. Setup automatic mounting of an attached EBS volume on reboot (one-off)
+Steps required to ensure an attached EBS volume is mounted automatically after a reboot:
+
+1. Connect: `ssh -i $my_pem ubuntu@$my_dns`
+2. Create a backup of `fstab`: `sudo cp /etc/fstab /etc/fstab.orig`
+3. Edit `fstab`: `sudo nano /etc/fstab`
+4. Add a line to the end: `/dev/xvdf /home/ubuntu/dl ext4 defaults,nofail 0 2`
+5. Check before rebooting: `sudo mount -a`
+6. Exit the instance
+6. Reboot the instance: `aws ec2 reboot-instances --instance-ids my_ins`
+
+
+## 4. Manually mount a previously mounted EBS volume (optional)
 Steps required to manually mount an EBS volume mounted previously (e.g. after a reboot) and is attached to the instance:
 
 1. Connect: `ssh -i $my_pem ubuntu@$my_dns`
 2. Check devices: `lsblk`
 3. Check file system is present: `sudo file -s /dev/xvdf`
 4. Mount: `sudo mount /dev/xvdf ~/dl/`
-
-
-## 4. Setup automatic mounting of an attached EBS volume on reboot (one-off)
-Steps required to ensure an attached EBS volume is mounted automatically after a reboot:
-
-1. Create a backup of `fstab`: `sudo cp /etc/fstab /etc/fstab.orig`
-2. Edit `fstab`: `sudo nano /etc/fstab`
-3. Add a line to the end: `/dev/xvdf /home/ubuntu/dl ext4 defaults,nofail 0 2`
-4. Check before rebooting: `sudo mount -a`
-5. Reboot instance: `aws ec2 reboot-instances --instance-ids my_ins`
 
 
 # Interact with the Deep Learning instance
@@ -161,7 +164,7 @@ Steps required to ensure an attached EBS volume is mounted automatically after a
 ## 3. Unmount and detach the EBS volume
 First unmount then detach:
 
-1. Connect to the instance
+1. Connect to the instance: `ssh -i $my_pem ubuntu@$my_dns`
 2. Unmount: `sudo umount /dev/xvdf`
 3. Detach: `aws ec2 detach-volume --volume-id $my_vol`
 
