@@ -53,12 +53,12 @@ Includes a separate second EBS Volume containing `DLToolkit` data and source fil
 
   - Setup an SSL certificate (https://docs.aws.amazon.com/dlami/latest/devguide/setup-jupyter-config.html):
     - Configure SSL:
-      1. `mkdir ssl`
+      - `mkdir ssl`
       - `cd ssl`
       - `sudo openssl req -x509 -nodes -days 365 -newkey rsa:1024 -keyout "cert.key" -out "cert.pem" -batch`
 
     - Run iPython:
-      1. `ipython`
+      - `ipython`
       - `from IPython.lib import passwd`
       - `passwd()`
       - Set the password, e.g.: `<password>`
@@ -66,7 +66,7 @@ Includes a separate second EBS Volume containing `DLToolkit` data and source fil
       - `exit`
 
     - Edit the config file:
-      1. `nano ~/.jupyter/jupyter_notebook_config.py`
+      - `nano ~/.jupyter/jupyter_notebook_config.py`
       - Paste at the end of the file:
       - `c = get_config()  
   c.NotebookApp.certfile = u'/home/ubuntu/ssl/cert.pem'
@@ -135,7 +135,7 @@ Steps required to ensure an attached EBS volume is mounted automatically after a
 
 ## 1. Start the instance
 
-1. Obtain server information (only sets `my_ins`): `. gb_server_info.sh`
+- Obtain server information (only sets `my_ins`): `. gb_server_info.sh`
 - Start the EC2 instance: `aws ec2 start-instances --instance-ids my_ins`
 - Obtain server information (now also sets `my_dns`): `. gb_server_info.sh`
 
@@ -143,19 +143,19 @@ Steps required to ensure an attached EBS volume is mounted automatically after a
 
 ### On the **server**:
 
-1. Connect to the instance: `ssh -i $my_pem ubuntu@$my_dns`
+- Connect to the instance: `ssh -i $my_pem ubuntu@$my_dns`
 - Activate the conda environment: `source activate tensorflow_p36`
 - Start Jupyter Notebook: `jupyter notebook`
 
 ### On the **local machine** using SSL:
 
-1. Open tunnel: `ssh -i $my_pem -L 8157:127.0.0.1:8888 ubuntu@$my_dns`
+- Open tunnel: `ssh -i $my_pem -L 8157:127.0.0.1:8888 ubuntu@$my_dns`
 - Access Jupyter via the browser: `https://127.0.0.1:8157`
 - Enter the SSL password, e.g.: `<password>`
 
 ### On the **local machine** NOT using SSL:
 
-1. Open tunnel: `ssh -L localhost:8888:localhost:8888 -i $my_pem ubuntu@$my_dns`
+- Open tunnel: `ssh -L localhost:8888:localhost:8888 -i $my_pem ubuntu@$my_dns`
 - Access Jupyter: copy/paste the link, e.g.: `http://localhost:8888/?token=d2080d49d9c27b4c2f0c5190900e42aa387246e30ce73111`
 
 ## 3. Unmount and detach the EBS volume
