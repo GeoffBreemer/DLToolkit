@@ -1,33 +1,49 @@
 # Common commands
 
 ## Local machine
-1. Set environment variables to EC2 instance information: `. gb_server_info.sh`
+1. Set environment variables to EC2 instance information:
 
-2. Start the EC2 instance: `aws ec2 start-instances --instance-ids $my_ins`
+	`. gb_server_info.sh`
 
-3. Connect to the instance: `ssh -i $my_pem ubuntu@$my_dns`
+2. Start the EC2 instance:
 
-4. Go to `DLToolkit` folder: `cd /Users/geoff/Documents/Development/DLToolkit`
+	`aws ec2 start-instances --instance-ids $my_ins`
 
-5. Copy files in the root folder TO the server: `scp -i $my_pem * ubuntu@$my_dns:~/dl`
+3. Connect to the instance:
 
-6. Go the folder where files are to be downloaded to: `cd /Users/geoff/Documents/Development/DLToolkit/exchange`
+	`ssh -i $my_pem ubuntu@$my_dns`
 
-7. Download files FROM the server: `scp -i $my_pem ubuntu@$my_dns:~/dl/thesis/* .`
+4. Go to the `DLToolkit` folder:
 
-8. Stop the EC2 instance: `aws ec2 stop-instances --instance-ids $my_ins`
+	`cd /Users/geoff/Documents/Development/DLToolkit`
+
+5. Copy files TO the server:
+
+	`scp -i $my_pem * ubuntu@$my_dns:~/dl`
+
+6. Go to the folder where files will be be downloaded to:
+
+	`cd /Users/geoff/Documents/Development/DLToolkit/exchange`
+
+7. Download files FROM the server:
+
+	`scp -i $my_pem ubuntu@$my_dns:~/dl/thesis/* .`
+
+8. Stop the EC2 instance:
+
+	`aws ec2 stop-instances --instance-ids $my_ins`
 
 ## Instance
 
-1. Activate the conda environment: `source activate tensorflow_p36`
+1. Activate the conda environment:
 
-2. Start Jupyter Notebook: `jupyter notebook`
+	`source activate tensorflow_p36`
 
+2. Start Jupyter Notebook:
 
+	`jupyter notebook`
 
-# Pre-requisites
-
-## AWS setup (one-off)
+# AWS setup (one-off)
 1. Login to AWS using IAM via: `https://874168575858.signin.aws.amazon.com/console`
 
 2. Create a key pair called `deep-learning` and store it on the local machine in: `~/.ssh/deep-learning.pem`
@@ -37,14 +53,14 @@
 	- `SSH` access for `My IP` over port `22` to enable remote access
 	- `Custom TCP Rule` over port `8888` from `Anywhere` (this results in two custom rules being created) to enable access to Jupyter Notebook from a local machine
 
-## Local machine setup (one-off)
+# Local machine setup (one-off)
 1. Update the `~/.bash_profile` on the local machine by adding the folder containing scripts to the `$PATH` environment variable:
 
 	`export PATH="/Users/geoff/Documents/Development/DLToolkit/scripts/:$PATH"`
 
 2. Install AWS CLI:
 
-  - Install using PIP: `pip install awscli --upgrade --user`
+  - Install the lastest PIP: `pip install awscli --upgrade --user`
 
   - Run `aws configure` and set:
 
@@ -75,30 +91,29 @@ Includes a separate second EBS Volume containing all `DLToolkit` data and source
 
 2. Set environment variables to EC2 instance information: `. gb_server_info.sh`
 
-3. Create the EBS volume and attach it to the instance: `. gb_create_ebs.sh`
+3. NO LONGER NEEDED: Create the EBS volume and attach it to the instance: `. gb_create_ebs.sh`
 
 4. Connect to the instance: `ssh -i $my_pem ubuntu@$my_dns`
 
-5. Setup Jupyter Notebook:
+5. Setup an SSL certificate for Jupyter Notebook:
 
-  - Setup an SSL certificate (https://docs.aws.amazon.com/dlami/latest/devguide/setup-jupyter-config.html):
-    - Configure SSL:
-      - `mkdir ssl`
-      - `cd ssl`
-      - `sudo openssl req -x509 -nodes -days 365 -newkey rsa:1024 -keyout "cert.key" -out "cert.pem" -batch`
+  - Configure SSL:
+    - `mkdir ssl`
+    - `cd ssl`
+    - `sudo openssl req -x509 -nodes -days 365 -newkey rsa:1024 -keyout "cert.key" -out "cert.pem" -batch`
 
-    - Run iPython:
-      - `ipython`
-      - `from IPython.lib import passwd`
-      - `passwd()`
-      - Set the password, e.g.: `<password>`
-      - Record the password hash, e.g.: `sha1:<password hash>`
-      - `exit()`
+  - Run iPython:
+    - `ipython`
+    - `from IPython.lib import passwd`
+    - `passwd()`
+    - Set the password, e.g.: `<password>`
+    - Record the password hash, e.g.: `sha1:<password hash>`
+    - `exit()`
 
-    - Edit the config file:
-      - `nano ~/.jupyter/jupyter_notebook_config.py`
-      - Paste at the end of the file:
-      - `c = get_config()  
+  - Edit the Jupyter config file:
+    - `nano ~/.jupyter/jupyter_notebook_config.py`
+    - Paste at the end of the file:
+    - `c = get_config()  
       c.NotebookApp.certfile = u'/home/ubuntu/ssl/cert.pem'
       c.NotebookApp.keyfile = u'/home/ubuntu/ssl/cert.key'
       c.IPKernelApp.pylab = 'inline'
@@ -126,21 +141,21 @@ Includes a separate second EBS Volume containing all `DLToolkit` data and source
 
 15. Create `savedmodels` subfolder: `mkdir savedmodels`
 
-16. Install `h5py` and `sklearn`:
+16. Install missing Python packages:
 
-- `source activate tensorflow_p36`
-- `pip install --upgrade pip`
-- `pip install h5py`
-- `pip install sklearn`
-- `pip install progressbar2`
+  - `source activate tensorflow_p36`
+  - `pip install --upgrade pip`
+  - `pip install h5py`
+  - `pip install sklearn`
+  - `pip install progressbar2`
 
-17. Add the path to the dltoolkit source files to `PYTHONPATH` by editing the `nano ~/.bashrc` and adding: `export PYTHONPATH=/home/ubuntu/dl:$PYTHONPATH`
+17. Add the path to the `dltoolkit` source files to `PYTHONPATH` by editing the `nano ~/.bashrc` and adding: `export PYTHONPATH=/home/ubuntu/dl:$PYTHONPATH`
 
 18. Exit the instance
 
 19. Go to `DLToolkit` folder: `cd /Users/geoff/Documents/Development/DLToolkit`
 
-20. Test the volume by copying a file: `scp -i $my_pem README.md ubuntu@$my_dns:~/dl`
+20. Test everything by copying a file: `scp -i $my_pem README.md ubuntu@$my_dns:~/dl`
 
 
 ## 2. Copy `DLToolkit` files (local machine to server, +/-8 minutes)
@@ -150,19 +165,18 @@ Copy all relevant files and subfolders:
 
 2. On the local machine go to folder: `cd /Users/geoff/Documents/Development/DLToolkit`
 
-3. Copy all subfolder content (excl. `output` and `savedmodels`): `scp -i $my_pem -r data dltoolkit settings thesis ubuntu@$my_dns:~/dl`
+3. Initial transfer of all subfolder content (excl. `output` and `savedmodels`): `scp -i $my_pem -r data dltoolkit settings thesis ubuntu@$my_dns:~/dl`
 
 4. Copy all files in the root folder: `scp -i $my_pem * ubuntu@$my_dns:~/dl`
 
 5. Copy source files only: `scp -i $my_pem -r dltoolkit settings thesis ubuntu@$my_dns:~/dl`
 
-
 # Interact with the Deep Learning instance
 
 Typically three terminal windows will be open:
 
-1. One executing Jupyer Notebook
-2. One to open the tunnel
+1. One executing Jupyer Notebook on the instance
+2. One to open the tunnel between the local machine
 3. One to copy files back and forth
 
 Typical workflow:
@@ -180,27 +194,30 @@ Typical workflow:
 - Start the EC2 instance: `aws ec2 start-instances --instance-ids $my_ins`
 - Obtain server information (now also sets `my_dns`): `. gb_server_info.sh`
 
-Or use the AWS GUI.
+Or use the AWS GUI and then set the environment variables by executing: `. gb_server_info.sh`
 
 ## 2. Start Jupyter Notebook (on every reboot)
 
 ### On the **server**:
 
-- Set environment variables to EC2 instance information: `. gb_server_info.sh`
 - Connect to the instance: `ssh -i $my_pem ubuntu@$my_dns`
 - Activate the conda environment: `source activate tensorflow_p36`
 - Change to the DLToolkit folder: `cd ~/dl`
 - Start Jupyter Notebook: `jupyter notebook`
 
+Do not close the terminal window or Jupyter Notebook will stop.
+
 ### On the **local machine** using SSL:
 
 - Set environment variables to EC2 instance information: `. gb_server_info.sh`
 - Open tunnel: `ssh -i $my_pem -L 8157:127.0.0.1:8888 ubuntu@$my_dns`
-- Access Jupyter via the browser: `https://127.0.0.1:8157`
+- Access Jupyter via a browser: `https://127.0.0.1:8157`
 - Enter the SSL password, e.g.: `<password>`
-- Use kernel `conda_tensorflow_p36`
+- Always use kernel `conda_tensorflow_p36`, which includes Keras
 
-## 3. Download files from the server
+Do not close the terminal window or the browser connection with the server instance will be closed.
+
+## 3. Download files FROM the server
 Copy files from the server to a local exchange folder:
 
 1. Set environment variables to EC2 instance information: `. gb_server_info.sh`
