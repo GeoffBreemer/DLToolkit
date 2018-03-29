@@ -1,6 +1,33 @@
+# Common commands
+
+## Local machine
+1. Set environment variables to EC2 instance information: `. gb_server_info.sh`
+
+2. Start the EC2 instance: `aws ec2 start-instances --instance-ids $my_ins`
+
+3. Connect to the instance: `ssh -i $my_pem ubuntu@$my_dns`
+
+4. Go to `DLToolkit` folder: `cd /Users/geoff/Documents/Development/DLToolkit`
+
+5. Copy files in the root folder TO the server: `scp -i $my_pem * ubuntu@$my_dns:~/dl`
+
+6. Go the folder where files are to be downloaded to: `cd /Users/geoff/Documents/Development/DLToolkit/exchange`
+
+7. Download files FROM the server: `scp -i $my_pem ubuntu@$my_dns:~/dl/thesis/* .`
+
+8. Stop the EC2 instance: `aws ec2 stop-instances --instance-ids $my_ins`
+
+## Instance
+
+1. Activate the conda environment: `source activate tensorflow_p36`
+
+2. Start Jupyter Notebook: `jupyter notebook`
+
+
+
 # Pre-requisites
 
-## AWS setup
+## AWS setup (one-off)
 1. Login to AWS using IAM via: `https://874168575858.signin.aws.amazon.com/console`
 
 2. Create a key pair called `deep-learning` and store it on the local machine in: `~/.ssh/deep-learning.pem`
@@ -10,7 +37,7 @@
 	- `SSH` access for `My IP` over port `22` to enable remote access
 	- `Custom TCP Rule` over port `8888` from `Anywhere` (this results in two custom rules being created) to enable access to Jupyter Notebook from a local machine
 
-## Local machine setup
+## Local machine setup (one-off)
 1. Update the `~/.bash_profile` on the local machine by adding the folder containing scripts to the `$PATH` environment variable:
 
 	`export PATH="/Users/geoff/Documents/Development/DLToolkit/scripts/:$PATH"`
@@ -18,7 +45,7 @@
 2. Install AWS CLI:
 
   - Install using PIP: `pip install awscli --upgrade --user`
-  
+
   - Run `aws configure` and set:
 
     - IAM user's Access Key ID: `<access key id>`
@@ -99,7 +126,7 @@ Includes a separate second EBS Volume containing all `DLToolkit` data and source
 
 15. Create `savedmodels` subfolder: `mkdir savedmodels`
 
-16. Install `h5py` and `sklearn`: 
+16. Install `h5py` and `sklearn`:
 
 - `source activate tensorflow_p36`
 - `pip install --upgrade pip`
@@ -116,13 +143,18 @@ Includes a separate second EBS Volume containing all `DLToolkit` data and source
 20. Test the volume by copying a file: `scp -i $my_pem README.md ubuntu@$my_dns:~/dl`
 
 
-## 2. Copy all `DLToolkit` files (local machine to server, +/-8 minutes)
+## 2. Copy `DLToolkit` files (local machine to server, +/-8 minutes)
 Copy all relevant files and subfolders:
 
-1. On the local machine go to folder: `cd /Users/geoff/Documents/Development/DLToolkit`
-2. Copy all subfolder content (excl. `output` and `savedmodels`): `scp -i $my_pem -r data dltoolkit settings thesis ubuntu@$my_dns:~/dl`
-3. Copy all files in the root folder: `scp -i $my_pem * ubuntu@$my_dns:~/dl`
-4. Copy source files only: `scp -i $my_pem -r dltoolkit settings thesis ubuntu@$my_dns:~/dl`
+1. Set environment variables to EC2 instance information: `. gb_server_info.sh`
+
+2. On the local machine go to folder: `cd /Users/geoff/Documents/Development/DLToolkit`
+
+3. Copy all subfolder content (excl. `output` and `savedmodels`): `scp -i $my_pem -r data dltoolkit settings thesis ubuntu@$my_dns:~/dl`
+
+4. Copy all files in the root folder: `scp -i $my_pem * ubuntu@$my_dns:~/dl`
+
+5. Copy source files only: `scp -i $my_pem -r dltoolkit settings thesis ubuntu@$my_dns:~/dl`
 
 
 # Interact with the Deep Learning instance
@@ -150,7 +182,7 @@ Typical workflow:
 
 Or use the AWS GUI.
 
-## 2. Setup Jupyter Notebook (on every startup)
+## 2. Start Jupyter Notebook (on every reboot)
 
 ### On the **server**:
 
@@ -168,19 +200,7 @@ Or use the AWS GUI.
 - Enter the SSL password, e.g.: `<password>`
 - Use kernel `conda_tensorflow_p36`
 
-### On the **local machine** NOT using SSL:
-
-- Open tunnel: `ssh -L localhost:8888:localhost:8888 -i $my_pem ubuntu@$my_dns`
-- Access Jupyter: copy/paste the link, e.g.: `http://localhost:8888/?token=d2080d49d9c27b4c2f0c5190900e42aa387246e30ce73111`
-
-## 3. Unmount and detach the EBS volume
-First unmount then detach:
-
-1. Connect to the instance: `ssh -i $my_pem ubuntu@$my_dns`
-2. Unmount: `sudo umount /dev/xvdf`
-3. Detach: `aws ec2 detach-volume --volume-id $my_vol`
-
-## 4. Download files from the server
+## 3. Download files from the server
 Copy files from the server to a local exchange folder:
 
 1. Set environment variables to EC2 instance information: `. gb_server_info.sh`
@@ -189,13 +209,26 @@ Copy files from the server to a local exchange folder:
 4. Download output only: `scp -i $my_pem ubuntu@$my_dns:~/dl/output/* .`
 5. Download savedmodels only: `scp -i $my_pem ubuntu@$my_dns:~/dl/savedmodels/* .`
 
-## 5. Stop the instance
+## 4. Stop the instance
 
 Command: `aws ec2 stop-instances --instance-ids $my_ins`
 
 Or use the AWS GUI.
 
 # Useful AWS CLI commands
+
+## Jupyter Notebook - On the **local machine** NOT using SSL:
+
+- Open tunnel: `ssh -L localhost:8888:localhost:8888 -i $my_pem ubuntu@$my_dns`
+- Access Jupyter: copy/paste the link, e.g.: `http://localhost:8888/?token=d2080d49d9c27b4c2f0c5190900e42aa387246e30ce73111`
+
+## Unmount and detach the EBS volume
+First unmount then detach:
+
+1. Connect to the instance: `ssh -i $my_pem ubuntu@$my_dns`
+2. Unmount: `sudo umount /dev/xvdf`
+3. Detach: `aws ec2 detach-volume --volume-id $my_vol`
+
 
 ## Obtain instance IDs and public DNS names
 Use the GUI or use AWS CLI:
