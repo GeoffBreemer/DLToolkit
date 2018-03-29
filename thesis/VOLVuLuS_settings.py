@@ -14,7 +14,7 @@ IMG_HEIGHT = 320            # original image height (prior to any pre-processing
 IMG_WIDTH = 320             # original image width (prior to any pre-processing)
 IMG_CHANNELS = 1            # number of channels for the images and ground truths (i.e. gray scale)
 NUM_CLASSES = 2             # number of classes to segment
-NUM_SLICES = 24              # number of slices fed to the 3D UNet during training
+NUM_SLICES = 96              # number of slices fed to the 3D UNet during training
 NUM_SLICES_TOTAL = 246      # total number of slices available in volume
 
 MASK_BINARY_THRESHOLD = 20  # Pixel intensities above this value are considered blood vessels

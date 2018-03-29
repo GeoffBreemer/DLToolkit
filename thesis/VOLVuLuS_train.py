@@ -84,7 +84,7 @@ if __name__ == "__main__":
     # Only train using a small number of images to test the pipeline
     print("\n--- Show example image")
     PATIENT_ID = 0
-    IX_START = 69
+    IX_START = 0
     print(train_imgs.shape)
     cv2.imshow("CHECK image", train_imgs[PATIENT_ID, :, :, IX_START, :])
     cv2.imshow("CHECK ground truth", train_grndtr[PATIENT_ID, :, :, IX_START, :])

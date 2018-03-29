@@ -23,8 +23,8 @@ MASK_BLOODVESSEL = 255          # pixel intensity for vessel pixels (i.e. white)
 ONEHOT_BACKGROUND = 0
 ONEHOT_BLOODVESSEL = 1
 
-SLICE_START = 69
-SLICE_END = 79
+SLICE_START = 0
+SLICE_END = 95
 
 # Training hyper parameters
 TRN_BATCH_SIZE = 1

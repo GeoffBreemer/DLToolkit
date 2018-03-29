@@ -66,7 +66,7 @@ Includes a separate second EBS Volume containing all `DLToolkit` data and source
       - `passwd()`
       - Set the password, e.g.: `<password>`
       - Record the password hash, e.g.: `sha1:<password hash>`
-      - `exit`
+      - `exit()`
 
     - Edit the config file:
       - `nano ~/.jupyter/jupyter_notebook_config.py`
@@ -77,35 +77,37 @@ Includes a separate second EBS Volume containing all `DLToolkit` data and source
       c.IPKernelApp.pylab = 'inline'
       c.NotebookApp.ip = '*'
       c.NotebookApp.open_browser = False
-      c.NotebookApp.password = <ENTER PASSWORD HASH>`
+      c.NotebookApp.password = '<ENTER PASSWORD HASH>'`
 
-6. Check devices: `lsblk`
+6. NO LONGER NEEDED: Check devices: `lsblk`
 
-7. Check if the device has a file system `sudo file -s /dev/xvdf`
+7. NO LONGER NEEDED: Check if the device has a file system `sudo file -s /dev/xvdf`
 
-8. Create the file system: `sudo mkfs -t ext4 /dev/xvdf`
+8. NO LONGER NEEDED: Create the file system: `sudo mkfs -t ext4 /dev/xvdf`
 
-9. Ensure current location is `/home/ubuntu`: `cd ~`
+9. NO LONGER NEEDED: Ensure current location is `/home/ubuntu`: `cd ~`
 
-10. Create mount point: `sudo mkdir dl`
+10. NO LONGER NEEDED: Create mount point: `sudo mkdir dl`
 
-11. Mount the EBS volume: `sudo mount /dev/xvdf ~/dl/`
+11. NO LONGER NEEDED: Mount the EBS volume: `sudo mount /dev/xvdf ~/dl/`
 
-12. Go to the mount point: `cd dl`
+12. Create and go to the mount point: `mkdir ~/dl` and `cd ~/dl`
 
-13. Enable access: `sudo chmod go+rw .`
+13. NO LONGER NEEDED: Enable access: `sudo chmod go+rw .`
 
 14. Create `output` subfolder: `mkdir output`
 
 15. Create `savedmodels` subfolder: `mkdir savedmodels`
 
-16. Install `h5py`: 
+16. Install `h5py` and `sklearn`: 
 
 - `source activate tensorflow_p36`
 - `pip install --upgrade pip`
 - `pip install h5py`
+- `pip install sklearn`
+- `pip install progressbar2`
 
-17. Add the path to the dltoolkit source files to `PYTHONPATH` by editing the `nano ~/.bashrc` and adding: `export PYTHONPATH=/home/ubuntu/dl/dltoolkit:$PYTHONPATH`
+17. Add the path to the dltoolkit source files to `PYTHONPATH` by editing the `nano ~/.bashrc` and adding: `export PYTHONPATH=/home/ubuntu/dl:$PYTHONPATH`
 
 18. Exit the instance
 
@@ -118,21 +120,9 @@ Includes a separate second EBS Volume containing all `DLToolkit` data and source
 Copy all relevant files and subfolders:
 
 1. On the local machine go to folder: `cd /Users/geoff/Documents/Development/DLToolkit`
-2. Copy all subfolder content (excl. `output` and `savedmodels`): `scp -i $my_pem -r data dltoolkit examples_complex examples_simple settings thesis ubuntu@$my_dns:~/dl`
+2. Copy all subfolder content (excl. `output` and `savedmodels`): `scp -i $my_pem -r data dltoolkit settings thesis ubuntu@$my_dns:~/dl`
 3. Copy all files in the root folder: `scp -i $my_pem * ubuntu@$my_dns:~/dl`
-
-
-## 3. Setup automatic mounting of an attached EBS volume on reboot (one-off)
-Steps required to ensure an attached EBS volume is mounted automatically after a reboot:
-
-1. Set environment variables to EC2 instance information: `. gb_server_info.sh`
-2. Connect: `ssh -i $my_pem ubuntu@$my_dns`
-3. Create a backup of `fstab`: `sudo cp /etc/fstab /etc/fstab.orig`
-4. Edit `fstab`: `sudo nano /etc/fstab`
-5. Add a line to the end: `/dev/xvdf /home/ubuntu/dl ext4 defaults,nofail 0 2`
-6. Check before rebooting: `sudo mount -a`
-7. Exit the instance
-8. Reboot the instance: `aws ec2 reboot-instances --instance-ids my_ins`
+4. Copy source files only: `scp -i $my_pem -r dltoolkit settings thesis ubuntu@$my_dns:~/dl`
 
 
 # Interact with the Deep Learning instance
@@ -140,8 +130,10 @@ Steps required to ensure an attached EBS volume is mounted automatically after a
 ## 1. Start the instance
 
 - Obtain server information (only sets `my_ins`): `. gb_server_info.sh`
-- Start the EC2 instance: `aws ec2 start-instances --instance-ids my_ins`
+- Start the EC2 instance: `aws ec2 start-instances --instance-ids $my_ins`
 - Obtain server information (now also sets `my_dns`): `. gb_server_info.sh`
+
+Or use the AWS GUI.
 
 ## 2. Setup Jupyter Notebook (on every startup)
 
@@ -150,6 +142,7 @@ Steps required to ensure an attached EBS volume is mounted automatically after a
 - Set environment variables to EC2 instance information: `. gb_server_info.sh`
 - Connect to the instance: `ssh -i $my_pem ubuntu@$my_dns`
 - Activate the conda environment: `source activate tensorflow_p36`
+- Change to the DLToolkit folder: `cd ~/dl`
 - Start Jupyter Notebook: `jupyter notebook`
 
 ### On the **local machine** using SSL:
@@ -158,6 +151,7 @@ Steps required to ensure an attached EBS volume is mounted automatically after a
 - Open tunnel: `ssh -i $my_pem -L 8157:127.0.0.1:8888 ubuntu@$my_dns`
 - Access Jupyter via the browser: `https://127.0.0.1:8157`
 - Enter the SSL password, e.g.: `<password>`
+- Use kernel `conda_tensorflow_p36`
 
 ### On the **local machine** NOT using SSL:
 
@@ -174,13 +168,17 @@ First unmount then detach:
 ## 4. Download files from the server
 Copy files from the server to a local exchange folder:
 
-1. Go the folder where files are to be downloaded to: `cd /Users/geoff/Documents/Development/exchange`
-2. Download files: `scp -i $my_pem ubuntu@$my_dns:~/dl/test.txt .`
+1. Set environment variables to EC2 instance information: `. gb_server_info.sh`
+2. Go the folder where files are to be downloaded to: `cd /Users/geoff/Documents/Development/DLToolkit/exchange`
+3. Download source files only: `scp -i $my_pem ubuntu@$my_dns:~/dl/thesis/* .`
+4. Download output only: `scp -i $my_pem ubuntu@$my_dns:~/dl/output/* .`
+5. Download savedmodels only: `scp -i $my_pem ubuntu@$my_dns:~/dl/savedmodels/* .`
 
 ## 5. Stop the instance
 
 Command: `aws ec2 stop-instances --instance-ids $my_ins`
 
+Or use the AWS GUI.
 
 # Useful AWS CLI commands
 
@@ -229,6 +227,19 @@ Steps required to manually mount an EBS volume mounted previously (e.g. after a 
 2. Check devices: `lsblk`
 3. Check file system is present: `sudo file -s /dev/xvdf`
 4. Mount: `sudo mount /dev/xvdf ~/dl/`
+
+## Setup automatic mounting of an attached EBS volume on reboot (one-off)
+Steps required to ensure an attached EBS volume is mounted automatically after a reboot:
+
+1. Set environment variables to EC2 instance information: `. gb_server_info.sh`
+2. Connect: `ssh -i $my_pem ubuntu@$my_dns`
+3. Create a backup of `fstab`: `sudo cp /etc/fstab /etc/fstab.orig`
+4. Edit `fstab`: `sudo nano /etc/fstab`
+5. Add a line to the end: `/dev/xvdf /home/ubuntu/dl ext4 defaults,nofail 0 2`
+6. Check before rebooting: `sudo mount -a`
+7. Exit the instance
+8. Reboot the instance: `aws ec2 reboot-instances --instance-ids $my_ins`
+
 
 # Errors
 - Host key verification failed. -> delete IP address from ~/.ssh/known_hosts: `sudo nano ~/.ssh/known_hosts`
