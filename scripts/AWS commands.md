@@ -127,6 +127,21 @@ Copy all relevant files and subfolders:
 
 # Interact with the Deep Learning instance
 
+Typically three terminal windows will be open:
+
+1. One executing Jupyer Notebook
+2. One to open the tunnel
+3. One to copy files back and forth
+
+Typical workflow:
+
+1. Start the instance
+2. Copy files to the instance
+3. Start Jupyter Notebook
+4. Fit a model
+5. Copy files to the local machine
+6. Stop the instance
+
 ## 1. Start the instance
 
 - Obtain server information (only sets `my_ins`): `. gb_server_info.sh`
