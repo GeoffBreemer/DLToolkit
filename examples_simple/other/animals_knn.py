@@ -1,6 +1,6 @@
 """Animal classification using k-NN (three classes)"""
 from dltoolkit.preprocess import ResizePreprocessor
-from dltoolkit.io import MemoryDataLoader
+from dltoolkit.iomisc import MemoryDataLoader
 
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import LabelEncoder

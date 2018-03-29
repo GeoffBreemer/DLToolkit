@@ -1,6 +1,6 @@
 """Animal classification using ShallowNet"""
 from dltoolkit.preprocess import ResizePreprocessor, ImgToArrayPreprocessor, NormalisePreprocessor
-from dltoolkit.io import MemoryDataLoader
+from dltoolkit.iomisc import MemoryDataLoader
 from dltoolkit.nn.cnn import ShallowNetNN
 from dltoolkit.utils import plot_training_history, ANIMALS_CLASS_NAMES
 

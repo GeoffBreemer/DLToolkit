@@ -1,16 +1,17 @@
 # Pre-requisites
 
 ## AWS setup
-1. Login to AWS using IAM via:
-https://874168575858.signin.aws.amazon.com/console
+1. Login to AWS using IAM via: `https://874168575858.signin.aws.amazon.com/console`
 
-2. On AWS setup a Security Group with two inbound rules:
+2. Create a key pair called `deep-learning` and store it on the local machine in: `~/.ssh/deep-learning.pem`
 
-	- `SSH` access for `My IP` over port `22` (to enable remote access)
-	- `Custom TCP Rule` over port `8888` from `Anywhere` (results in two custom rules being created, this enables access to Jupyter Notebook)
+3. Setup an EC2 Security Group called `deep-learning` with two inbound rules:
+
+	- `SSH` access for `My IP` over port `22` to enable remote access
+	- `Custom TCP Rule` over port `8888` from `Anywhere` (this results in two custom rules being created) to enable access to Jupyter Notebook from a local machine
 
 ## Local machine setup
-1. Update the `~./bash_profile` on the local machine to add the folder containing scripts to the `$PATH` environment variable:
+1. Update the `~/.bash_profile` on the local machine to add the folder containing scripts to the `$PATH` environment variable:
 
 	`export PATH="/Users/geoff/Documents/Development/DLToolkit/scripts/:$PATH"`
 
@@ -32,16 +33,17 @@ https://874168575858.signin.aws.amazon.com/console
     - Add the same command to `~/.bashrc`
 
 # Create a new Deep Learning EC2 instance
-Includes a separate second EBS Volume containing `DLToolkit` data and source files mounted to `/home/ubuntu/dl`.
+Includes a separate second EBS Volume containing all `DLToolkit` data and source files mounted as `/home/ubuntu/dl`.
 
 ## 1. Initial EC2 instance setup (one-off)
 
 1. Create a new EC2 instance using the GUI:
 
-  - Use `Deep Learning AMI (Ubuntu)` from Amazon
-  - Set the `Name` tag to `deep-learning`
+  - Use `Deep Learning AMI (Ubuntu)` from Amazon (AMI ID: ``)
   - Deploy to a `g3.4xlarge` or `p2.xlarge` instance
+  - Set the `Name` tag to `deep-learning`
   - Use Security Group `deep-learning` (required for accessing Jupyter Notebook)
+  - Use existing key pair `deep-learning`
 
 2. Set environment variables to EC2 instance information: `. gb_server_info.sh`
 
@@ -96,13 +98,19 @@ Includes a separate second EBS Volume containing `DLToolkit` data and source fil
 
 15. Create `savedmodels` subfolder: `mkdir savedmodels`
 
-16. Go to `DLToolkit` folder: `cd /Users/geoff/Documents/Development/DLToolkit`
+16. Install `h5py`: 
 
-17. Test the volume by copying a file: `scp -i $my_pem README.md ubuntu@$my_dns:~/dl`
+- `source activate tensorflow_p36`
+- `pip install --upgrade pip`
+- `pip install h5py`
 
-18. Add the path to the dltoolkit source files to `PYTHONPATH` by editing the `~/.bashrc` and adding: `export PYTHONPATH=/home/ubuntu/dl/dltoolkit:$PYTHONPATH`
+17. Add the path to the dltoolkit source files to `PYTHONPATH` by editing the `nano ~/.bashrc` and adding: `export PYTHONPATH=/home/ubuntu/dl/dltoolkit:$PYTHONPATH`
 
-19. Exit the instance
+18. Exit the instance
+
+19. Go to `DLToolkit` folder: `cd /Users/geoff/Documents/Development/DLToolkit`
+
+20. Test the volume by copying a file: `scp -i $my_pem README.md ubuntu@$my_dns:~/dl`
 
 
 ## 2. Copy all `DLToolkit` files (local machine to server, +/-8 minutes)
@@ -116,22 +124,14 @@ Copy all relevant files and subfolders:
 ## 3. Setup automatic mounting of an attached EBS volume on reboot (one-off)
 Steps required to ensure an attached EBS volume is mounted automatically after a reboot:
 
-1. Connect: `ssh -i $my_pem ubuntu@$my_dns`
-2. Create a backup of `fstab`: `sudo cp /etc/fstab /etc/fstab.orig`
-3. Edit `fstab`: `sudo nano /etc/fstab`
-4. Add a line to the end: `/dev/xvdf /home/ubuntu/dl ext4 defaults,nofail 0 2`
-5. Check before rebooting: `sudo mount -a`
-6. Exit the instance
-6. Reboot the instance: `aws ec2 reboot-instances --instance-ids my_ins`
-
-
-## 4. Manually mount a previously mounted EBS volume (optional)
-Steps required to manually mount an EBS volume mounted previously (e.g. after a reboot) and is attached to the instance:
-
-1. Connect: `ssh -i $my_pem ubuntu@$my_dns`
-2. Check devices: `lsblk`
-3. Check file system is present: `sudo file -s /dev/xvdf`
-4. Mount: `sudo mount /dev/xvdf ~/dl/`
+1. Set environment variables to EC2 instance information: `. gb_server_info.sh`
+2. Connect: `ssh -i $my_pem ubuntu@$my_dns`
+3. Create a backup of `fstab`: `sudo cp /etc/fstab /etc/fstab.orig`
+4. Edit `fstab`: `sudo nano /etc/fstab`
+5. Add a line to the end: `/dev/xvdf /home/ubuntu/dl ext4 defaults,nofail 0 2`
+6. Check before rebooting: `sudo mount -a`
+7. Exit the instance
+8. Reboot the instance: `aws ec2 reboot-instances --instance-ids my_ins`
 
 
 # Interact with the Deep Learning instance
@@ -146,12 +146,14 @@ Steps required to manually mount an EBS volume mounted previously (e.g. after a 
 
 ### On the **server**:
 
+- Set environment variables to EC2 instance information: `. gb_server_info.sh`
 - Connect to the instance: `ssh -i $my_pem ubuntu@$my_dns`
 - Activate the conda environment: `source activate tensorflow_p36`
 - Start Jupyter Notebook: `jupyter notebook`
 
 ### On the **local machine** using SSL:
 
+- Set environment variables to EC2 instance information: `. gb_server_info.sh`
 - Open tunnel: `ssh -i $my_pem -L 8157:127.0.0.1:8888 ubuntu@$my_dns`
 - Access Jupyter via the browser: `https://127.0.0.1:8157`
 - Enter the SSL password, e.g.: `<password>`
@@ -217,6 +219,15 @@ Command: `aws ec2 reboot-instances --instance-ids i-0d86fdc0f57011ddb`
 
 ## Attach an existing EBS volume to an instance
 `aws ec2 attach-volume --device /dev/sdf --volume-id vol-06b98fbf3036e350d --instance-id i-0d86fdc0f57011ddb`
+
+
+## Manually mount a previously mounted EBS volume (optional)
+Steps required to manually mount an EBS volume mounted previously (e.g. after a reboot) and is attached to the instance:
+
+1. Connect: `ssh -i $my_pem ubuntu@$my_dns`
+2. Check devices: `lsblk`
+3. Check file system is present: `sudo file -s /dev/xvdf`
+4. Mount: `sudo mount /dev/xvdf ~/dl/`
 
 # Errors
 - Host key verification failed. -> delete IP address from ~/.ssh/known_hosts: `sudo nano ~/.ssh/known_hosts`

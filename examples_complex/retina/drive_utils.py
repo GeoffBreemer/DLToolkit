@@ -1,5 +1,5 @@
 """Common functions for drive_train.py and drive_test.py"""
-from dltoolkit.io import HDF5Reader
+from dltoolkit.iomisc import HDF5Reader
 from dltoolkit.utils.image import rgb_to_gray, normalise, clahe_equalization, adjust_gamma
 
 import numpy as np

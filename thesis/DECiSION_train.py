@@ -52,7 +52,7 @@ from dltoolkit.utils.generic import model_architecture_to_file, model_summary_to
 from dltoolkit.utils.image import standardise, standardise_single, mean_subtraction
 from dltoolkit.nn.segment import UNet_NN
 from dltoolkit.utils.visual import plot_training_history
-from dltoolkit.io import HDF5Writer, HDF5Reader, HDF5Generator_Segment
+from dltoolkit.iomisc import HDF5Writer, HDF5Reader, HDF5Generator_Segment
 
 from thesis_common import convert_img_to_pred, convert_pred_to_img #convert_to_hdf5, group_images
 from thesis_metric_loss import dice_coef, weighted_pixelwise_crossentropy_loss

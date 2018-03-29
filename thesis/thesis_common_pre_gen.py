@@ -1,5 +1,5 @@
 """Image handling and conversion methods"""
-from dltoolkit.io import HDF5Reader, HDF5Writer
+from dltoolkit.iomisc import HDF5Reader, HDF5Writer
 from dltoolkit.utils.image import standardise_single, standardise
 from dltoolkit.utils.generic import list_images
 

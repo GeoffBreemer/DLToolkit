@@ -11,7 +11,7 @@ https://www.pyimagesearch.com/deep-learning-computer-vision-python-book/
 """
 from dltoolkit.nn.cnn import MiniVGGNN, VGG16CustomNN
 from dltoolkit.preprocess import NormalisePreprocessor, ResizeWithAspectRatioPreprocessor, ImgToArrayPreprocessor
-from dltoolkit.io import MemoryDataLoader
+from dltoolkit.iomisc import MemoryDataLoader
 from dltoolkit.utils import plot_training_history, str2bool, model_architecture_to_file, FLOWERS17_CLASS_NAMES,\
     model_performance, visualise_results
 

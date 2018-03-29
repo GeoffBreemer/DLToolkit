@@ -10,7 +10,7 @@ matplotlib.use("Agg")
 from settings import settings_cats_and_dogs as settings
 
 from dltoolkit.preprocess import ResizeWithAspectRatioPreprocessor, ImgToArrayPreprocessor, ResizePreprocessor, PatchPreprocessor, SubtractMeansPreprocessor
-from dltoolkit.io import HDF5Generator, HDF5Writer
+from dltoolkit.iomisc import HDF5Generator, HDF5Writer
 from dltoolkit.nn.cnn import AlexNetNN
 from dltoolkit.utils import TrainingMonitor, ranked_accuracy, model_architecture_to_file
 from dltoolkit.utils.generic import list_images

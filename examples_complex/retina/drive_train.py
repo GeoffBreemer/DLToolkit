@@ -27,7 +27,7 @@
 from settings import settings_drive as settings
 from drive_utils import perform_image_preprocessing, perform_groundtruth_preprocessing
 
-from dltoolkit.io import HDF5Writer
+from dltoolkit.iomisc import HDF5Writer
 from dltoolkit.utils.generic import list_images, model_architecture_to_file, model_summary_to_file
 from dltoolkit.nn.segment import UNet_NN
 from dltoolkit.utils.visual import plot_training_history

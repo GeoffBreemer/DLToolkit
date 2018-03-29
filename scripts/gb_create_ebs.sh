@@ -15,11 +15,11 @@ echo $my_dns
 echo $my_ins
 
 # Create EBS volume
-my_vol=$(aws ec2 create-volume --output=json --size 10 --region ap-southeast-2 --availability-zone ap-southeast-2b --volume-type gp2 | grep VolumeId | awk -F\" '{print $4}')
+my_vol=$(aws ec2 create-volume --output=json --size 20 --region ap-southeast-2 --availability-zone ap-southeast-2c --volume-type gp2 | grep VolumeId | awk -F\" '{print $4}')
 echo $my_vol
 
-echo Sleeping for 5 seconds
-sleep 5
+echo Sleeping for 10 seconds
+sleep 10
 
 # Attach it to the instance
 aws ec2 attach-volume --device /dev/sdf --volume-id $my_vol --instance-id $my_ins

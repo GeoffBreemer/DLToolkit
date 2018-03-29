@@ -3,7 +3,7 @@ from settings import settings_drive as settings
 from drive_utils import perform_groundtruth_preprocessing, perform_image_preprocessing,\
     save_image, crop_image, group_images
 
-from dltoolkit.io import HDF5Reader
+from dltoolkit.iomisc import HDF5Reader
 
 from keras.models import load_model
 
