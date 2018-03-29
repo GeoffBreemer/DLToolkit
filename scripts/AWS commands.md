@@ -17,9 +17,9 @@
 
 	`cd /Users/geoff/Documents/Development/DLToolkit`
 
-5. Copy files TO the server:
+5. Copy source files TO the server (excl. `output`, `data` and `savedmodels`):
 
-	`scp -i $my_pem * ubuntu@$my_dns:~/dl`
+	`scp -i $my_pem -r dltoolkit settings thesis ubuntu@$my_dns:~/dl`
 
 6. Go to the folder where files will be be downloaded to:
 
@@ -165,11 +165,12 @@ Copy all relevant files and subfolders:
 
 2. On the local machine go to folder: `cd /Users/geoff/Documents/Development/DLToolkit`
 
-3. Initial transfer of all subfolder content (excl. `output` and `savedmodels`): `scp -i $my_pem -r data dltoolkit settings thesis ubuntu@$my_dns:~/dl`
+3. Copy source files (excl. `output`, `data` and `savedmodels`): `scp -i $my_pem -r dltoolkit settings thesis ubuntu@$my_dns:~/dl`
 
-4. Copy all files in the root folder: `scp -i $my_pem * ubuntu@$my_dns:~/dl`
+5. Copy data files, `jpg` only not `h5`: `rsync -avz -e "ssh -i $my_pem" --include='*/' --include='*.jpg' --exclude='*.h5' data ubuntu@$my_dns:~/dl`
 
-5. Copy source files only: `scp -i $my_pem -r dltoolkit settings thesis ubuntu@$my_dns:~/dl`
+6. Copy all files in the root folder: `scp -i $my_pem * ubuntu@$my_dns:~/dl`
+
 
 # Interact with the Deep Learning instance
 
