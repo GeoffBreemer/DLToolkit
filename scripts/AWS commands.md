@@ -17,15 +17,16 @@
 
 2. Install AWS CLI:
 
-  1. Install using PIP: `pip install awscli --upgrade --user`
-  2. Run `aws configure` and set:
+  - Install using PIP: `pip install awscli --upgrade --user`
+  
+  - Run `aws configure` and set:
 
     - IAM user's Access Key ID: `<access key id>`
     - IAM user's Secret Access Key: `<secret access key`
     - default region name: `ap-southeast-2`
     - default output format: `text`
 
-  3. Setup Command Completion:
+  - Setup Command Completion:
 
     - Find shell location: `echo $SHELL`
     - Locate the AWS Completer: `which aws_completer`
