@@ -11,7 +11,7 @@
 	- `Custom TCP Rule` over port `8888` from `Anywhere` (this results in two custom rules being created) to enable access to Jupyter Notebook from a local machine
 
 ## Local machine setup
-1. Update the `~/.bash_profile` on the local machine to add the folder containing scripts to the `$PATH` environment variable:
+1. Update the `~/.bash_profile` on the local machine by adding the folder containing scripts to the `$PATH` environment variable:
 
 	`export PATH="/Users/geoff/Documents/Development/DLToolkit/scripts/:$PATH"`
 
