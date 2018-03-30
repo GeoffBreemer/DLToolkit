@@ -97,15 +97,15 @@ Includes a separate second EBS Volume containing all `DLToolkit` data and source
 
 	Use the GUI:
 
-		- Use `Deep Learning AMI (Ubuntu) version 6.0` from Amazon
-		- Deploy to a `g3.4xlarge` or `p2.xlarge` instance
-		- Set the `Name` tag to `deep-learning`
-		- Use Security Group `deep-learning` (required for accessing Jupyter Notebook)
-		- Use existing key pair `deep-learning`
+	- Use `Deep Learning AMI (Ubuntu) version 6.0` from Amazon
+	- Deploy to a `g3.4xlarge` or `p2.xlarge` instance
+	- Set the `Name` tag to `deep-learning`
+	- Use Security Group `deep-learning` (required for accessing Jupyter Notebook)
+	- Use existing key pair `deep-learning`
 
 	Or use AWS CLI:
 
-		`. gb_create_instance.sh`
+	`. gb_create_instance.sh`
 
 2. Set environment variables to EC2 instance information: `. gb_server_info.sh`
 
