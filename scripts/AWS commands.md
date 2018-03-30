@@ -161,11 +161,11 @@ Includes a separate second EBS Volume containing all `DLToolkit` data and source
 
 16. Install missing Python packages:
 
-  - `source activate tensorflow_p36`
-  - `pip install --upgrade pip`
-  - `pip install h5py`
-  - `pip install sklearn`
-  - `pip install progressbar2`
+	- `source activate tensorflow_p36`
+	- `pip install --upgrade pip`
+	- `pip install h5py`
+	- `pip install sklearn`
+	- `pip install progressbar2`
 
 17. Add the path to the `dltoolkit` source files to `PYTHONPATH` by editing the `nano ~/.bashrc` and adding: `export PYTHONPATH=/home/ubuntu/dl:$PYTHONPATH`
 
