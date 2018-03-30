@@ -357,6 +357,14 @@ def group_images(imgs, num_per_row, empty_color=255, show=False, save_path=None)
     return final_image
 
 
+def show_image(img, title):
+    plt.imshow(img, cmap='gray')
+    plt.axis('off')
+    plt.grid(False)
+    plt.title(title)
+    plt.show()
+
+
 # Parameter parsing
 def model_name_from_arguments():
     """Return the full path of the model to be used for making predictions"""

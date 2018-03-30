@@ -14,7 +14,7 @@ echo $my_dns
 echo $my_ins
 
 # Create EBS volume
-my_vol=$(aws ec2 create-volume --output=json --size 20 --region ap-southeast-2 --availability-zone ap-southeast-2a --volume-type gp2 | grep VolumeId | awk -F\" '{print $4}')
+my_vol=$(aws ec2 create-volume --output=json --size 20 --region ap-southeast-2 --availability-zone ap-southeast-2b --volume-type gp2 | grep VolumeId | awk -F\" '{print $4}')
 echo $my_vol
 
 echo Sleeping for 10 seconds

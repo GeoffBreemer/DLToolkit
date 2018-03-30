@@ -13,4 +13,4 @@ cd /Users/geoff/Documents/Development/DLToolkit/exchange
 
 echo Downloading savedmodels files FROM the server
 mkdir savedmodels
-scp -i $my_pem ubuntu@$my_dns:~/dl/output/* ./savedmodels
+scp -i $my_pem ubuntu@$my_dns:~/dl/savedmodels/* ./savedmodels

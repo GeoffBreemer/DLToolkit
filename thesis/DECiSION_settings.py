@@ -23,6 +23,11 @@ MASK_BLOODVESSEL = 255          # pixel intensity for vessel pixels (i.e. white)
 ONEHOT_BACKGROUND = 0
 ONEHOT_BLOODVESSEL = 1
 
+# Local:
+# SLICE_START = 69
+# SLICE_END = 79
+
+# AWS:
 SLICE_START = 0
 SLICE_END = 95
 

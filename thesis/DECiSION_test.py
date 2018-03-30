@@ -1,7 +1,6 @@
 import DECiSION_settings as settings
 from thesis_common import read_preprocess_image, read_preprocess_groundtruth,\
-    convert_img_to_pred, convert_pred_to_img,\
-    convert_img_to_pred_flatten, convert_pred_to_img_flatten, group_images, model_name_from_arguments
+    convert_pred_to_img, group_images, model_name_from_arguments
 
 from dltoolkit.nn.segment import UNet_NN
 
@@ -33,7 +32,7 @@ if __name__ == "__main__":
     cv2.waitKey(0)
 
     # Only predict for some images
-    PRED_IX = range(0, 16)
+    PRED_IX = range(0, 9)
     test_imgs = test_imgs[[PRED_IX]]
     if settings.IS_DEVELOPMENT:
         test_ground_truths = test_ground_truths[[PRED_IX]]
@@ -78,8 +77,8 @@ if __name__ == "__main__":
 
     print("\n--- Producing output images")
     if settings.IS_DEVELOPMENT:
-        group_images(test_ground_truths[0:16], 4, 255, False, "../output/DECISION_"+unet.title+"_grp_originals")
-    group_images(test_imgs[0:16], 4, 1.0, False, "../output/DECISION_" + unet.title+"_grp_images")
-    group_images(predictions[0:16], 4, 1.0, False, "../output/DECISION_" + unet.title+"_grp_predictions")
+        group_images(test_ground_truths[0:9], 3, 255, False, "../output/DECISION_"+unet.title+"_grp_originals")
+    group_images(test_imgs[0:9], 3, 1.0, False, "../output/DECISION_" + unet.title+"_grp_images")
+    group_images(predictions[0:9], 3, 1.0, False, "../output/DECISION_" + unet.title+"_grp_predictions")
 
     print("\n--- Predicting complete")

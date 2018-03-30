@@ -36,6 +36,11 @@
 #   Data generator:
 #   https://github.com/aurora95/Keras-FCN/blob/master/utils/SegDataGenerator.py
 #
+#   Data augmentation:
+#   https://towardsdatascience.com/image-augmentation-for-deep-learning-using-keras-and-histogram-equalization-9329f6ae5085
+#   https://rock-it.pl/images-augmentation-for-deep-learning-with-keras/
+#   https://github.com/keras-team/keras/issues/1627
+#
 RANDOM_STATE = 42
 from numpy.random import seed
 seed(RANDOM_STATE)
