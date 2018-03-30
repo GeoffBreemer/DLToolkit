@@ -9,7 +9,7 @@
 
 	`aws ec2 start-instances --instance-ids $my_ins`
 
-	or
+	or:
 	
 	`. gb_start.sh`
 	
@@ -17,9 +17,13 @@
 
 	`ssh -i $my_pem ubuntu@$my_dns`
 	
-	or
+	or:
 	
 	`. gb_connect.sh`
+
+3. Tunnel to the instance:
+
+	`gb_tunnel.sh`
 
 4. Go to the `DLToolkit` folder:
 
@@ -41,7 +45,7 @@
 
 	`aws ec2 stop-instances --instance-ids $my_ins`
 
-	or
+	or:
 	
 	`. gb_stop.sh`
 	
@@ -163,9 +167,7 @@ Includes a separate second EBS Volume containing all `DLToolkit` data and source
 
 	- `source activate tensorflow_p36`
 	- `pip install --upgrade pip`
-	- `pip install h5py`
-	- `pip install sklearn`
-	- `pip install progressbar2`
+	- `pip install h5py sklearn progressbar2`
 
 17. Add the path to the `dltoolkit` source files to `PYTHONPATH` by editing the `nano ~/.bashrc` and adding: `export PYTHONPATH=/home/ubuntu/dl:$PYTHONPATH`
 
@@ -174,21 +176,6 @@ Includes a separate second EBS Volume containing all `DLToolkit` data and source
 19. Go to `DLToolkit` folder: `cd /Users/geoff/Documents/Development/DLToolkit`
 
 20. Test everything by copying a file: `scp -i $my_pem README.md ubuntu@$my_dns:~/dl`
-
-
-## 2. Copy `DLToolkit` files (local machine to server, +/-8 minutes)
-Copy all relevant files and subfolders:
-
-1. Set environment variables to EC2 instance information: `. gb_server_info.sh`
-
-2. On the local machine go to folder: `cd /Users/geoff/Documents/Development/DLToolkit`
-
-3. Copy **source files** (excl. `output`, `data` and `savedmodels`): `scp -i $my_pem -r dltoolkit settings thesis ubuntu@$my_dns:~/dl`
-
-5. Copy **data** files, `*.jpg` only, ignores `*.h5`: `rsync -avz -e "ssh -i $my_pem" --include='*/' --include='*.jpg' --exclude='*.h5' data ubuntu@$my_dns:~/dl`
-
-6. Copy files in the **root folder**: `scp -i $my_pem * ubuntu@$my_dns:~/dl`
-
 
 # Interact with the Deep Learning instance
 
@@ -201,8 +188,8 @@ Typically three terminal windows will be open:
 Typical workflow:
 
 1. Start the instance
-2. Copy files to the instance
-3. Start Jupyter Notebook
+2. Start Jupyter Notebook
+3. Copy files to the instance
 4. Fit a model
 5. Copy files to the local machine
 6. Stop the instance
@@ -232,16 +219,25 @@ Do not close the terminal window or Jupyter Notebook will stop.
 
 Do not close the terminal window or the browser connection with the server instance will be closed.
 
-## 3. Download files FROM the server
-Copy files from the server to a local exchange folder:
+## 3. Copy `DLToolkit` files to the server (local machine to server, +/-8 minutes)
+Local machine folder containing all files: `/Users/geoff/Documents/Development/DLToolkit`
 
-1. Set environment variables to EC2 instance information: `. gb_server_info.sh`
-2. Go the folder where files are to be downloaded to: `cd /Users/geoff/Documents/Development/DLToolkit/exchange`
-3. Download **source** files only: `scp -i $my_pem ubuntu@$my_dns:~/dl/thesis/* .`
-4. Download **output** only: `scp -i $my_pem ubuntu@$my_dns:~/dl/output/* .`
-5. Download **savedmodels** only: `scp -i $my_pem ubuntu@$my_dns:~/dl/savedmodels/* .`
+1. Copy **source files** (excl. `output`, `data` and `savedmodels`): `. gb_copy_source_to.sh`
 
-## 4. Stop the instance
+2. Copy **data** files (`*.jpg` only, ignores `*.h5`): `. gb_copy_data_to.sh`
+
+## 4. Fit a model
+Fit models by running Jupyter notebooks.
+
+## 5. Download files FROM the server
+Copy files from the server to a local exchange folder: `cd /Users/geoff/Documents/Development/DLToolkit/exchange`
+
+1. Download **source** files only: `. gb_copy_source_from.sh`
+2. Download **output** only: `. gb_copy_output_from.sh`
+3. Download **savedmodels** only: `. gb_copy_savedmodels_from.sh`
+
+
+## 6. Stop the instance
 
 Command: `. gb_stop.sh`
 
