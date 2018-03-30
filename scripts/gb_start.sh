@@ -16,3 +16,5 @@ sleep 15
 
 echo Updating environment variables
 source gb_server_info.sh
+
+echo If the PublicDnsName is not set yet run gb_server_info.sh again manually.
