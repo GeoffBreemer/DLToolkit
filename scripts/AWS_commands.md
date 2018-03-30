@@ -23,7 +23,7 @@
 
 3. Tunnel to the instance:
 
-	`gb_tunnel.sh`
+	`. gb_tunnel.sh`
 
 4. Go to the `DLToolkit` folder on the local machine:
 
