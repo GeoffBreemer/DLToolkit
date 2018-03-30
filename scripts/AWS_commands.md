@@ -208,7 +208,7 @@ Typical workflow:
 
 ## 1. Start the instance
 
-Execute: `gb_start.sh`
+Execute: `. gb_start.sh`
 
 ## 2. Start Jupyter Notebook (on every reboot)
 
@@ -223,15 +223,14 @@ Do not close the terminal window or the Jupyter Notebook will stop.
 
 ### On the **local machine** using SSL:
 
-- Set environment variables to EC2 instance information: `. gb_server_info.sh`
-- Open tunnel: `ssh -i $my_pem -L 8157:127.0.0.1:8888 ubuntu@$my_dns`
+- Tunnel to the instanc: `. gb_tunnel.sh`
 - Access Jupyter via a browser: `https://127.0.0.1:8157`
 - Enter the SSL password, e.g.: `<password>`
 - Always use kernel `conda_tensorflow_p36`, which includes Keras
 
 Do not close the terminal window or the browser connection with the instance will be closed.
 
-## 3. Copy `DLToolkit` files to the server (local machine to server, +/-8 minutes)
+## 3. Copy files to the server (local machine to server, +/-8 minutes incl. images)
 Local machine folder containing all files: `/Users/geoff/Documents/Development/DLToolkit`
 
 1. Copy **source files** (excl. `output`, `data` and `savedmodels`): `. gb_copy_source.sh`
@@ -242,13 +241,13 @@ Local machine folder containing all files: `/Users/geoff/Documents/Development/D
 Fit models by running Jupyter notebooks.
 
 ## 5. Download files FROM the server
-Copy files from the server to the local exchange folder: `cd /Users/geoff/Documents/Development/DLToolkit/exchange`
+Copy files from the server to the local `exchange` folder: `cd /Users/geoff/Documents/Development/DLToolkit/exchange`
 
 1. Download **source** files only: `. gb_download_source.sh`
 2. Download **output** only: `. gb_download_output.sh`
 3. Download **savedmodels** only: `. gb_download_savedmodels.sh`
 
-Existing files with the same name are overwritten. Existing files with different names are NOT deleted.
+Existing files with the same name are overwritten. Other files are NOT deleted.
 
 ## 6. Stop the instance
 
