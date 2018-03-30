@@ -1,7 +1,7 @@
 # Common commands
 
 ## Local machine
-1. Set environment variables to EC2 instance information:
+1. Set environment variables with EC2 instance information:
 
 	`. gb_server_info.sh`
 
@@ -9,9 +9,17 @@
 
 	`aws ec2 start-instances --instance-ids $my_ins`
 
+	or
+	
+	`. gb_start.sh`
+	
 3. Connect to the instance:
 
 	`ssh -i $my_pem ubuntu@$my_dns`
+	
+	or
+	
+	`. gb_connect.sh`
 
 4. Go to the `DLToolkit` folder:
 
@@ -33,6 +41,10 @@
 
 	`aws ec2 stop-instances --instance-ids $my_ins`
 
+	or
+	
+	`. gb_stop.sh`
+	
 ## Instance
 
 1. Activate the conda environment:
@@ -81,7 +93,9 @@ Includes a separate second EBS Volume containing all `DLToolkit` data and source
 
 ## 1. Initial EC2 instance setup (one-off)
 
-1. Create a new EC2 instance using the GUI:
+1. Create a new EC2 instance
+
+Use the GUI:
 
   - Use `Deep Learning AMI (Ubuntu)` from Amazon (AMI ID: ``)
   - Deploy to a `g3.4xlarge` or `p2.xlarge` instance
@@ -89,11 +103,15 @@ Includes a separate second EBS Volume containing all `DLToolkit` data and source
   - Use Security Group `deep-learning` (required for accessing Jupyter Notebook)
   - Use existing key pair `deep-learning`
 
+Or use AWS CLI:
+
+	`. gb_create_instance.sh`
+
 2. Set environment variables to EC2 instance information: `. gb_server_info.sh`
 
 3. NO LONGER NEEDED: Create the EBS volume and attach it to the instance: `. gb_create_ebs.sh`
 
-4. Connect to the instance: `ssh -i $my_pem ubuntu@$my_dns`
+4. Connect to the instance: `ssh -i $my_pem ubuntu@$my_dns` or `. gb_connect.sh`
 
 5. Setup an SSL certificate for Jupyter Notebook:
 
@@ -165,11 +183,11 @@ Copy all relevant files and subfolders:
 
 2. On the local machine go to folder: `cd /Users/geoff/Documents/Development/DLToolkit`
 
-3. Copy source files (excl. `output`, `data` and `savedmodels`): `scp -i $my_pem -r dltoolkit settings thesis ubuntu@$my_dns:~/dl`
+3. Copy **source files** (excl. `output`, `data` and `savedmodels`): `scp -i $my_pem -r dltoolkit settings thesis ubuntu@$my_dns:~/dl`
 
-5. Copy data files, `jpg` only not `h5`: `rsync -avz -e "ssh -i $my_pem" --include='*/' --include='*.jpg' --exclude='*.h5' data ubuntu@$my_dns:~/dl`
+5. Copy **data** files, `*.jpg` only, ignores `*.h5`: `rsync -avz -e "ssh -i $my_pem" --include='*/' --include='*.jpg' --exclude='*.h5' data ubuntu@$my_dns:~/dl`
 
-6. Copy all files in the root folder: `scp -i $my_pem * ubuntu@$my_dns:~/dl`
+6. Copy files in the **root folder**: `scp -i $my_pem * ubuntu@$my_dns:~/dl`
 
 
 # Interact with the Deep Learning instance
@@ -191,17 +209,13 @@ Typical workflow:
 
 ## 1. Start the instance
 
-- Obtain server information (only sets `my_ins`): `. gb_server_info.sh`
-- Start the EC2 instance: `aws ec2 start-instances --instance-ids $my_ins`
-- Obtain server information (now also sets `my_dns`): `. gb_server_info.sh`
-
-Or use the AWS GUI and then set the environment variables by executing: `. gb_server_info.sh`
+Execute: `gb_start.sh`
 
 ## 2. Start Jupyter Notebook (on every reboot)
 
 ### On the **server**:
 
-- Connect to the instance: `ssh -i $my_pem ubuntu@$my_dns`
+- Connect to the instance: `. gb_connect.sh`
 - Activate the conda environment: `source activate tensorflow_p36`
 - Change to the DLToolkit folder: `cd ~/dl`
 - Start Jupyter Notebook: `jupyter notebook`
@@ -223,15 +237,13 @@ Copy files from the server to a local exchange folder:
 
 1. Set environment variables to EC2 instance information: `. gb_server_info.sh`
 2. Go the folder where files are to be downloaded to: `cd /Users/geoff/Documents/Development/DLToolkit/exchange`
-3. Download source files only: `scp -i $my_pem ubuntu@$my_dns:~/dl/thesis/* .`
-4. Download output only: `scp -i $my_pem ubuntu@$my_dns:~/dl/output/* .`
-5. Download savedmodels only: `scp -i $my_pem ubuntu@$my_dns:~/dl/savedmodels/* .`
+3. Download **source** files only: `scp -i $my_pem ubuntu@$my_dns:~/dl/thesis/* .`
+4. Download **output** only: `scp -i $my_pem ubuntu@$my_dns:~/dl/output/* .`
+5. Download **savedmodels** only: `scp -i $my_pem ubuntu@$my_dns:~/dl/savedmodels/* .`
 
 ## 4. Stop the instance
 
-Command: `aws ec2 stop-instances --instance-ids $my_ins`
-
-Or use the AWS GUI.
+Command: `. gb_stop.sh`
 
 # Useful AWS CLI commands
 

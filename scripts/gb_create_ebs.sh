@@ -8,14 +8,13 @@
 # To make the script executable run: chmod u+x gb_create_ebs.sh
 #
 # Execute: . /Users/geoff/Documents/Development/DLToolkit/scripts/create_ebs.sh
-
 echo EC2 instance information:
 echo $my_pem
 echo $my_dns
 echo $my_ins
 
 # Create EBS volume
-my_vol=$(aws ec2 create-volume --output=json --size 20 --region ap-southeast-2 --availability-zone ap-southeast-2c --volume-type gp2 | grep VolumeId | awk -F\" '{print $4}')
+my_vol=$(aws ec2 create-volume --output=json --size 20 --region ap-southeast-2 --availability-zone ap-southeast-2a --volume-type gp2 | grep VolumeId | awk -F\" '{print $4}')
 echo $my_vol
 
 echo Sleeping for 10 seconds
