@@ -48,7 +48,7 @@ Data sets used:
 The folders below contain toolkit specific code, settings for more elaborate examples and code for all simple examples:
 
 - `dltoolkit`:
-  - `io`: classes for loading data sets, converting to HDF5 format etc.
+  - `iomisc`: classes for loading data sets, converting to HDF5 format etc.
   - `nn`: various neural network architectures built using Keras, to date only a number of convolution neural networks (CNN) have been implemented.
     - `cnn`: convolutional neural network (CNN) architectures for classification tasks
     - `rnn` : recurrent neural network (RNN) architectures
