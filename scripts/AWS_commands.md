@@ -25,20 +25,31 @@
 
 	`gb_tunnel.sh`
 
-4. Go to the `DLToolkit` folder:
+4. Go to the `DLToolkit` folder on the local machine:
 
 	`cd /Users/geoff/Documents/Development/DLToolkit`
 
-5. Copy source files TO the server (excl. `output`, `data` and `savedmodels`):
+5. Copy source files TO the server (`data` and source files only):
+
+	`. gb_copy_source_to.sh`
+	`. gb_copy_data_to.sh`
+
+	or manually:
 
 	`scp -i $my_pem -r dltoolkit settings thesis ubuntu@$my_dns:~/dl`
 
-6. Go to the folder where files will be be downloaded to:
+6. Go to the `exchange` folder on the local machine:
 
 	`cd /Users/geoff/Documents/Development/DLToolkit/exchange`
 
 7. Download files FROM the server:
 
+	`. gb_copy_output_from.sh`
+	`. gb_copy_savedmodels_from.sh`
+	`. gb_copy_source_from.sh`
+
+	or manually:
+	
 	`scp -i $my_pem ubuntu@$my_dns:~/dl/thesis/* .`
 
 8. Stop the EC2 instance:
@@ -92,10 +103,8 @@
     - Enable completer using the path found under step 2 : `complete -C '/Users/geoff/anaconda3/bin/aws_completer' aws`
     - Add the same command to `~/.bashrc`
 
-# Create a new Deep Learning EC2 instance
+# Create a new Deep Learning EC2 instance (one-off)
 Includes a separate second EBS Volume containing all `DLToolkit` data and source files mounted as `/home/ubuntu/dl`.
-
-## 1. Initial EC2 instance setup (one-off)
 
 1. Create a new EC2 instance
 
@@ -207,7 +216,7 @@ Execute: `gb_start.sh`
 - Change to the DLToolkit folder: `cd ~/dl`
 - Start Jupyter Notebook: `jupyter notebook`
 
-Do not close the terminal window or Jupyter Notebook will stop.
+Do not close the terminal window or the Jupyter Notebook will stop.
 
 ### On the **local machine** using SSL:
 
@@ -217,7 +226,7 @@ Do not close the terminal window or Jupyter Notebook will stop.
 - Enter the SSL password, e.g.: `<password>`
 - Always use kernel `conda_tensorflow_p36`, which includes Keras
 
-Do not close the terminal window or the browser connection with the server instance will be closed.
+Do not close the terminal window or the browser connection with the instance will be closed.
 
 ## 3. Copy `DLToolkit` files to the server (local machine to server, +/-8 minutes)
 Local machine folder containing all files: `/Users/geoff/Documents/Development/DLToolkit`
@@ -230,12 +239,13 @@ Local machine folder containing all files: `/Users/geoff/Documents/Development/D
 Fit models by running Jupyter notebooks.
 
 ## 5. Download files FROM the server
-Copy files from the server to a local exchange folder: `cd /Users/geoff/Documents/Development/DLToolkit/exchange`
+Copy files from the server to the local exchange folder: `cd /Users/geoff/Documents/Development/DLToolkit/exchange`
 
 1. Download **source** files only: `. gb_copy_source_from.sh`
 2. Download **output** only: `. gb_copy_output_from.sh`
 3. Download **savedmodels** only: `. gb_copy_savedmodels_from.sh`
 
+Existing files with the same name are overwritten. Existing files with different names are NOT deleted.
 
 ## 6. Stop the instance
 
