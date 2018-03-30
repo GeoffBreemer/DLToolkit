@@ -11,8 +11,8 @@ source gb_server_info.sh
 echo Starting instance $my_ins
 aws ec2 start-instances --instance-ids $my_ins
 
-echo Pausing 10 seconds to wait for assignment of PublicDnsName
-sleep 10
+echo Pausing 15 seconds to wait for assignment of PublicDnsName
+sleep 15
 
 echo Updating environment variables
 source gb_server_info.sh
