@@ -31,8 +31,9 @@
 
 5. Copy source files TO the server (`data` and source files only):
 
-	`. gb_copy_source_to.sh`
-	`. gb_copy_data_to.sh`
+	`. gb_copy_source.sh`
+	
+	`. gb_copy_data.sh`
 
 	or manually:
 
@@ -42,11 +43,13 @@
 
 	`cd /Users/geoff/Documents/Development/DLToolkit/exchange`
 
-7. Download files FROM the server:
+7. Copy files FROM the server:
 
-	`. gb_copy_output_from.sh`
-	`. gb_copy_savedmodels_from.sh`
-	`. gb_copy_source_from.sh`
+	`. gb_download_output.sh`
+	
+	`. gb_download_savedmodels.sh`
+	
+	`. gb_download_source.sh`
 
 	or manually:
 	
@@ -231,9 +234,9 @@ Do not close the terminal window or the browser connection with the instance wil
 ## 3. Copy `DLToolkit` files to the server (local machine to server, +/-8 minutes)
 Local machine folder containing all files: `/Users/geoff/Documents/Development/DLToolkit`
 
-1. Copy **source files** (excl. `output`, `data` and `savedmodels`): `. gb_copy_source_to.sh`
+1. Copy **source files** (excl. `output`, `data` and `savedmodels`): `. gb_copy_source.sh`
 
-2. Copy **data** files (`*.jpg` only, ignores `*.h5`): `. gb_copy_data_to.sh`
+2. Copy **data** files (`*.jpg` only, ignores `*.h5`): `. gb_copy_data.sh`
 
 ## 4. Fit a model
 Fit models by running Jupyter notebooks.
@@ -241,9 +244,9 @@ Fit models by running Jupyter notebooks.
 ## 5. Download files FROM the server
 Copy files from the server to the local exchange folder: `cd /Users/geoff/Documents/Development/DLToolkit/exchange`
 
-1. Download **source** files only: `. gb_copy_source_from.sh`
-2. Download **output** only: `. gb_copy_output_from.sh`
-3. Download **savedmodels** only: `. gb_copy_savedmodels_from.sh`
+1. Download **source** files only: `. gb_download_source.sh`
+2. Download **output** only: `. gb_download_output.sh`
+3. Download **savedmodels** only: `. gb_download_savedmodels.sh`
 
 Existing files with the same name are overwritten. Existing files with different names are NOT deleted.
 
@@ -251,7 +254,7 @@ Existing files with the same name are overwritten. Existing files with different
 
 Command: `. gb_stop.sh`
 
-# Useful AWS CLI commands
+# Individual AWS CLI commands
 
 ## Jupyter Notebook - On the **local machine** NOT using SSL:
 
@@ -264,7 +267,6 @@ First unmount then detach:
 1. Connect to the instance: `ssh -i $my_pem ubuntu@$my_dns`
 2. Unmount: `sudo umount /dev/xvdf`
 3. Detach: `aws ec2 detach-volume --volume-id $my_vol`
-
 
 ## Obtain instance IDs and public DNS names
 Use the GUI or use AWS CLI:
@@ -303,7 +305,6 @@ Command: `aws ec2 reboot-instances --instance-ids i-0d86fdc0f57011ddb`
 ## Attach an existing EBS volume to an instance
 `aws ec2 attach-volume --device /dev/sdf --volume-id vol-06b98fbf3036e350d --instance-id i-0d86fdc0f57011ddb`
 
-
 ## Manually mount a previously mounted EBS volume (optional)
 Steps required to manually mount an EBS volume mounted previously (e.g. after a reboot) and is attached to the instance:
 
@@ -323,7 +324,6 @@ Steps required to ensure an attached EBS volume is mounted automatically after a
 6. Check before rebooting: `sudo mount -a`
 7. Exit the instance
 8. Reboot the instance: `aws ec2 reboot-instances --instance-ids $my_ins`
-
 
 # Errors
 - Host key verification failed. -> delete IP address from ~/.ssh/known_hosts: `sudo nano ~/.ssh/known_hosts`
