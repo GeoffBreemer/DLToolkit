@@ -61,12 +61,13 @@ The folders below contain toolkit specific code, settings for more elaborate exa
   - `kaggle_cats_and_dogs.py` for Kaggle's Dogs vs Cats [competition](https://www.kaggle.com/c/dogs-vs-cats)
   - `kaggle_data_science_bowl_2018.ipynb` for Kaggle's Data Science Bowl 2018 [competition](https://www.kaggle.com/c/data-science-bowl-2018)
   - `/retina`: semantic segmentation using a U-Net, partially based on [this](https://github.com/orobix/retina-unet) repository. Does not produce winning results and is not production-ready code, but does quite well considering the minimal data augmentation and hardly any hyper parameter tuning was used. Comes in Keras and TensorFlow versions.
-- `/thesis`: UNet and 3D UNet based semantic segmentation of cerebral blood vessels in MRA images.
+- `scripts`: various bash scripts to interact with Amazon Web Services (used to train deep models).
+- `thesis`: UNet and 3D UNet based semantic segmentation of cerebral blood vessels in MRA images.
 
 The folders below are not included on GitHub due to their (potential) size and/or because they contain output data created by the various examples:
 
 - `data`: contains data sets.
-- `output`: JSON files, plots etc. created by the examples.
+- `output`: JSON files, plots etc..
 - `savedmodels`: saved Keras models.
 
 ## Acknowledgments
