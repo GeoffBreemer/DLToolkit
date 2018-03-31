@@ -62,18 +62,16 @@ class HDF5Generator:
 
 
 class HDF5Generator_Segment:
-    def __init__(self, image_db_path, mask_db_path, batch_size, num_classes, data_gen_args=None, augment=None, feat_key="X", label_key="Y"):
+    def __init__(self, image_db_path, mask_db_path, batch_size, num_classes, converter=None, data_gen_args=None, feat_key="X"):
         self._batch_size = batch_size
-        self._augment = augment
 
         # Open the database
         self._db_image = h5py.File(image_db_path, "r")
         self._db_mask = h5py.File(mask_db_path, "r")
-        self._num_classes = num_classes
 
-        self.data_gen_args = data_gen_args
 
         # Create data generators if parameters were provided
+        self.data_gen_args = data_gen_args
         if not data_gen_args is None:
             self.image_datagen = ImageDataGenerator(**data_gen_args)
             self.mask_datagen = ImageDataGenerator(**data_gen_args)
@@ -81,13 +79,15 @@ class HDF5Generator_Segment:
             self.image_datagen = None
             self.mask_datagen = None
 
+        self._num_classes = num_classes
         self._num_images = self._db_image[feat_key].shape[0]
         self._feat_key = feat_key
+        self._converter = converter
 
     def num_images(self):
         return self._num_images
 
-    def generator(self, converter, settings, num_epochs=np.inf):
+    def generator(self, num_epochs=np.inf):
         """Generate batches of data"""
         epochs = 0
         RANDOM_STATE = 42
@@ -103,16 +103,11 @@ class HDF5Generator_Segment:
                     seed = RANDOM_STATE*epochs
 
                     imgs = next(self.image_datagen.flow(imgs, batch_size=self._batch_size, shuffle=True, seed=seed))
-                    # imgs = next(self.image_datagen.flow(imgs, batch_size=self._batch_size, shuffle=True))
                     masks = next(self.mask_datagen.flow(masks, batch_size=self._batch_size, shuffle=True, seed=seed))
-                    # masks = next(self.mask_datagen.flow(masks, batch_size=self._batch_size, shuffle=True))
 
-                # the_generator = zip(train_image_gen, train_mask_gen)
-                # (imgs, masks) = next(the_generator)
-
-                # Convert masks to UNet format
-                if not converter is None:
-                    masks = converter(masks, settings)
+                # Convert masks to the format produced by the segmentation model
+                if not self._converter is None:
+                    masks = self._converter(masks, self._num_classes)
 
                 # Return
                 yield (imgs, masks)

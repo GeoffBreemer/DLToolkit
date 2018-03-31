@@ -146,7 +146,79 @@ def convert_pred_to_img_3D(pred, verbose=False):
 
 
 # U-Net conversions
-def convert_img_to_pred(ground_truths, settings, verbose=False):
+def convert_img_to_pred(ground_truths, num_classes, verbose=False):
+    """Convert an array of grayscale images with shape (-1, height, width, 1) to an array of the same length with
+    shape (-1, height, width, num_classes).
+    :param ground_truths: array of grayscale images, pixel values are integers 0 (background) or 255 (blood vessels)
+    :param settings:
+    :param verbose: True if additional information is to be printed to the console during training
+    :return: one-hot encoded version of the image
+    """
+
+    start_time = time.time()
+
+    # Convert 0 to 0 and 255 to 1, then perform one-hot encoding and squeeze the single-dimension
+    tmp_truths = ground_truths/255
+    new_masks = (np.arange(num_classes) == tmp_truths[..., None]).astype(np.uint8)
+    new_masks = np.squeeze(new_masks, axis=3)
+
+    if verbose:
+        print("Elapsed time: {}".format(time.time() - start_time))
+
+    return new_masks
+
+
+    start_time = time.time()
+
+    img_height = ground_truths.shape[1]
+    img_width = ground_truths.shape[2]
+
+    new_masks = np.empty((ground_truths.shape[0], img_height, img_width, settings.NUM_CLASSES), dtype=np.uint8)
+
+    for image in range(ground_truths.shape[0]):
+        if image != 0 and verbose and image % 1000 == 0:
+            print("Processed {}/{}".format(image, ground_truths.shape[0]))
+
+        for pix_h in range(img_height):
+            for pix_w in range(img_width):
+                if ground_truths[image, pix_h, pix_w] == settings.MASK_BACKGROUND:
+                    new_masks[image, pix_h, pix_w, settings.ONEHOT_BACKGROUND] = 1
+                    new_masks[image, pix_h, pix_w, settings.ONEHOT_BLOODVESSEL] = 0
+                else:
+                    new_masks[image, pix_h, pix_w, settings.ONEHOT_BACKGROUND] = 0
+                    new_masks[image, pix_h, pix_w, settings.ONEHOT_BLOODVESSEL] = 1
+
+    if verbose:
+        print("Elapsed time: {}".format(time.time() - start_time))
+
+    return new_masks
+
+
+def convert_pred_to_img(pred, verbose=False):
+    """Convert U-Net predictions from (-1, height, width, num_classes) to (-1, height, width, 1)"""
+    start_time = time.time()
+
+    # print("pred shape: {}".format(pred.shape))
+    # ix = 120
+    # print(pred[0, ix:(ix+11), 100, 0, :])
+
+    # Determine the class label for each pixel for all images
+    pred_images = (np.argmax(pred, axis=-1)*255).astype(np.uint8)
+
+    # print("pred images shape 1: {}".format(pred_images.shape))
+    # print(pred_images[0, ix:(ix+11), 100, 0])
+
+    # Add a dimension for the color channel
+    pred_images = np.reshape(pred_images, tuple(pred_images.shape[0:3]) + (1,))
+    # print("pred images shape 2: {}".format(pred_images.shape))
+
+    if verbose:
+        print("Elapsed time: {}".format(time.time() - start_time))
+
+    return pred_images
+
+
+def convert_img_to_pred_WORKS(ground_truths, settings, verbose=False):
     """Convert an array of grayscale images with shape (-1, height, width, 1) to an array of the same length with
     shape (-1, height, width, num_classes).
     :param ground_truths: array of grayscale images, pixel values are integers 0 (background) or 255 (blood vessels)
@@ -180,7 +252,7 @@ def convert_img_to_pred(ground_truths, settings, verbose=False):
     return new_masks
 
 
-def convert_pred_to_img(pred, settings, threshold=0.5, verbose=False):
+def convert_pred_to_img_WORKS(pred, settings, threshold=0.5, verbose=False):
     """Convert U-Net predictions from (-1, height, width, num_classes) to (-1, height, width, 1)"""
     start_time = time.time()
 

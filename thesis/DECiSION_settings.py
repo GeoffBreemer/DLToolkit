@@ -10,10 +10,12 @@ HDF5_EXT = ".h5"
 HDF5_KEY = "image"
 
 # Image dimensions
-IMG_HEIGHT = 320            # original image height (prior to any pre-processing)
-IMG_WIDTH = 320             # original image width (prior to any pre-processing)
+IMG_HEIGHT = 240            # image height (after cropping)
+IMG_WIDTH = 240             # image width (after cropping)
 IMG_CHANNELS = 1            # number of channels for the images and ground truths (i.e. gray scale)
 NUM_CLASSES = 2             # number of classes to segment
+IMG_CROP_HEIGHT = 40        # number of pixels to crop from BOTH the top and the bottom
+IMG_CROP_WIDTH = 40         # number of pixels to crop from BOTH the left and the right
 
 MASK_BINARY_THRESHOLD = 20      # Pixel intensities above this value are considered blood vessels
 CLASS_WEIGHT_BACKGROUND = 1.
@@ -28,8 +30,8 @@ ONEHOT_BLOODVESSEL = 1
 # SLICE_END = 79
 
 # AWS:
-SLICE_START = 0
-SLICE_END = 95
+SLICE_START = 59
+SLICE_END = 69
 
 # Training hyper parameters
 TRN_BATCH_SIZE = 1
@@ -39,7 +41,7 @@ TRN_TRAIN_VAL_SPLIT = 0.1       # Percentage of training data to use for the val
 TRN_DROPOUT_RATE = 0.0          # Dropout rate used for all DropOut layers
 TRN_MOMENTUM = 0.99
 TRN_PRED_THRESHOLD = 0.5        # Pixel intensities that exceed the threshold are considered a positive detection
-TRN_EARLY_PATIENCE = 4          # Early stopping patience
+TRN_EARLY_PATIENCE = 6          # Early stopping patience
 
 # Miscellaneous
 VERBOSE = True

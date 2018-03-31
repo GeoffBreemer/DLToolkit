@@ -46,6 +46,15 @@ def standardise(imgs):
     return imgs_standardised.astype("float32")
 
 
+def normalise_single(img):
+    """Normalise an array of RGB images, values are float32 between 0.0 and 255.0"""
+    # img_normalized = np.empty(img.shape)
+    #
+    img_normalized = ((img - np.min(img)) / (np.max(img)-np.min(img)))
+
+    return img_normalized.astype("uint8")
+    # return img_normalized.astype("float32")
+
 def normalise(imgs):
     """Normalise an array of RGB images, values are float32 between 0.0 and 255.0"""
     imgs_normalized = np.empty(imgs.shape)
@@ -65,8 +74,24 @@ def clahe_equalization(imgs):
     for i in range(imgs.shape[0]):
         imgs_equalized[i,0] = clahe.apply(np.array(imgs[i,0], dtype = np.uint8))
 
-    return imgs_equalized.astype("uint8")
+    return imgs_equalized.astype("float32")
+    # return imgs_equalized.astype("uint8")
 
+
+def clahe_equalization_single(img):
+    """Apply CLAHE (Contrast Limited Adaptive Histogram Equalization) to an array of images"""
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+
+    # imgs_equalized = np.empty(imgs.shape)
+
+    print("prior: {}".format(img.shape))
+
+    img_equalized = clahe.apply(np.array(img, dtype = np.uint8))
+
+    print("after: {}".format(img.shape))
+
+    return img_equalized.astype("float32")
+    # return imgs_equalized.astype("uint8")
 
 def adjust_gamma(imgs, gamma=1.0):
     """Apply gamma adjustment"""
@@ -79,3 +104,12 @@ def adjust_gamma(imgs, gamma=1.0):
         new_imgs[i,0] = cv2.LUT(np.array(imgs[i,0], dtype = np.uint8), table)
 
     return new_imgs.astype("uint8")
+
+def adjust_gamma_single(img, gamma=1.0):
+    """Apply gamma adjustment"""
+    invGamma = 1.0 / gamma
+    table = np.array([((i / 255.0) ** invGamma) * 255 for i in np.arange(0, 256)]).astype("uint8")
+
+    new_img = cv2.LUT(np.array(img, dtype = np.uint8), table)
+
+    return new_img.astype("uint8")
