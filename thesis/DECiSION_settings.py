@@ -41,7 +41,7 @@ TRN_TRAIN_VAL_SPLIT = 0.1       # Percentage of training data to use for the val
 TRN_DROPOUT_RATE = 0.0          # Dropout rate used for all DropOut layers
 TRN_MOMENTUM = 0.99
 TRN_PRED_THRESHOLD = 0.5        # Pixel intensities that exceed the threshold are considered a positive detection
-TRN_EARLY_PATIENCE = 6          # Early stopping patience
+TRN_EARLY_PATIENCE = 10          # Early stopping patience
 
 # Miscellaneous
 VERBOSE = True

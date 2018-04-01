@@ -104,12 +104,3 @@ def adjust_gamma(imgs, gamma=1.0):
         new_imgs[i,0] = cv2.LUT(np.array(imgs[i,0], dtype = np.uint8), table)
 
     return new_imgs.astype("uint8")
-
-def adjust_gamma_single(img, gamma=1.0):
-    """Apply gamma adjustment"""
-    invGamma = 1.0 / gamma
-    table = np.array([((i / 255.0) ** invGamma) * 255 for i in np.arange(0, 256)]).astype("uint8")
-
-    new_img = cv2.LUT(np.array(img, dtype = np.uint8), table)
-
-    return new_img.astype("uint8")

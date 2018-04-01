@@ -58,7 +58,7 @@ if __name__ == "__main__":
     # predictions = np.where(predictions > 0.9, 1., 0.)
 
     # Convert predictions to images
-    predictions = convert_pred_to_img(predictions, settings, settings.TRN_PRED_THRESHOLD)
+    predictions = convert_pred_to_img(predictions, settings.TRN_PRED_THRESHOLD)
     # print(" predictions.shape AFTER conv: {} ".format(predictions.shape))
 
     if settings.IS_DEVELOPMENT:

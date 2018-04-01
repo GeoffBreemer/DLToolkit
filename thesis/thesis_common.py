@@ -201,7 +201,10 @@ def create_hdf5_db(imgs_list, dn_name, img_path, img_shape, key, ext, settings, 
             image = clahe.apply(image)
 
             # Normalise between -0.5 and 0.5
-            image = (image / 255.0 - 0.5).astype(np.float32)
+            # image = (image / 255.0 - 0.5).astype(np.float32)
+
+            # Standardise
+            image = standardise_single(image)
 
         # Reshape from (height, width) to (height, width, 1)
         image = image.reshape((img_shape[0], img_shape[1], img_shape[2]))
