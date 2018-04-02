@@ -26,24 +26,33 @@ ONEHOT_BACKGROUND = 0
 ONEHOT_BLOODVESSEL = 1
 
 # Local:
-# SLICE_START = 69
-# SLICE_END = 79
-
-# AWS:
 SLICE_START = 59
 SLICE_END = 69
+
+# Local CV:
+# SLICE_START = 59
+# SLICE_END = 70
+
+# AWS:
+# SLICE_START = 0
+# SLICE_END = 95
 
 # Training hyper parameters
 TRN_BATCH_SIZE = 1
 TRN_LEARNING_RATE = 0.001
-TRN_NUM_EPOCH = 100              #10  #10 #30 #7
+TRN_NUM_EPOCH = 100
 TRN_TRAIN_VAL_SPLIT = 0.1       # Percentage of training data to use for the validation set
+# TRN_TRAIN_VAL_SPLIT = 0       # Percentage of training data to use for the validation set
 TRN_DROPOUT_RATE = 0.0          # Dropout rate used for all DropOut layers
 TRN_MOMENTUM = 0.99
 TRN_PRED_THRESHOLD = 0.5        # Pixel intensities that exceed the threshold are considered a positive detection
-TRN_EARLY_PATIENCE = 10          # Early stopping patience
+TRN_EARLY_PATIENCE = 10         # Early stopping patience
+TRN_NUM_KFOLD_SPLITS = 5
 
 # Miscellaneous
 VERBOSE = True
-IS_DEVELOPMENT = True
+IS_DEVELOPMENT = True           # Set to True during development, False to apply the pipeline to unseen images without
+                                # ground truths (i.e. inference mode)
+IS_MODEL_EVALUATION = False     # Set to True when applying the pipeline to test images WITH ground truths, False to
+                                # use training images for pipeline validation
 RANDOM_STATE = 122177

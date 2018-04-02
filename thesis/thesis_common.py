@@ -164,6 +164,10 @@ def create_hdf5_db(imgs_list, dn_name, img_path, img_shape, key, ext, settings, 
     output_path = os.path.join(os.path.dirname(img_path), tmp_name) + ext
     print(output_path)
 
+    if len(imgs_list) == 0:
+        print("No images found, not creating HDF5 file")
+        return ""
+
     # Prepare the HDF5 writer, which expects a label vector. Because this is a segmentation problem just pass None
     # hdf5_writer = HDF5Writer((len(imgs_list), img_shape[0], img_shape[1], img_shape[2]), output_path,
     hdf5_writer = HDF5Writer(((len(imgs_list),) + img_shape),
@@ -240,49 +244,28 @@ def convert_img_to_pred(ground_truths, num_classes, verbose=False):
     return new_masks
 
 
+def convert_pred_to_img(pred, threshold=0.5, verbose=False):
+    """Convert U-Net predictions from (-1, height, width, num_classes) to (-1, height, width, 1) and
+    assign one of the two labels to each pixel. The threshold is used to set the minimum probability
+    required to be assigned the blood vessel class. Use a threshold of 0.5 to go with the class that has the
+    highest probability. Use a higher (or lower) threshold to require the model to be more confident about
+    blood vessel classes."""
     start_time = time.time()
 
-    img_height = ground_truths.shape[1]
-    img_width = ground_truths.shape[2]
-
-    new_masks = np.empty((ground_truths.shape[0], img_height, img_width, settings.NUM_CLASSES), dtype=np.uint8)
-
-    for image in range(ground_truths.shape[0]):
-        if image != 0 and verbose and image % 1000 == 0:
-            print("Processed {}/{}".format(image, ground_truths.shape[0]))
-
-        for pix_h in range(img_height):
-            for pix_w in range(img_width):
-                if ground_truths[image, pix_h, pix_w] == settings.MASK_BACKGROUND:
-                    new_masks[image, pix_h, pix_w, settings.ONEHOT_BACKGROUND] = 1
-                    new_masks[image, pix_h, pix_w, settings.ONEHOT_BLOODVESSEL] = 0
-                else:
-                    new_masks[image, pix_h, pix_w, settings.ONEHOT_BACKGROUND] = 0
-                    new_masks[image, pix_h, pix_w, settings.ONEHOT_BLOODVESSEL] = 1
-
-    if verbose:
-        print("Elapsed time: {}".format(time.time() - start_time))
-
-    return new_masks
-
-
-def convert_pred_to_img(pred, verbose=False):
-    """Convert U-Net predictions from (-1, height, width, num_classes) to (-1, height, width, 1)"""
-    start_time = time.time()
-
-    # print("pred shape: {}".format(pred.shape))
-    # ix = 120
-    # print(pred[0, ix:(ix+11), 100, 0, :])
+    # Set pixels with intensities greater than the threshold to the blood vessel class,
+    # all other pixels to the background class
+    idx = pred[:, :, :, 1] > threshold
+    local_pred = pred.copy()
+    local_pred[idx, 1] = 1
+    local_pred[idx, 0] = 0
+    local_pred[~idx, 1] = 0
+    local_pred[~idx, 0] = 1
 
     # Determine the class label for each pixel for all images
-    pred_images = (np.argmax(pred, axis=-1)*255).astype(np.uint8)
-
-    # print("pred images shape 1: {}".format(pred_images.shape))
-    # print(pred_images[0, ix:(ix+11), 100, 0])
+    pred_images = (np.argmax(local_pred, axis=-1) * 255).astype(np.uint8)
 
     # Add a dimension for the color channel
     pred_images = np.reshape(pred_images, tuple(pred_images.shape[0:3]) + (1,))
-    # print("pred images shape 2: {}".format(pred_images.shape))
 
     if verbose:
         print("Elapsed time: {}".format(time.time() - start_time))
