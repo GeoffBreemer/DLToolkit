@@ -51,7 +51,7 @@ TRN_NUM_KFOLD_SPLITS = 5
 
 # Miscellaneous
 VERBOSE = True
-IS_DEVELOPMENT = False           # Set to True during development, False to apply the pipeline to unseen images without
+IS_DEVELOPMENT = True           # Set to True during development, False to apply the pipeline to unseen images without
                                 # ground truths (i.e. inference mode)
 IS_MODEL_EVALUATION = False     # Set to True when applying the pipeline to test images WITH ground truths, False to
                                 # use training images for pipeline validation

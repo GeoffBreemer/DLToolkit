@@ -15,7 +15,7 @@ from dltoolkit.nn.segment import UNet_3D_NN
 from dltoolkit.utils.visual import plot_training_history
 
 from thesis_common import read_preprocess_image, read_preprocess_groundtruth, \
-    convert_img_to_pred_3D, convert_pred_to_img_3D, convert_to_hdf5_3D
+    convert_img_to_pred_3D, convert_pred_to_img_3D, create_hdf5_db_3D
 from thesis_metric_loss import dice_coef, weighted_pixelwise_crossentropy_loss, focal_loss
 
 from keras.callbacks import ModelCheckpoint, EarlyStopping, CSVLogger
@@ -42,34 +42,32 @@ def perform_hdf5_conversion_3D(settings):
 
     print("training images")
     # Convert training images in each sub folder to a single HDF5 file
-    output_paths.append(convert_to_hdf5_3D(os.path.join(settings.TRAINING_PATH, settings.FLDR_IMAGES),
+    output_paths.append(create_hdf5_db_3D(os.path.join(settings.TRAINING_PATH, settings.FLDR_IMAGES),
                                         (settings.IMG_HEIGHT, settings.IMG_WIDTH, settings.IMG_CHANNELS),
                                         img_exts=".jpg", key=settings.HDF5_KEY, ext=settings.HDF5_EXT,
                                         settings=settings))
 
     print("training ground truths")
     # Training ground truths
-    path, class_weights = convert_to_hdf5_3D(os.path.join(settings.TRAINING_PATH, settings.FLDR_GROUND_TRUTH),
+    output_paths.append(create_hdf5_db_3D(os.path.join(settings.TRAINING_PATH, settings.FLDR_GROUND_TRUTH),
                                         (settings.IMG_HEIGHT, settings.IMG_WIDTH, settings.IMG_CHANNELS),
                                         img_exts=".jpg", key=settings.HDF5_KEY, ext=settings.HDF5_EXT,
-                                        settings=settings, is_mask=True)
-
-    output_paths.append(path)
+                                        settings=settings, is_mask=True))
 
     # Do the same for the test images
     print("test images")
-    output_paths.append(convert_to_hdf5_3D(os.path.join(settings.TEST_PATH, settings.FLDR_IMAGES),
+    output_paths.append(create_hdf5_db_3D(os.path.join(settings.TEST_PATH, settings.FLDR_IMAGES),
                                         (settings.IMG_HEIGHT, settings.IMG_WIDTH, settings.IMG_CHANNELS),
                                         img_exts=".jpg", key=settings.HDF5_KEY, ext=settings.HDF5_EXT,
                                         settings=settings))
 
-    return output_paths, class_weights
+    return output_paths
 
 
 if __name__ == "__main__":
     if settings.IS_DEVELOPMENT:
         print("\n--- Converting images to HDF5")
-        hdf5_paths, class_weights = perform_hdf5_conversion_3D(settings)
+        hdf5_paths = perform_hdf5_conversion_3D(settings)
     else:
         # During development avoid performing HDF5 conversion for every run
         hdf5_paths = ["../data/MSC8002/training_3d/images.h5",
@@ -86,8 +84,8 @@ if __name__ == "__main__":
     PATIENT_ID = 0
     IX_START = 0
     print(train_imgs.shape)
-    cv2.imshow("CHECK image", train_imgs[PATIENT_ID, :, :, IX_START, :])
     cv2.imshow("CHECK ground truth", train_grndtr[PATIENT_ID, :, :, IX_START, :])
+    cv2.imshow("CHECK image", train_imgs[PATIENT_ID, :, :, IX_START, :])
     print("Max image intensity: {} - {} - {}".format(np.max(train_imgs[PATIENT_ID, :, :, IX_START, :]),
                                                             train_imgs.dtype,
                                                             train_imgs.shape))
@@ -95,12 +93,13 @@ if __name__ == "__main__":
                                                             train_grndtr.dtype,
                                                             train_grndtr.shape))
 
-
     lala = train_imgs[PATIENT_ID, :, :, IX_START, :]
     print(lala.shape)
     print(lala[120:120+10, 100])
 
     cv2.waitKey(0)
+
+    exit()
 
     # Only train using a small number of images to test the pipeline
     print("\n--- Limiting training set size for pipeline testing")

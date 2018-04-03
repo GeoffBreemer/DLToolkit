@@ -124,6 +124,7 @@ def plot_precision_recall_curve(ground_truth_imgs, predictions, num_classes, sho
 
     precision = np.fliplr([precision])[0]
     recall = np.fliplr([recall])[0]
+
     AUC_prec_rec = np.trapz(precision, recall)
 
     print("\nArea under Precision-Recall curve: " + str(AUC_prec_rec))

@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 
 # 3D U-Net conversions
-def convert_to_hdf5_3D(img_path, img_shape, img_exts, key, ext, settings, is_mask=False):
+def create_hdf5_db_3D(img_path, img_shape, img_exts, key, ext, settings, is_mask=False):
     """Convert images present in `img_path` to HDF5 format. The HDF5 file is saved one sub folder up from where the
     images are located. Masks are binary tresholded to be 0 for background pixels and 255 for blood vessels. Images
     (slices) are expected to be stored in subfolders (volumes), one for each patient.
@@ -22,6 +22,8 @@ def convert_to_hdf5_3D(img_path, img_shape, img_exts, key, ext, settings, is_mas
     :param is_mask: True when converting masks/ground truths, False when converting images
     :return: full path to the generated HDF5 file, class_weights (masks/ground truths only)
     """
+    num_slices = settings.SLICE_END - settings.SLICE_START
+
     # Path to the HDF5 file
     output_path = os.path.join(os.path.dirname(img_path), os.path.basename(img_path)) + ext
 
@@ -29,13 +31,16 @@ def convert_to_hdf5_3D(img_path, img_shape, img_exts, key, ext, settings, is_mas
     patient_folders = sorted([os.path.join(img_path, e.name) for e in os.scandir(img_path) if e.is_dir()])
 
     # Prepare the HDF5 writer, which expects a label vector. Because this is a segmentation problem just pass None
-    hdf5_writer = HDF5Writer((len(patient_folders), settings.NUM_SLICES_TOTAL) + img_shape, output_path,
+    hdf5_writer = HDF5Writer((len(patient_folders), num_slices) + img_shape,
+                             output_path,
                              feat_key=key,
                              label_key=None,
                              del_existing=True,
                              buf_size=len(patient_folders),
-                             dtype_feat="f" if not is_mask else "i8")
-    classcounts = [0] * settings.NUM_CLASSES
+                             dtype_feat=np.float32 if not is_mask else np.uint8)
+
+    # Prepare for CLAHE histogram equalization
+    clahe = cv2.createCLAHE(clipLimit=2, tileGridSize=(16, 16))
 
     # Loop through all images
     widgets = ["Creating HDF5 database ", progressbar.Percentage(), " ", progressbar.Bar(), " ", progressbar.ETA()]
@@ -43,56 +48,41 @@ def convert_to_hdf5_3D(img_path, img_shape, img_exts, key, ext, settings, is_mas
 
     # Loop through each patient subfolder
     for patient_ix, p_folder in enumerate(patient_folders):
-        imgs_list = sorted(list(list_images(basePath=p_folder, validExts=img_exts)))
-        # imgs = np.zeros((settings.NUM_SLICES_TOTAL, img_shape[0], img_shape[1], img_shape[2]), dtype=np.float32)
-        imgs = np.zeros((settings.NUM_SLICES_TOTAL, img_shape[0], img_shape[1], img_shape[2]), dtype=np.uint8)
+        imgs_list = sorted(list(list_images(basePath=p_folder, validExts=img_exts)))[settings.SLICE_START:settings.SLICE_END]
+        imgs = np.zeros((num_slices, img_shape[0], img_shape[1], img_shape[2]), dtype=np.float32)
 
         # Read each slice in the current patient's folder
         for slice_ix, slice_img in enumerate(imgs_list):
             image = cv2.imread(slice_img, cv2.IMREAD_GRAYSCALE)
 
+            # Crop to the region of interest
+            image = image[settings.IMG_CROP_HEIGHT:image.shape[0] - settings.IMG_CROP_HEIGHT,
+                    settings.IMG_CROP_WIDTH:image.shape[1] - settings.IMG_CROP_WIDTH]
+
             # Apply any preprocessing
             if is_mask:
                 # Apply binary thresholding to ground truth masks
-                _, image = cv2.threshold(image, settings.MASK_BINARY_THRESHOLD, settings.MASK_BLOODVESSEL, cv2.THRESH_BINARY)
+                _, image = cv2.threshold(image, settings.MASK_BINARY_THRESHOLD, settings.MASK_BLOODVESSEL,
+                                         cv2.THRESH_BINARY)
+            else:
+                # Apply CLAHE histogram equalization
+                image = clahe.apply(image)
 
-                # Count the number of class occurrences in the ground truth image
-                for ix, cl in enumerate([settings.MASK_BACKGROUND, settings.MASK_BLOODVESSEL]):
-                    classcounts[ix] += len(np.where(image == cl)[0])
-            # else:
-            # Standardise the images
-            #     image = mean_subtraction(image)
-            #     image = image/255.
-                # image = standardise_single(image)
-                # pass
+                # Standardise
+                image = standardise_single(image)
 
             # Reshape from (height, width) to (height, width, 1)
             image = image.reshape((img_shape[0], img_shape[1], img_shape[2]))
             imgs[slice_ix] = image
 
-        ########################################
-        # if not is_mask:
-        #     print("prior group std during CONV:{} - {}".format(imgs.shape, imgs.dtype))
-        #     imgs = standardise(imgs)
-        #     print("after group std during CONV:{} - {}".format(imgs.shape, imgs.dtype))
-        ########################################
-
         # Write all slices for the current patient
         hdf5_writer.add([imgs], None)
         pbar.update(patient_ix)
 
-    if is_mask:
-        total = sum(classcounts)
-        for ix in range(settings.NUM_CLASSES):
-            classcounts[ix] = int(total / classcounts[ix])
-
     pbar.finish()
     hdf5_writer.close()
 
-    if is_mask:
-        return output_path, classcounts
-    else:
-        return output_path
+    return output_path
 
 
 def convert_img_to_pred_3D(ground_truths, num_classes, verbose=False):
@@ -114,7 +104,7 @@ def convert_img_to_pred_3D(ground_truths, num_classes, verbose=False):
     return new_masks
 
 
-def convert_pred_to_img_3D(pred, verbose=False):
+def convert_pred_to_img_3D(pred, threshold=0.5, verbose=False):
     """Convert 3D UNet predictions to images, changing the shape from (-1, height, width, slices, num_classes) to
     (-1, slices, height, width, 1). The assumption is that only two classes are used and that they are 0 (background)
     and 255 (blood vessels). This function will not generalize to more classes and/or different class labels in its
@@ -122,12 +112,20 @@ def convert_pred_to_img_3D(pred, verbose=False):
     """
     start_time = time.time()
 
-    # print("pred shape: {}".format(pred.shape))
-    # ix = 120
-    # print(pred[0, ix:(ix+11), 100, 0, :])
+    # Set pixels with intensities greater than the threshold to the blood vessel class,
+    # all other pixels to the background class
+    idx = pred[:, :, :, :, 1] > threshold
+    local_pred = pred.copy()
+    local_pred[idx, 1] = 1
+    local_pred[idx, 0] = 0
+    local_pred[~idx, 1] = 0
+    local_pred[~idx, 0] = 1
+
+    pred_images = (np.argmax(local_pred, axis=-1)*255).astype(np.uint8)
+
 
     # Determine the class label for each pixel for all images
-    pred_images = (np.argmax(pred, axis=-1)*255).astype(np.uint8)
+    # pred_images = (np.argmax(pred, axis=-1)*255).astype(np.uint8)
 
     # print("pred images shape 1: {}".format(pred_images.shape))
     # print(pred_images[0, ix:(ix+11), 100, 0])
@@ -169,7 +167,6 @@ def create_hdf5_db(imgs_list, dn_name, img_path, img_shape, key, ext, settings, 
         return ""
 
     # Prepare the HDF5 writer, which expects a label vector. Because this is a segmentation problem just pass None
-    # hdf5_writer = HDF5Writer((len(imgs_list), img_shape[0], img_shape[1], img_shape[2]), output_path,
     hdf5_writer = HDF5Writer(((len(imgs_list),) + img_shape),
                              output_path=output_path,
                              feat_key=key,
@@ -336,12 +333,6 @@ def read_preprocess_image(image_path, key, is_3D=False):
 
     # Permute array dimensions for the 3D U-Net model so that the shape becomes: (-1, height, width, slices, channels)
     if is_3D:
-        # Standardise
-        # print("prior group std during READ:{} - {}".format(imgs.shape, imgs.dtype))
-        imgs = standardise(imgs)
-        # imgs = mean_subtraction(imgs)
-        # print("after group std during READ:{} - {}".format(imgs.shape, imgs.dtype))
-
         imgs = np.transpose(imgs, axes=(0, 2, 3, 1, 4))
 
     return imgs
@@ -426,6 +417,7 @@ def group_images(imgs, num_per_row, empty_color=255, show=False, save_path=None)
 
 
 def show_image(img, title):
+    """Display an image and give it a title"""
     plt.imshow(img, cmap='gray')
     plt.axis('off')
     plt.grid(False)
@@ -435,10 +427,39 @@ def show_image(img, title):
 
 # Parameter parsing
 def model_name_from_arguments():
-    """Return the full path of the model to be used for making predictions"""
+    """Return the full path of the model for making predictions by parsing script arguments"""
     ap = argparse.ArgumentParser()
     ap.add_argument("-m", "--model", type=str, nargs='?',
                     const=True, required=True, help="Set to the full path of the trained model to use")
     args = vars(ap.parse_args())
 
     return args["model"]
+
+
+def print_training_info(unet, model_path, input_shape, settings, opt=None, loss=None):
+    """Print useful training and hyper parameter info to the console"""
+    print("\nGeneric information:")
+    print("              Model: {}".format(unet.title))
+    print("          Saving to: {}".format(model_path))
+    print("        Input shape: {}".format(input_shape))
+    print("\nHyper parameters:")
+    print("          Optimizer: {}".format(opt.get_config()))
+    print("               Loss: {}".format(loss))
+    print("         IMG_HEIGHT: {}".format(settings.IMG_HEIGHT))
+    print("          IMG_WIDTH: {}".format(settings.IMG_WIDTH))
+    print("       IMG_CHANNELS: {}".format(settings.IMG_CHANNELS))
+    print("        NUM_CLASSES: {}".format(settings.NUM_CLASSES))
+    print("        SLICE_START: {}".format(settings.SLICE_START))
+    print("          SLICE_END: {}".format(settings.SLICE_END))
+    print("    IMG_CROP_HEIGHT: {}".format(settings.IMG_CROP_HEIGHT))
+    print("     IMG_CROP_WIDTH: {}".format(settings.IMG_CROP_WIDTH))
+
+    print("     TRN_BATCH_SIZE: {}".format(settings.TRN_BATCH_SIZE))
+    print("  TRN_LEARNING_RATE: {}".format(settings.TRN_LEARNING_RATE))
+    print("      TRN_NUM_EPOCH: {}".format(settings.TRN_NUM_EPOCH))
+    print("TRN_TRAIN_VAL_SPLIT: {}".format(settings.TRN_TRAIN_VAL_SPLIT))
+    print("   TRN_DROPOUT_RATE: {}".format(settings.TRN_DROPOUT_RATE))
+    print("       TRN_MOMENTUM: {}".format(settings.TRN_MOMENTUM))
+    print(" TRN_PRED_THRESHOLD: {}".format(settings.TRN_PRED_THRESHOLD))
+    print(" TRN_EARLY_PATIENCE: {}".format(settings.TRN_EARLY_PATIENCE))
+    print("\n")

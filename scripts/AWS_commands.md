@@ -10,15 +10,15 @@
 	`aws ec2 start-instances --instance-ids $my_ins`
 
 	or:
-	
+
 	`. gb_start.sh`
-	
+
 3. Connect to the instance:
 
 	`ssh -i $my_pem ubuntu@$my_dns`
-	
+
 	or:
-	
+
 	`. gb_connect.sh`
 
 3. Tunnel to the instance:
@@ -32,7 +32,7 @@
 5. Copy source files TO the server (`data` and source files only):
 
 	`. gb_copy_source.sh`
-	
+
 	`. gb_copy_data.sh`
 
 	or manually:
@@ -46,13 +46,13 @@
 7. Copy files FROM the server:
 
 	`. gb_download_output.sh`
-	
+
 	`. gb_download_savedmodels.sh`
-	
+
 	`. gb_download_source.sh`
 
 	or manually:
-	
+
 	`scp -i $my_pem ubuntu@$my_dns:~/dl/thesis/* .`
 
 8. Stop the EC2 instance:
@@ -60,9 +60,9 @@
 	`aws ec2 stop-instances --instance-ids $my_ins`
 
 	or:
-	
+
 	`. gb_stop.sh`
-	
+
 ## Instance
 
 1. Activate the conda environment:
@@ -72,6 +72,14 @@
 2. Start Jupyter Notebook:
 
 	`jupyter notebook`
+
+3. UNIX commands:
+
+	- GPU info: `nvidia-smi`
+
+	- memory info: `free -m`
+
+	- disk info: `df -h`
 
 # AWS setup (one-off)
 1. Login to AWS using IAM via: `https://874168575858.signin.aws.amazon.com/console`
@@ -125,7 +133,7 @@ Includes a separate second EBS Volume containing all `DLToolkit` data and source
 
 2. Set environment variables to EC2 instance information: `. gb_server_info.sh`
 
-3. NO LONGER NEEDED: Create the EBS volume and attach it to the instance: `. gb_create_ebs.sh`
+3. Separate EBS volume ONLY: Create the EBS volume and attach it to the instance: `. gb_create_ebs.sh`
 
 4. Connect to the instance: `ssh -i $my_pem ubuntu@$my_dns` or `. gb_connect.sh`
 
@@ -155,31 +163,31 @@ Includes a separate second EBS Volume containing all `DLToolkit` data and source
       c.NotebookApp.open_browser = False
       c.NotebookApp.password = '<ENTER PASSWORD HASH>'`
 
-6. NO LONGER NEEDED: Check devices: `lsblk`
+6. Separate EBS volume ONLY: Check devices: `lsblk`
 
-7. NO LONGER NEEDED: Check if the device has a file system `sudo file -s /dev/xvdf`
+7. Separate EBS volume ONLY: Check if the device has a file system `sudo file -s /dev/xvdf`
 
-8. NO LONGER NEEDED: Create the file system: `sudo mkfs -t ext4 /dev/xvdf`
+8. Separate EBS volume ONLY: Create the file system: `sudo mkfs -t ext4 /dev/xvdf`
 
-9. NO LONGER NEEDED: Ensure current location is `/home/ubuntu`: `cd ~`
+9. Ensure the current location is `/home/ubuntu`: `cd ~`
 
-10. NO LONGER NEEDED: Create mount point: `sudo mkdir dl`
+10. Separate EBS volume ONLY: Create mount point: `sudo mkdir dl`
 
-11. NO LONGER NEEDED: Mount the EBS volume: `sudo mount /dev/xvdf ~/dl/`
+11. SKIP when using a separate EBS volume - Create folder that will contain all files: `mkdir dl`
 
-12. Create and go to the mount point: `mkdir ~/dl` and `cd ~/dl`
+12. Separate EBS volume ONLY: Mount the EBS volume: `sudo mount /dev/xvdf ~/dl/`
 
-13. NO LONGER NEEDED: Enable access: `sudo chmod go+rw .`
+13. Separate EBS volume ONLY: Enable access: `sudo chmod go+rw .`
 
-14. Create `output` subfolder: `mkdir output`
+14. Create `output` and `output/segmentation_maps` subfolders: `mkdir ~/dl/output` and `mkdir ~/dl/output/segmentation_maps`
 
-15. Create `savedmodels` subfolder: `mkdir savedmodels`
+15. Create `savedmodels` subfolder: `mkdir ~/dl/savedmodels`
 
-16. Install missing Python packages:
+16. Install missing Python packages (take a minute or two):
 
 	- `source activate tensorflow_p36`
 	- `pip install --upgrade pip`
-	- `pip install h5py sklearn progressbar2`
+	- `pip install h5py sklearn progressbar2 pydot pydot_ng graphviz`
 
 17. Add the path to the `dltoolkit` source files to `PYTHONPATH` by editing the `nano ~/.bashrc` and adding: `export PYTHONPATH=/home/ubuntu/dl:$PYTHONPATH`
 
@@ -224,7 +232,7 @@ Do not close the terminal window or the Jupyter Notebook will stop.
 ### On the **local machine** using SSL:
 
 - Tunnel to the instanc: `. gb_tunnel.sh`
-- Access Jupyter via a browser: `https://127.0.0.1:8157`
+- Access Jupyter via a browser (ignore the warning during the first logon): `https://127.0.0.1:8157`
 - Enter the SSL password, e.g.: `<password>`
 - Always use kernel `conda_tensorflow_p36`, which includes Keras
 
@@ -304,7 +312,7 @@ Command: `aws ec2 reboot-instances --instance-ids i-0d86fdc0f57011ddb`
 ## Attach an existing EBS volume to an instance
 `aws ec2 attach-volume --device /dev/sdf --volume-id vol-06b98fbf3036e350d --instance-id i-0d86fdc0f57011ddb`
 
-## Manually mount a previously mounted EBS volume (optional)
+## Manually mount a previously mounted EBS volume
 Steps required to manually mount an EBS volume mounted previously (e.g. after a reboot) and is attached to the instance:
 
 1. Connect: `ssh -i $my_pem ubuntu@$my_dns`
@@ -312,7 +320,9 @@ Steps required to manually mount an EBS volume mounted previously (e.g. after a 
 3. Check file system is present: `sudo file -s /dev/xvdf`
 4. Mount: `sudo mount /dev/xvdf ~/dl/`
 
-## Setup automatic mounting of an attached EBS volume on reboot (one-off)
+The volume will NOT be mounted again after a reboot.
+
+## Setup automatic mounting of an attached EBS volume on reboot
 Steps required to ensure an attached EBS volume is mounted automatically after a reboot:
 
 1. Set environment variables to EC2 instance information: `. gb_server_info.sh`
