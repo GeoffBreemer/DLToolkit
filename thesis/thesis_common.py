@@ -430,7 +430,7 @@ def model_name_from_arguments():
     return args["model"]
 
 
-def print_training_info(unet, model_path, input_shape, settings, opt=None, loss=None):
+def print_training_info(unet, model_path, input_shape, settings, class_weights, opt=None, loss=None):
     """Print useful training and hyper parameter info to the console"""
     print("\nGeneric information:")
     print("              Model: {}".format(unet.title))
@@ -458,4 +458,6 @@ def print_training_info(unet, model_path, input_shape, settings, opt=None, loss=
     print("       TRN_MOMENTUM: {}".format(settings.TRN_MOMENTUM))
     print(" TRN_PRED_THRESHOLD: {}".format(settings.TRN_PRED_THRESHOLD))
     print(" TRN_EARLY_PATIENCE: {}".format(settings.TRN_EARLY_PATIENCE))
+
+    print("      Class weights: {}".format(class_weights))
     print("\n")

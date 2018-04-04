@@ -19,7 +19,7 @@ IMG_CROP_WIDTH = 40         # number of pixels to crop from BOTH the left and th
 
 MASK_BINARY_THRESHOLD = 20      # Pixel intensities above this value are considered blood vessels
 CLASS_WEIGHT_BACKGROUND = 1.
-CLASS_WEIGHT_BLOODVESSEL = 10.
+CLASS_WEIGHT_BLOODVESSEL = 9.
 MASK_BACKGROUND = 0             # pixel intensity for background pixels (i.e. black)
 MASK_BLOODVESSEL = 255          # pixel intensity for vessel pixels (i.e. white)
 ONEHOT_BACKGROUND = 0
