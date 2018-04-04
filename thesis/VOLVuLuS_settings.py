@@ -14,10 +14,15 @@ IMG_HEIGHT = 240            # original image height (prior to any pre-processing
 IMG_WIDTH = 240             # original image width (prior to any pre-processing)
 IMG_CHANNELS = 1            # number of channels for the images and ground truths (i.e. gray scale)
 NUM_CLASSES = 2             # number of classes to segment
-# NUM_SLICES = 96              # number of slices fed to the 3D UNet during training
-# NUM_SLICES_TOTAL = 246      # total number of slices available in volume
-SLICE_START = 59-4         # 32 slices works, more results in OOM
+
+# Local:
+SLICE_START = 59 - 4
 SLICE_END = 59 + 4
+
+# AWS:
+# SLICE_START = 59 - 8
+# SLICE_END = 59 + 8
+
 IMG_CROP_HEIGHT = 40        # number of pixels to crop from BOTH the top and the bottom
 IMG_CROP_WIDTH = 40         # number of pixels to crop from BOTH the left and the right
 
@@ -32,7 +37,7 @@ TRN_BATCH_SIZE = 1
 TRN_LEARNING_RATE = 0.001
 TRN_NUM_EPOCH = 200
 TRN_TRAIN_VAL_SPLIT = 0.0       # Percentage of training data to use for the validation set
-TRN_DROPOUT_RATE = 0.0          # Dropout rate used for all DropOut layers
+TRN_DROPOUT_RATE = 0.5          # Dropout rate used for all DropOut layers
 TRN_MOMENTUM = 0.99
 TRN_PRED_THRESHOLD = 0.5        # Pixel intensities that exceed the threshold are considered a positive detection
 TRN_EARLY_PATIENCE = 10          # Early stopping patience

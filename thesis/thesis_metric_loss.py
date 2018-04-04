@@ -1,6 +1,4 @@
 """Keras loss and metric functions for use with model.compile(metrics=[..., "..."], loss="...")
-Helpful resources;
-
 Keras discussions:
 https://github.com/keras-team/keras/issues/3653
 https://github.com/keras-team/keras/issues/6261

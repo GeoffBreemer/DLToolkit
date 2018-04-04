@@ -1,6 +1,46 @@
 # Thesis Code
 Work in progress.
 
+## TO DO
+
+Generic:
+
+- [ ] implement baseline model
+- [x] generators
+- [x] image pre-processing
+- [ ] data augmentation offline generation script
+- [x] different opimizers ([algorithms](https://towardsdatascience.com/types-of-optimization-algorithms-used-in-neural-networks-and-ways-to-optimize-gradient-95ae5d39529f)):
+    - [x] Adam: good results
+    - [x] AdaDelta: appears to take longer to converge
+    - [x] SGD with Nesterov and Momentum 0.9: no good
+- [ ] speed up convergence:
+    - [x] kernel initialisers: bias constants, weights randomized
+    - [x] batch normalization
+- [ ] regularization:
+    - [ ] less complex models
+    - [ ] L1/L2 regularization
+    - [x] early stopping
+    - [x] small batch sizes: use 1 due to memry constraints, especially 3D UNet
+    - [ ] ensembling (7.11):
+        - [ ] bagging
+        - [ ] model averaging
+    - [x] dropout (~ bagging), possibly increase model size to offset capacity reduction, may be less effective due to small data set
+- [ ] train final model with selected hyper parameters using all training data (incl. validation data) (7.7):
+        - [ ] continue training with parameters obtained at early stopping point but now with all training data, OR:
+        - [ ] train for the same number of epochs but now with all training data
+
+- [ ] hyper parameter selection
+
+2D U-Net:
+- [ ] hyper parameter selection
+- [ ] use validation set or CV
+
+3D U-Net:
+- [ ] reduce memory usage
+- [ ] hyper parameter selection
+- [ ] use validation set or CV
+
+
 ## Getting Started
 - Download/clone the repository to a local machine
 - Add the full path to the repository to the `PYTHONPATH` environment variable (if running code from the terminal)
@@ -32,11 +72,11 @@ The research project pursues two semantic segmentation models:
 1. A variation of **U-Net** ([Ronneberger 2015](#references)) named DECiSION
 2. A variation of **3D U-Net** ([Çiçek 2016](#references)) named VOLVuLuS
 
-Code to train and test each model comes in three `.py` files:
+Code to train and test each model comes in three notebook files:
 
-- `_settings.py`: model specific constants
-- `_training.py`: train the model using a training set
-- `_test.py`: apply a trained model to a test set
+- `_settings`: model specific constants
+- `_training`: train the model using a training set
+- `_test`: apply a trained model to a test set
 
 In addition, `thesis_common.py` contains common code shared between the two models and `thesis_metric_loss.py` contains loss metrics used during training.
 

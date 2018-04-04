@@ -62,13 +62,13 @@ class HDF5Generator:
 
 
 class HDF5Generator_Segment:
+    """Generator specifically for semantic segmentation data, i.e. images and ground truths"""
     def __init__(self, image_db_path, mask_db_path, batch_size, num_classes, converter=None, data_gen_args=None, feat_key="X"):
         self._batch_size = batch_size
 
         # Open the database
         self._db_image = h5py.File(image_db_path, "r")
         self._db_mask = h5py.File(mask_db_path, "r")
-
 
         # Create data generators if parameters were provided
         self.data_gen_args = data_gen_args

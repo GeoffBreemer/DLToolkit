@@ -15,7 +15,7 @@ BUF_SIZE = 10000
 
 class HDF5Writer:
     def __init__(self, dimensions, output_path, feat_key="X", label_key="Y", buf_size=BUF_SIZE, del_existing=False,
-                 dtype_feat=np.float32, dtype_label=np.uint8):
+                 dtype_feat=np.float16, dtype_label=np.uint8):
         """
         Create the new HDF5 file for simple 2D matrices
         :param dimensions: e.g. (# of records, # of features) or (# of images, height, width, # of channels)

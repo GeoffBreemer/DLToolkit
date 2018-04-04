@@ -81,12 +81,21 @@ def visualise_results(test_set, test_labels, pred_labels, class_names):
         cv2.waitKey(0)
 
 
-def plot_roc_curve(ground_truth_imgs, predicted_imgs, show=True, save_path=None, time_stamp=False):
+def plot_roc_curve(ground_truth_imgs, predicted_scores_pos, show=True, save_path=None, time_stamp=False):
+    """
+    Plot the ROC curve.
+    :param ground_truth_imgs: ground truth images
+    :param predicted_scores_pos: predicted scores for the positive class (i.e. NOT for both classes, and not the image)
+    :param show: True to show the image, False otherwise
+    :param save_path: full path to save the image to, None to not save the image
+    :param time_stamp: True to add a timestamp to the saved file, False otherwise
+    :return: N/A
+    """
     y_true = np.reshape(ground_truth_imgs, (-1, 1))
     y_true = (y_true / 255).astype(np.uint8)
 
-    y_scores = np.reshape(predicted_imgs, (-1, 1))
-    y_scores = (y_scores / 255).astype(np.uint8)
+    y_scores = np.reshape(predicted_scores_pos, (-1, 1))
+    # y_scores = (y_scores / 255).astype(np.uint8)
     fpr, tpr, thresholds = roc_curve(y_true, y_scores, pos_label=1)
 
     AUC_ROC = roc_auc_score(y_true, y_scores, average='weighted')
@@ -116,6 +125,16 @@ def plot_roc_curve(ground_truth_imgs, predicted_imgs, show=True, save_path=None,
 
 
 def plot_precision_recall_curve(ground_truth_imgs, predictions, num_classes, show=True, save_path=None, time_stamp=False):
+    """
+    Plot the precision/recall curve.
+    :param ground_truth_imgs: ground truth images
+    :param predictions: prediction scores (i.e. NOT the images)
+    :param num_classes: number of classes
+    :param show: True to show the image, False otherwise
+    :param save_path: full path to save the image to, None to not save the image
+    :param time_stamp: True to add a timestamp to the saved file, False otherwise
+    :return: N/A
+    """
     y_true = np.reshape(ground_truth_imgs, (-1, 1))
     y_true = (y_true / 255).astype(np.uint8)
     y_scores = np.reshape(predictions, (-1, num_classes))
@@ -154,6 +173,12 @@ def plot_precision_recall_curve(ground_truth_imgs, predictions, num_classes, sho
 
 
 def print_confusion_matrix(ground_truth_imgs, predicted_imgs):
+    """
+    Print the confusion matrix.
+    :param ground_truth_imgs: ground truth images
+    :param predicted_imgs: predicted images (i.e. NOT the scores)
+    :return:
+    """
     y_true = np.reshape(ground_truth_imgs, (-1, 1))
     y_pred = np.reshape(predicted_imgs, (-1, 1))
 
@@ -177,6 +202,12 @@ def print_confusion_matrix(ground_truth_imgs, predicted_imgs):
 
 
 def print_classification_report(ground_truth_imgs, predicted_imgs):
+    """
+    Print the classification report
+    :param ground_truth_imgs: ground truth images
+    :param predicted_imgs: predicted images (i.e. NOT the scores)
+    :return:
+    """
     y_true = np.reshape(ground_truth_imgs, (-1, 1))
     y_pred = np.reshape(predicted_imgs, (-1, 1))
 
