@@ -7,17 +7,9 @@
 
 2. Start the EC2 instance:
 
-	`aws ec2 start-instances --instance-ids $my_ins`
-
-	or:
-
 	`. gb_start.sh`
 
 3. Connect to the instance:
-
-	`ssh -i $my_pem ubuntu@$my_dns`
-
-	or:
 
 	`. gb_connect.sh`
 
@@ -25,7 +17,7 @@
 
 	`. gb_tunnel.sh`
 
-4. Go to the `DLToolkit` folder on the local machine:
+4. Location of the `DLToolkit` folder on the local machine:
 
 	`cd /Users/geoff/Documents/Development/DLToolkit`
 
@@ -39,7 +31,7 @@
 
 	`scp -i $my_pem -r dltoolkit settings thesis ubuntu@$my_dns:~/dl`
 
-6. Go to the `exchange` folder on the local machine:
+6. Location of the `exchange` folder on the local machine:
 
 	`cd /Users/geoff/Documents/Development/DLToolkit/exchange`
 
@@ -56,10 +48,6 @@
 	`scp -i $my_pem ubuntu@$my_dns:~/dl/thesis/* .`
 
 8. Stop the EC2 instance:
-
-	`aws ec2 stop-instances --instance-ids $my_ins`
-
-	or:
 
 	`. gb_stop.sh`
 
@@ -86,10 +74,9 @@
 
 2. Create a key pair called `deep-learning` and store it on the local machine in: `~/.ssh/deep-learning.pem`
 
-3. Setup an EC2 Security Group called `deep-learning` with two inbound rules:
+3. Setup an EC2 Security Group called `deep-learning` with inbound rules enabling SSL, SSH and Jupyter access:
 
-	- `SSH` access for `My IP` over port `22` to enable remote access
-	- `Custom TCP Rule` over port `8888` from `Anywhere` (this results in two custom rules being created) to enable access to Jupyter Notebook from a local machine
+	`. gb_create_sec_group.sh`
 
 # Local machine setup (one-off)
 1. Update the `~/.bash_profile` on the local machine by adding the folder containing scripts to the `$PATH` environment variable:
@@ -119,83 +106,45 @@ Includes a separate second EBS Volume containing all `DLToolkit` data and source
 
 1. Create a new EC2 instance
 
-	Use the GUI:
-
-	- Use `Deep Learning AMI (Ubuntu) version 6.0` from Amazon
-	- Deploy to a `g3.4xlarge` or `p2.xlarge` instance
-	- Set the `Name` tag to `deep-learning`
-	- Use Security Group `deep-learning` (required for accessing Jupyter Notebook)
-	- Use existing key pair `deep-learning`
-
-	Or use AWS CLI:
-
 	`. gb_create_instance.sh`
 
-2. Set environment variables to EC2 instance information: `. gb_server_info.sh`
+2. Set environment variables to EC2 instance information:
 
-3. Separate EBS volume ONLY: Create the EBS volume and attach it to the instance: `. gb_create_ebs.sh`
+	`. gb_server_info.sh`
 
-4. Connect to the instance: `ssh -i $my_pem ubuntu@$my_dns` or `. gb_connect.sh`
+3. OPTIONAL - Create the EBS volume and attach it to the instance:
 
-5. Setup an SSL certificate for Jupyter Notebook:
+	`. gb_create_ebs.sh`
 
-  - Configure SSL:
-    - `mkdir ssl`
-    - `cd ssl`
-    - `sudo openssl req -x509 -nodes -days 365 -newkey rsa:1024 -keyout "cert.key" -out "cert.pem" -batch`
+4. Copy the server setup script:
 
-  - Run iPython:
-    - `ipython`
-    - `from IPython.lib import passwd`
-    - `passwd()`
-    - Set the password, e.g.: `<password>`
-    - Record the password hash, e.g.: `sha1:<password hash>`
-    - `exit()`
+	`scp -i $my_pem /Users/geoff/Documents/Development/DLToolkit/scripts/gb_setup_server.sh ubuntu@$my_dns:~`
 
-  - Edit the Jupyter config file:
-    - `nano ~/.jupyter/jupyter_notebook_config.py`
-    - Paste at the end of the file:
-    - `c = get_config()  
-      c.NotebookApp.certfile = u'/home/ubuntu/ssl/cert.pem'
-      c.NotebookApp.keyfile = u'/home/ubuntu/ssl/cert.key'
-      c.IPKernelApp.pylab = 'inline'
-      c.NotebookApp.ip = '*'
-      c.NotebookApp.open_browser = False
-      c.NotebookApp.password = '<ENTER PASSWORD HASH>'`
+4. Connect to the instance:
 
-6. Separate EBS volume ONLY: Check devices: `lsblk`
+	`. gb_connect.sh`
 
-7. Separate EBS volume ONLY: Check if the device has a file system `sudo file -s /dev/xvdf`
+5. Run the server setup script (takes a minute):
 
-8. Separate EBS volume ONLY: Create the file system: `sudo mkfs -t ext4 /dev/xvdf`
+	- `cd ~`
+	- `chmod u+x gb_setup_server.sh`
+	- `. gb_setup_server.sh`
 
-9. Ensure the current location is `/home/ubuntu`: `cd ~`
+6. OPTIONAL - Check devices: `lsblk`
 
-10. Separate EBS volume ONLY: Create mount point: `sudo mkdir dl`
+7. OPTIONAL - Check if the device has a file system `sudo file -s /dev/xvdf`
 
-11. SKIP when using a separate EBS volume - Create folder that will contain all files: `mkdir dl`
+8. OPTIONAL - Create the file system: `sudo mkfs -t ext4 /dev/xvdf`
 
-12. Separate EBS volume ONLY: Mount the EBS volume: `sudo mount /dev/xvdf ~/dl/`
+9. OPTIONAL - Ensure the current location is `/home/ubuntu`: `cd ~`
 
-13. Separate EBS volume ONLY: Enable access: `sudo chmod go+rw .`
+10. OPTIONAL - Create mount point: `sudo mkdir dl`
 
-14. Create `output` and `output/segmentation_maps` subfolders: `mkdir ~/dl/output` and `mkdir ~/dl/output/segmentation_maps`
+11. OPTIONAL - Mount the EBS volume: `sudo mount /dev/xvdf ~/dl/`
 
-15. Create `savedmodels` subfolder: `mkdir ~/dl/savedmodels`
+12. OPTIONAL - Enable access: `sudo chmod go+rw .`
 
-16. Install missing Python packages (take a minute or two):
-
-	- `source activate tensorflow_p36`
-	- `pip install --upgrade pip`
-	- `pip install h5py sklearn progressbar2 pydot pydot_ng graphviz`
-
-17. Add the path to the `dltoolkit` source files to `PYTHONPATH` by editing the `nano ~/.bashrc` and adding: `export PYTHONPATH=/home/ubuntu/dl:$PYTHONPATH`
-
-18. Exit the instance
-
-19. Go to `DLToolkit` folder: `cd /Users/geoff/Documents/Development/DLToolkit`
-
-20. Test everything by copying a file: `scp -i $my_pem README.md ubuntu@$my_dns:~/dl`
+13. Exit the instance
 
 # Interact with the Deep Learning instance
 
@@ -210,7 +159,7 @@ Typical workflow:
 1. Start the instance
 2. Start Jupyter Notebook
 3. Copy files to the instance
-4. Fit a model
+4. Fit a model, optionally create augmented data
 5. Copy files to the local machine
 6. Stop the instance
 
@@ -231,7 +180,7 @@ Do not close the terminal window or the Jupyter Notebook will stop.
 
 ### On the **local machine** using SSL:
 
-- Tunnel to the instanc: `. gb_tunnel.sh`
+- Tunnel to the instance: `. gb_tunnel.sh`
 - Access Jupyter via a browser (ignore the warning during the first logon): `https://127.0.0.1:8157`
 - Enter the SSL password, e.g.: `<password>`
 - Always use kernel `conda_tensorflow_p36`, which includes Keras
@@ -246,7 +195,7 @@ Local machine folder containing all files: `/Users/geoff/Documents/Development/D
 2. Copy **data** files (`*.jpg` only, ignores `*.h5`): `. gb_copy_data.sh`
 
 ## 4. Fit a model
-Fit models by running Jupyter notebooks.
+Fit models by running Jupyter notebooks. Create augmented data if required by running the `thesis_augment_data.ipynb` notebook.
 
 ## 5. Download files FROM the server
 Copy files from the server to the local `exchange` folder: `cd /Users/geoff/Documents/Development/DLToolkit/exchange`
