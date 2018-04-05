@@ -5,6 +5,7 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import datetime
+import seaborn as sns
 
 from sklearn.metrics import roc_curve
 from sklearn.metrics import roc_auc_score
@@ -13,8 +14,63 @@ from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import jaccard_similarity_score
 from sklearn.metrics import f1_score, precision_score, recall_score, classification_report
 
+def plot_training_history(hist, show=True, save_path=None, time_stamp=False, metric="acc"):
+    """
+    Plot Keras training results to a figure and display and/or save it
+    :param hist: a Keras History object
+    :param show: True to show the figure, False if not
+    :param save_path: full path to save the figure to, None if no saving required
+    :param time_stamp: whether to add a date/time stamp to the file name
+    """
+    import seaborn as sns
+    import datetime
 
-def plot_training_history(hist, epochs, show=True, save_path=None, time_stamp=False, metric='acc'):
+    # Set the style
+    sns.set_style("whitegrid")
+    sns.color_palette("viridis")
+    plt.style.use("style.use")
+
+    if metric == "acc":
+        ylabel = "Accuracy"
+    elif metric == "dice_coef":
+        ylabel = "Dice coefficient"
+
+    # Create a dual axis graph
+    fig, ax1 = plt.subplots(figsize=(16, 10))
+    ax2 = ax1.twinx()
+
+    ax1.plot(hist.history['loss'], 'r--', linewidth=3.0, label="Training loss")
+    ax1.plot(hist.history['val_loss'], 'b--', linewidth=3.0, label="Validation loss")
+
+    ax1.set_xlabel('Epoch')
+    ax1.set_ylabel('Loss')
+    ax1.legend(loc="lower left")
+
+    ax2.plot(hist.history[metric], 'r', linewidth=3.0, label="Training "+ylabel)
+    ax2.plot(hist.history["val_"+metric], 'b', linewidth=3.0, label="Validation "+ylabel)
+
+    ax2.set_ylabel(ylabel)
+    ax2.legend(loc="lower right")
+    plt.title("Training loss/"+ylabel)
+    plt.legend()
+
+    if show:
+        plt.show()
+
+    if save_path is not None:
+        save_path = save_path + "_training"
+        if time_stamp:
+            current_dt = datetime.datetime.now()
+            save_path = save_path + "_{}_{}".format(current_dt.strftime("%Y%m%d"),
+            current_dt.strftime("%H%M%S"))
+
+        save_path = save_path + ".png"
+        fig.savefig(save_path)
+
+    plt.close()
+
+
+def plot_training_history_OLD(hist, epochs, show=True, save_path=None, time_stamp=False, metric='acc'):
     """
     Plot Keras training results to a figure and display and/or save it
     :param hist: a Keras History object
@@ -23,8 +79,12 @@ def plot_training_history(hist, epochs, show=True, save_path=None, time_stamp=Fa
     :param save_path: full path to save the figure to, None if no saving required
     :param time_stamp: whether to add a date/time stamp to the file name
     """
-    plt.style.use("ggplot")
-    fig, ax = plt.subplots()
+    # Set the style
+    sns.set_style("whitegrid")
+    sns.color_palette("viridis")
+    plt.style.use("style.use")
+
+    fig, ax = plt.subplots(figsize=(16, 10))
     # plt.plot(np.arange(0, epochs), hist.history["loss"], label="train_loss")
     # plt.plot(np.arange(0, epochs), hist.history["val_loss"], label="val_loss")
     # plt.plot(np.arange(0, epochs), hist.history["acc"], label="train_acc")
@@ -100,12 +160,16 @@ def plot_roc_curve(ground_truth_imgs, predicted_scores_pos, show=True, save_path
 
     AUC_ROC = roc_auc_score(y_true, y_scores, average='weighted')
 
-    plt.style.use("ggplot")
-    fig, ax = plt.subplots()
-    ax.plot(fpr, tpr, '-', label='Area Under the Curve (AUC) = %0.4f' % AUC_ROC)
-    plt.title('ROC curve')
-    plt.xlabel("FPR (False Positive Rate)")
-    plt.ylabel("TPR (True Positive Rate)")
+    # Set the style
+    sns.set_style("whitegrid")
+    sns.color_palette("viridis")
+    plt.style.use("style.use")
+
+    fig, ax = plt.subplots(figsize=(16, 10))
+    ax.plot(fpr, tpr, '-', label="Area Under the Curve (AUC) = {:0.4f}".format(AUC_ROC))
+    plt.title("Receiver Operator Curve (ROC)")
+    plt.xlabel("False Positive Rate (FPR)")
+    plt.ylabel("True Positive Rate (TPR)")
     plt.legend(loc="lower right")
 
     if show:
@@ -148,9 +212,13 @@ def plot_precision_recall_curve(ground_truth_imgs, predictions, num_classes, sho
 
     print("\nArea under Precision-Recall curve: " + str(AUC_prec_rec))
 
-    plt.style.use("ggplot")
-    fig, ax = plt.subplots()
-    ax.plot(recall, precision, '-', label='Area Under the Curve (AUC = %0.4f)' % AUC_prec_rec)
+    # Set the style
+    sns.set_style("whitegrid")
+    sns.color_palette("viridis")
+    plt.style.use("style.use")
+
+    fig, ax = plt.subplots(figsize=(16, 10))
+    ax.plot(recall, precision, '-', label="Area Under the Curve (AUC) = {:0.4f}".format(AUC_prec_rec))
     plt.title('Precision - Recall curve')
     plt.xlabel("Recall")
     plt.ylabel("Precision")

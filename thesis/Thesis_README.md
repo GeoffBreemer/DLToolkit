@@ -5,6 +5,7 @@ Work in progress.
 
 Generic:
 
+- [ ] check float16 usage, possibly change back to float32
 - [ ] implement baseline model
 - [x] generators
 - [x] image pre-processing
