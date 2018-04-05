@@ -13,6 +13,7 @@ Generic:
     - [x] Adam: good results
     - [x] AdaDelta: appears to take longer to converge
     - [x] SGD with Nesterov and Momentum 0.9: no good
+    - [ ] Adam with `amsgrad=True`
 - [ ] speed up convergence:
     - [x] kernel initialisers: bias constants, weights randomized
     - [x] batch normalization

@@ -83,6 +83,7 @@ class HDF5Generator_Segment:
         self._num_images = self._db_image[feat_key].shape[0]
         self._feat_key = feat_key
         self._converter = converter
+        self.img_shape = self._db_image[feat_key].shape
 
     def num_images(self):
         return self._num_images
