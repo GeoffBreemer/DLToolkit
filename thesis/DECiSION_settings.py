@@ -55,6 +55,4 @@ TRN_NUM_KFOLD_SPLITS = 5
 
 # Miscellaneous
 VERBOSE = True
-IS_DEVELOPMENT = True           # Set to True during development, False to apply the pipeline to unseen images without
-                                # ground truths (i.e. inference mode)
 RANDOM_STATE = 122177

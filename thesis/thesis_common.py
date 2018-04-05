@@ -99,7 +99,7 @@ def convert_img_to_pred_3D(ground_truths, num_classes, verbose=False):
     new_masks = np.squeeze(new_masks, axis=4)
 
     if verbose:
-        print("Elapsed time: {:.2f}".format(time.time() - start_time))
+        print("Elapsed time: {:.2f}s".format(time.time() - start_time))
 
     return new_masks
 
@@ -129,7 +129,7 @@ def convert_pred_to_img_3D(pred, threshold=0.5, verbose=False):
     pred_images = np.transpose(pred_images, axes=(0, 3, 1, 2, 4))
 
     if verbose:
-        print("Elapsed time: {:.2f}".format(time.time() - start_time))
+        print("Elapsed time: {:.2f}s".format(time.time() - start_time))
 
     return pred_images
 
@@ -222,7 +222,7 @@ def convert_img_to_pred(ground_truths, num_classes, verbose=False):
     new_masks = np.squeeze(new_masks, axis=3)
 
     if verbose:
-        print("Elapsed time: {:.2f}".format(time.time() - start_time))
+        print("Elapsed time: {:.2f}s".format(time.time() - start_time))
 
     return new_masks
 
@@ -251,7 +251,7 @@ def convert_pred_to_img(pred, threshold=0.5, verbose=False):
     pred_images = np.reshape(pred_images, tuple(pred_images.shape[0:3]) + (1,))
 
     if verbose:
-        print("Elapsed time: {:.2f}".format(time.time() - start_time))
+        print("Elapsed time: {:.2f}s".format(time.time() - start_time))
 
     return pred_images
 
@@ -282,7 +282,7 @@ def convert_img_to_pred_flatten(ground_truths, settings, verbose=False):
                 new_masks[image, pix, settings.ONEHOT_BLOODVESSEL] = 1
 
     if verbose:
-        print("Elapsed time: {:.2f}".format(time.time() - start_time))
+        print("Elapsed time: {:.2f}s".format(time.time() - start_time))
 
     return new_masks
 
@@ -306,7 +306,7 @@ def convert_pred_to_img_flatten(pred, settings, threshold=0.5, verbose=False):
     pred_images = np.reshape(pred_images, (pred.shape[0], settings.IMG_HEIGHT, settings.IMG_WIDTH, 1))
 
     if verbose:
-        print("Elapsed time: {:.2f}".format(time.time() - start_time))
+        print("Elapsed time: {:.2f}s".format(time.time() - start_time))
 
     return pred_images
 
