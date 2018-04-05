@@ -62,7 +62,7 @@ class HDF5Generator:
 
 
 class HDF5Generator_Segment:
-    """Generator specifically for semantic segmentation data, i.e. images and ground truths"""
+    """Generator specifically for semantic segmentation data, i.e. images and ground truth images"""
     def __init__(self, image_db_path, mask_db_path, batch_size, num_classes, converter=None, data_gen_args=None, feat_key="X"):
         self._batch_size = batch_size
 

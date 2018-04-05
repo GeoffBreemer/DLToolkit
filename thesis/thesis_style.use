@@ -1,0 +1,8 @@
+# http://matplotlib.org/users/customizing.html
+axes.titlesize : 20
+axes.titleweight : bold
+axes.labelsize : 15
+axes.labelweight : bold
+figure.titlesize : 15
+figure.titleweight: bold
+legend.fontsize : xx-large

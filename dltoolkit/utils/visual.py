@@ -25,10 +25,13 @@ def plot_training_history(hist, show=True, save_path=None, time_stamp=False, met
     import seaborn as sns
     import datetime
 
+    # Don't include validation results if there aren't any (assumes only one loss/metric pair is used)
+    includes_val = len(hist.history) > 2
+
     # Set the style
     sns.set_style("whitegrid")
     sns.color_palette("viridis")
-    plt.style.use("style.use")
+    plt.style.use("thesis_style.use")
 
     if metric == "acc":
         ylabel = "Accuracy"
@@ -39,71 +42,51 @@ def plot_training_history(hist, show=True, save_path=None, time_stamp=False, met
     fig, ax1 = plt.subplots(figsize=(16, 10))
     ax2 = ax1.twinx()
 
-    ax1.plot(hist.history['loss'], 'r--', linewidth=3.0, label="Training loss")
-    ax1.plot(hist.history['val_loss'], 'b--', linewidth=3.0, label="Validation loss")
-
+    # Plot the metric
+    p1 = ax1.plot(hist.history[metric], '-', linewidth=3.0, label="Training "+ylabel)
+    if includes_val:
+        p2 = ax1.plot(hist.history["val_"+metric], '-', linewidth=3.0, label="Validation "+ylabel)
     ax1.set_xlabel('Epoch')
-    ax1.set_ylabel('Loss')
-    ax1.legend(loc="lower left")
+    ax1.set_ylabel(ylabel)
 
-    ax2.plot(hist.history[metric], 'r', linewidth=3.0, label="Training "+ylabel)
-    ax2.plot(hist.history["val_"+metric], 'b', linewidth=3.0, label="Validation "+ylabel)
+    # Plot the loss
+    p3 = ax2.plot(hist.history['loss'], '--', linewidth=3.0, label="Training loss")
+    if includes_val:
+        p4 = ax2.plot(hist.history['val_loss'], '--', linewidth=3.0, label="Validation loss")
+    ax2.set_ylabel('Loss')
 
-    ax2.set_ylabel(ylabel)
-    ax2.legend(loc="lower right")
-    plt.title("Training loss/"+ylabel)
-    plt.legend()
+    # Combine into one legend
+    if includes_val:
+        p = p1+p2+p3+p4
+        min_ix = np.argmin(hist.history["val_loss"])
+        min_val = hist.history["val_loss"][min_ix]
+        min_text = "Lowest validation loss"
+    else:
+        p = p1+p3
+        min_ix = np.argmin(hist.history["loss"])
+        min_val = hist.history["loss"][min_ix]
+        min_text = "Lowest loss"
 
-    if show:
-        plt.show()
+    labs = [l.get_label() for l in p]
+    ax1.legend(p, labs, loc="center right")
 
-    if save_path is not None:
-        save_path = save_path + "_training"
-        if time_stamp:
-            current_dt = datetime.datetime.now()
-            save_path = save_path + "_{}_{}".format(current_dt.strftime("%Y%m%d"),
-            current_dt.strftime("%H%M%S"))
+    # Mark the epoch with the lowest (val_)loss
+    ax2.plot([min_ix], [min_val], 'ko', markersize=15, alpha=.5)
+    ax2.plot([min_ix], [min_val], 'ko', markersize=15, markerfacecolor="None")
+    ax2.annotate(min_text, xy=(min_ix, min_val),
+            xytext=(0.5, 0.05), textcoords='axes fraction',
+            arrowprops=dict(facecolor='black'),#, shrink=0.15),
+            horizontalalignment='right', verticalalignment='top')
 
-        save_path = save_path + ".png"
-        fig.savefig(save_path)
+    # Align grids
+    ax2.set_yticks(np.linspace(ax2.get_yticks()[0], ax2.get_yticks()[-1], len(ax1.get_yticks())))
+    ax2.grid(None)
 
-    plt.close()
+    # Set ticks
+    major_ticks = np.arange(0, len(hist.history[metric]), 1)
+    ax1.set_xticks(major_ticks)
 
-
-def plot_training_history_OLD(hist, epochs, show=True, save_path=None, time_stamp=False, metric='acc'):
-    """
-    Plot Keras training results to a figure and display and/or save it
-    :param hist: a Keras History object
-    :param epochs: number of epochs used
-    :param show: True to show the figure, False if not
-    :param save_path: full path to save the figure to, None if no saving required
-    :param time_stamp: whether to add a date/time stamp to the file name
-    """
-    # Set the style
-    sns.set_style("whitegrid")
-    sns.color_palette("viridis")
-    plt.style.use("style.use")
-
-    fig, ax = plt.subplots(figsize=(16, 10))
-    # plt.plot(np.arange(0, epochs), hist.history["loss"], label="train_loss")
-    # plt.plot(np.arange(0, epochs), hist.history["val_loss"], label="val_loss")
-    # plt.plot(np.arange(0, epochs), hist.history["acc"], label="train_acc")
-    # plt.plot(np.arange(0, epochs), hist.history["val_acc"], label="val_acc")
-
-    # plt.figure(figsize=[8, 6])
-    plt.plot(hist.history['loss'], 'r--', linewidth=3.0, label="train_loss")
-    plt.plot(hist.history['val_loss'], 'b--', linewidth=3.0, label="val_loss")
-    plt.plot(hist.history[metric], 'r', linewidth=3.0, label="train_"+metric)
-    plt.plot(hist.history["val_"+metric], 'b', linewidth=3.0, label="val_"+metric)
-    # plt.legend(['Training loss', 'Validation Loss'], fontsize=18)
-    # plt.xlabel('Epochs ', fontsize=16)
-    # plt.ylabel('Loss', fontsize=16)
-    # plt.title('Loss Curves', fontsize=16)
-
-    plt.title("Loss/"+metric)
-    plt.xlabel("Epoch")
-    plt.ylabel("Loss/"+metric)
-    plt.legend()
+    plt.title("Training loss/" + ylabel + " by epoch")
 
     if show:
         plt.show()
@@ -160,17 +143,20 @@ def plot_roc_curve(ground_truth_imgs, predicted_scores_pos, show=True, save_path
 
     AUC_ROC = roc_auc_score(y_true, y_scores, average='weighted')
 
+    print("\nArea under ROC curve: " + str(AUC_ROC))
+
     # Set the style
     sns.set_style("whitegrid")
     sns.color_palette("viridis")
-    plt.style.use("style.use")
+    plt.style.use("thesis_style.use")
 
     fig, ax = plt.subplots(figsize=(16, 10))
     ax.plot(fpr, tpr, '-', label="Area Under the Curve (AUC) = {:0.4f}".format(AUC_ROC))
+
     plt.title("Receiver Operator Curve (ROC)")
     plt.xlabel("False Positive Rate (FPR)")
     plt.ylabel("True Positive Rate (TPR)")
-    plt.legend(loc="lower right")
+    plt.legend(loc="lower center")
 
     if show:
         plt.show()
@@ -215,14 +201,15 @@ def plot_precision_recall_curve(ground_truth_imgs, predictions, num_classes, sho
     # Set the style
     sns.set_style("whitegrid")
     sns.color_palette("viridis")
-    plt.style.use("style.use")
+    plt.style.use("thesis_style.use")
 
     fig, ax = plt.subplots(figsize=(16, 10))
     ax.plot(recall, precision, '-', label="Area Under the Curve (AUC) = {:0.4f}".format(AUC_prec_rec))
+
     plt.title('Precision - Recall curve')
     plt.xlabel("Recall")
     plt.ylabel("Precision")
-    plt.legend(loc="lower right")
+    plt.legend(loc="lower center")
 
     if show:
         plt.show()

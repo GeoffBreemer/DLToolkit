@@ -99,7 +99,7 @@ def convert_img_to_pred_3D(ground_truths, num_classes, verbose=False):
     new_masks = np.squeeze(new_masks, axis=4)
 
     if verbose:
-        print("Elapsed time: {}".format(time.time() - start_time))
+        print("Elapsed time: {:.2f}".format(time.time() - start_time))
 
     return new_masks
 
@@ -129,7 +129,7 @@ def convert_pred_to_img_3D(pred, threshold=0.5, verbose=False):
     pred_images = np.transpose(pred_images, axes=(0, 3, 1, 2, 4))
 
     if verbose:
-        print("Elapsed time: {}".format(time.time() - start_time))
+        print("Elapsed time: {:.2f}".format(time.time() - start_time))
 
     return pred_images
 
@@ -222,7 +222,7 @@ def convert_img_to_pred(ground_truths, num_classes, verbose=False):
     new_masks = np.squeeze(new_masks, axis=3)
 
     if verbose:
-        print("Elapsed time: {}".format(time.time() - start_time))
+        print("Elapsed time: {:.2f}".format(time.time() - start_time))
 
     return new_masks
 
@@ -251,7 +251,7 @@ def convert_pred_to_img(pred, threshold=0.5, verbose=False):
     pred_images = np.reshape(pred_images, tuple(pred_images.shape[0:3]) + (1,))
 
     if verbose:
-        print("Elapsed time: {}".format(time.time() - start_time))
+        print("Elapsed time: {:.2f}".format(time.time() - start_time))
 
     return pred_images
 
@@ -282,7 +282,7 @@ def convert_img_to_pred_flatten(ground_truths, settings, verbose=False):
                 new_masks[image, pix, settings.ONEHOT_BLOODVESSEL] = 1
 
     if verbose:
-        print("Elapsed time: {}".format(time.time() - start_time))
+        print("Elapsed time: {:.2f}".format(time.time() - start_time))
 
     return new_masks
 
@@ -306,7 +306,7 @@ def convert_pred_to_img_flatten(pred, settings, threshold=0.5, verbose=False):
     pred_images = np.reshape(pred_images, (pred.shape[0], settings.IMG_HEIGHT, settings.IMG_WIDTH, 1))
 
     if verbose:
-        print("Elapsed time: {}".format(time.time() - start_time))
+        print("Elapsed time: {:.2f}".format(time.time() - start_time))
 
     return pred_images
 
@@ -430,17 +430,23 @@ def model_name_from_arguments():
     return args["model"]
 
 
-def print_training_info(unet, model_path, input_shape, settings, class_weights, opt=None, loss=None):
-    """Print useful training and hyper parameter info to the console"""
+def print_training_info(unet, model_path, train_shape, val_shape, settings, class_weights, num_patients, opt=None, loss=None):
+    """Print training and hyper parameter info to the console"""
+    train_slices_per_patient = int(train_shape[0]/num_patients)
+    val_slices_per_patient = int(val_shape[0]/num_patients) if val_shape is not None else 0
+
     print("\nGeneric information:")
     print("              Model: {}".format(unet.title))
     print("          Saving to: {}".format(model_path))
-    print("        Input shape: {}".format(input_shape))
+    print(" Number of patients: {}".format(num_patients))
+    print("     Training shape: {} ({} per patient)".format(train_shape, train_slices_per_patient))
+    print("   Validation shape: {} ({} per patient)".format(val_shape, val_slices_per_patient))
+    print("      Class weights: {}".format(class_weights))
     print("\nHyper parameters:")
     print("          Optimizer: {}".format(type(opt)))
     for (k, v) in enumerate(opt.get_config().items()):
         print("                   : {} = {}".format(k, v))
-    print("               Loss: {}".format(loss))
+    print("               Loss: {}".format(str(loss).split(".")[0]))
     print("         IMG_HEIGHT: {}".format(settings.IMG_HEIGHT))
     print("          IMG_WIDTH: {}".format(settings.IMG_WIDTH))
     print("       IMG_CHANNELS: {}".format(settings.IMG_CHANNELS))
@@ -449,7 +455,7 @@ def print_training_info(unet, model_path, input_shape, settings, class_weights, 
     print("          SLICE_END: {}".format(settings.SLICE_END))
     print("    IMG_CROP_HEIGHT: {}".format(settings.IMG_CROP_HEIGHT))
     print("     IMG_CROP_WIDTH: {}".format(settings.IMG_CROP_WIDTH))
-
+    print("")
     print("     TRN_BATCH_SIZE: {}".format(settings.TRN_BATCH_SIZE))
     print("  TRN_LEARNING_RATE: {}".format(settings.TRN_LEARNING_RATE))
     print("      TRN_NUM_EPOCH: {}".format(settings.TRN_NUM_EPOCH))
@@ -458,6 +464,4 @@ def print_training_info(unet, model_path, input_shape, settings, class_weights, 
     print("       TRN_MOMENTUM: {}".format(settings.TRN_MOMENTUM))
     print(" TRN_PRED_THRESHOLD: {}".format(settings.TRN_PRED_THRESHOLD))
     print(" TRN_EARLY_PATIENCE: {}".format(settings.TRN_EARLY_PATIENCE))
-
-    print("      Class weights: {}".format(class_weights))
-    print("\n")
+    print("")

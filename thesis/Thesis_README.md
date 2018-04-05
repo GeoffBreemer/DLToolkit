@@ -18,6 +18,7 @@ Generic:
 - [ ] speed up convergence:
     - [x] kernel initialisers: bias constants, weights randomized
     - [x] batch normalization
+    - [ ] try ReduceLROnPlateau
 - [ ] regularization:
     - [ ] less complex models
     - [ ] L1/L2 regularization

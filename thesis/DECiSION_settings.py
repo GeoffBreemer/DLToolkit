@@ -26,8 +26,8 @@ ONEHOT_BACKGROUND = 0
 ONEHOT_BLOODVESSEL = 1
 
 # Local:
-SLICE_START = 59
-SLICE_END = 69
+# SLICE_START = 59
+# SLICE_END = 69
 
 # Local CV:
 # SLICE_START = 59
@@ -37,9 +37,9 @@ SLICE_END = 69
 # SLICE_START = 0
 # SLICE_END = 247
 
-# AWS:
-# SLICE_START = 0
-# SLICE_END = 96
+# Useful only:
+SLICE_START = 0
+SLICE_END = 96
 
 # Training hyper parameters
 TRN_BATCH_SIZE = 1
