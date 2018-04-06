@@ -144,7 +144,7 @@ Includes a separate second EBS Volume containing all `DLToolkit` data and source
 
 12. OPTIONAL - Enable access: `sudo chmod go+rw .`
 
-13. Exit the instance
+13. Exit the instance and restart it: `. gb_stop.sh` followed by `. gb_start.sh`
 
 # Interact with the Deep Learning instance
 
