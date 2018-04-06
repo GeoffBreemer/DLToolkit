@@ -88,7 +88,7 @@ class HDF5Generator_Segment:
     def num_images(self):
         return self._num_images
 
-    def generator(self, num_epochs=np.inf):
+    def generator(self, num_epochs=np.inf, dim_reorder=None):
         """Generate batches of data"""
         epochs = 0
         RANDOM_STATE = 42
@@ -109,6 +109,11 @@ class HDF5Generator_Segment:
                 # Convert masks to the format produced by the segmentation model
                 if not self._converter is None:
                     masks = self._converter(masks, self._num_classes)
+
+                if dim_reorder is not None:
+                    # Reorder the dimensions to what the 3D Unet expects
+                    imgs = np.transpose(imgs, axes=dim_reorder) #(0, 2, 3, 1, 4))
+                    masks = np.transpose(masks, axes=dim_reorder) #(0, 2, 3, 1, 4))
 
                 # Return
                 yield (imgs, masks)

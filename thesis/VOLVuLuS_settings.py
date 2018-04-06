@@ -1,6 +1,6 @@
 # Variables used to construct paths and filenames and convert data to HDF5 format
-TRAINING_PATH = "../data/MSC8002/training_3d"              # training images
-TEST_PATH = "../data/MSC8002/test_3d"                      # test images
+TRAINING_PATH = "../data/MSC8002/training3d"            # training images
+TEST_PATH = "../data/MSC8002/test3d"                    # test images
 MODEL_PATH = "../savedmodels/"                          # saved Keras models
 OUTPUT_PATH = "../output/"                              # plots and other output
 
@@ -8,6 +8,7 @@ FLDR_GROUND_TRUTH = "groundtruths"                      # folder with the ground
 FLDR_IMAGES = "images"                                  # folder with the images
 HDF5_EXT = ".h5"
 HDF5_KEY = "image"
+IMG_EXTENSION = ".jpg"
 
 # Image dimensions
 IMG_HEIGHT = 240            # original image height (prior to any pre-processing)
@@ -16,8 +17,8 @@ IMG_CHANNELS = 1            # number of channels for the images and ground truth
 NUM_CLASSES = 2             # number of classes to segment
 
 # Local:
-SLICE_START = 59 - 4
-SLICE_END = 59 + 4
+SLICE_START = 59 - 8
+SLICE_END = 59 + 8
 
 # AWS:
 # SLICE_START = 59 - 8
@@ -36,12 +37,12 @@ MASK_BLOODVESSEL = 255      # pixel intensity for vessel pixels (i.e. white)
 TRN_BATCH_SIZE = 1
 TRN_LEARNING_RATE = 0.001
 TRN_NUM_EPOCH = 200
-TRN_TRAIN_VAL_SPLIT = 0.0       # Percentage of training data to use for the validation set
+TRN_TRAIN_VAL_SPLIT = 0#1/3       # Percentage of training data to use for the validation set
 TRN_DROPOUT_RATE = 0.5          # Dropout rate used for all DropOut layers
 TRN_MOMENTUM = 0.99
 TRN_PRED_THRESHOLD = 0.5        # Pixel intensities that exceed the threshold are considered a positive detection
-TRN_EARLY_PATIENCE = 10          # Early stopping patience
+TRN_EARLY_PATIENCE = 3 #10         # Early stopping patience
 
 # Miscellaneous
 VERBOSE = True
-IS_DEVELOPMENT = True
+RANDOM_STATE = 122177

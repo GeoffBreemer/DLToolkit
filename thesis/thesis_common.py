@@ -10,7 +10,94 @@ import matplotlib.pyplot as plt
 
 
 # 3D U-Net conversions
-def create_hdf5_db_3D(img_path, img_shape, img_exts, key, ext, settings, is_mask=False):
+def create_hdf5_db_3d(patients_list, dn_name, img_path, img_shape, img_exts, key, ext, settings, is_mask=False):
+    """Create a HDF5 file using a list of paths to patient subfolders to be written to the data set. An existing file is
+    overwritten.
+    :param imgs_list: list of patient subfolders
+    :param dn_name: becomes part of the HDF5 file name
+    :param img_path: path to the location of the `images` and `groundtruths` subfolders
+    :param img_shape: shape of the images being written to the data set
+    :param key: key to use for the data set
+    :param ext: extension of the HDF5 file name
+    :param settings: holds settings
+    :param is_mask: True if the ground truths data set is being created, False if not
+    :return: the full path to the HDF5 file.
+    """
+    # Do not do anything if the list of patient subfolders is empty
+    if len(patients_list) == 0:
+        print("No patient subfolders found, not creating HDF5 file")
+        return ""
+
+    num_slices = settings.SLICE_END - settings.SLICE_START
+
+    tmp_name = dn_name + ("_" + settings.FLDR_GROUND_TRUTH if is_mask else "_" + settings.FLDR_IMAGES)
+    output_path = os.path.join(os.path.dirname(img_path), tmp_name) + ext
+    print(output_path)
+
+    # Path to the HDF5 file
+    # output_path = os.path.join(os.path.dirname(img_path), os.path.basename(img_path)) + ext
+
+    # Create a list of paths to the individual patient folders
+    # patients_list = sorted([os.path.join(img_path, e.name) for e in os.scandir(img_path) if e.is_dir()])
+    print("reading patient folders: ", patients_list)
+    print("---")
+
+    # Prepare the HDF5 writer
+    hdf5_writer = HDF5Writer((len(patients_list), num_slices) + img_shape,
+                             output_path,
+                             feat_key=key,
+                             label_key=None,
+                             del_existing=True,
+                             buf_size=len(patients_list),
+                             dtype_feat=np.float16 if not is_mask else np.uint8)
+
+    # Prepare for CLAHE histogram equalization
+    clahe = cv2.createCLAHE(clipLimit=2, tileGridSize=(16, 16))
+
+    # Loop through all images
+    widgets = ["Creating HDF5 database ", progressbar.Percentage(), " ", progressbar.Bar(), " ", progressbar.ETA()]
+    pbar = progressbar.ProgressBar(maxval=len(patients_list), widgets=widgets).start()
+
+    # Loop through each patient subfolder
+    for patient_ix, p_folder in enumerate(patients_list):
+        imgs_list = sorted(list(list_images(basePath=p_folder, validExts=img_exts)))[settings.SLICE_START:settings.SLICE_END]
+        imgs = np.zeros((num_slices, img_shape[0], img_shape[1], img_shape[2]), dtype=np.float16)
+
+        # Read each slice in the current patient's folder
+        for slice_ix, slice_img in enumerate(imgs_list):
+            image = cv2.imread(slice_img, cv2.IMREAD_GRAYSCALE)
+
+            # Crop to the region of interest
+            image = image[settings.IMG_CROP_HEIGHT:image.shape[0] - settings.IMG_CROP_HEIGHT,
+                    settings.IMG_CROP_WIDTH:image.shape[1] - settings.IMG_CROP_WIDTH]
+
+            # Apply any preprocessing
+            if is_mask:
+                # Apply binary thresholding to ground truth masks
+                _, image = cv2.threshold(image, settings.MASK_BINARY_THRESHOLD, settings.MASK_BLOODVESSEL,
+                                         cv2.THRESH_BINARY)
+            else:
+                # Apply CLAHE histogram equalization
+                image = clahe.apply(image)
+
+                # Standardise
+                image = standardise_single(image)
+
+            # Reshape from (height, width) to (height, width, 1)
+            image = image.reshape((img_shape[0], img_shape[1], img_shape[2]))
+            imgs[slice_ix] = image
+
+        # Write all slices for the current patient
+        hdf5_writer.add([imgs], None)
+        pbar.update(patient_ix)
+
+    pbar.finish()
+    hdf5_writer.close()
+
+    return output_path
+
+
+def create_hdf5_db_3D_OLD(img_path, img_shape, img_exts, key, ext, settings, is_mask=False):
     """Convert images present in `img_path` to HDF5 format. The HDF5 file is saved one sub folder up from where the
     images are located. Masks are binary tresholded to be 0 for background pixels and 255 for blood vessels. Images
     (slices) are expected to be stored in subfolders (volumes), one for each patient.
@@ -85,7 +172,7 @@ def create_hdf5_db_3D(img_path, img_shape, img_exts, key, ext, settings, is_mask
     return output_path
 
 
-def convert_img_to_pred_3D(ground_truths, num_classes, verbose=False):
+def convert_img_to_pred_3d(ground_truths, num_classes, verbose=False):
     """Convert an array of grayscale images with shape (-1, height, width, slices, 1) to an array of the same length
     # with shape (-1, height, width, slices, num_classes). That is the shape the 3D Unet produces. Does not generalise
     # to more than two classes, and requires the ground truth image to only contain 0 (first class) or 255 (second
@@ -104,7 +191,7 @@ def convert_img_to_pred_3D(ground_truths, num_classes, verbose=False):
     return new_masks
 
 
-def convert_pred_to_img_3D(pred, threshold=0.5, verbose=False):
+def convert_pred_to_img_3d(pred, threshold=0.5, verbose=False):
     """Convert 3D UNet predictions to images, changing the shape from (-1, height, width, slices, num_classes) to
     (-1, slices, height, width, 1). The assumption is that only two classes are used and that they are 0 (background)
     and 255 (blood vessels). This function will not generalize to more classes and/or different class labels in its
@@ -136,8 +223,7 @@ def convert_pred_to_img_3D(pred, threshold=0.5, verbose=False):
 
 # U-Net conversions
 def create_hdf5_db(imgs_list, dn_name, img_path, img_shape, key, ext, settings, is_mask=False):
-    """
-    Create a HDF5 file using a list of paths to individual images to be written to the data set. An existing file is
+    """Create a HDF5 file using a list of paths to individual images to be written to the data set. An existing file is
     overwritten.
     :param imgs_list: list of image paths (NOT the actual images)
     :param dn_name: becomes part of the HDF5 file name
@@ -150,14 +236,14 @@ def create_hdf5_db(imgs_list, dn_name, img_path, img_shape, key, ext, settings, 
     :return: the full path to the HDF5 file.
     """
     # Construct the name of the database
-    tmp_name = dn_name + ("_groundtruths" if is_mask else "_images")
-    output_path = os.path.join(os.path.dirname(img_path), tmp_name) + ext
-    print(output_path)
-
     # Do not do anything if the list of paths is empty
     if len(imgs_list) == 0:
         print("No images found, not creating HDF5 file")
         return ""
+
+    tmp_name = dn_name + ("_" + settings.FLDR_GROUND_TRUTH if is_mask else "_" + settings.FLDR_IMAGES)
+    output_path = os.path.join(os.path.dirname(img_path), tmp_name) + ext
+    print(output_path)
 
     # Prepare the HDF5 writer
     hdf5_writer = HDF5Writer(((len(imgs_list),) + img_shape),
@@ -432,8 +518,14 @@ def model_name_from_arguments():
 
 def print_training_info(unet, model_path, train_shape, val_shape, settings, class_weights, num_patients, opt=None, loss=None):
     """Print training and hyper parameter info to the console"""
-    train_slices_per_patient = int(train_shape[0]/num_patients)
-    val_slices_per_patient = int(val_shape[0]/num_patients) if val_shape is not None else 0
+    if len(train_shape) == 4:
+        # UNet
+        train_slices_per_patient = int(train_shape[0]/num_patients)
+        val_slices_per_patient = int(val_shape[0]/num_patients) if val_shape is not None else 0
+    else:
+        # 3D Unet
+        train_slices_per_patient = train_shape[1]
+        val_slices_per_patient = train_slices_per_patient if val_shape is not None else None
 
     print("\nGeneric information:")
     print("              Model: {}".format(unet.title))

@@ -8,6 +8,7 @@ FLDR_GROUND_TRUTH = "groundtruths"                      # folder with the ground
 FLDR_IMAGES = "images"                                  # folder with the images
 HDF5_EXT = ".h5"
 HDF5_KEY = "image"
+IMG_EXTENSION = ".jpg"
 
 # Image dimensions
 IMG_HEIGHT = 240            # image height (after cropping)
@@ -25,21 +26,17 @@ MASK_BLOODVESSEL = 255          # pixel intensity for vessel pixels (i.e. white)
 ONEHOT_BACKGROUND = 0
 ONEHOT_BLOODVESSEL = 1
 
-# Local:
-# SLICE_START = 59
-# SLICE_END = 69
+# Local testing:
+SLICE_START = 59
+SLICE_END = 69
 
-# Local CV:
-# SLICE_START = 59
-# SLICE_END = 70
-
-# All:
+# All slices:
 # SLICE_START = 0
 # SLICE_END = 247
 
-# Useful only:
-SLICE_START = 0
-SLICE_END = 96
+# Useful sices only:
+# SLICE_START = 0
+# SLICE_END = 96
 
 # Training hyper parameters
 TRN_BATCH_SIZE = 1
