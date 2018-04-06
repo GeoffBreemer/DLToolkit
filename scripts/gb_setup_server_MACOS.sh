@@ -38,7 +38,7 @@ mkdir ~/dl/savedmodels
 echo Install Python packages (first activation may take some time)
 source activate tensorflow_p36
 pip install --upgrade pip
-pip install h5py sklearn progressbar2 pydot pydot_ng graphviz
+pip install h5py sklearn progressbar2 pydot pydot_ng graphviz seaborn
 
 echo Update PYTHONPATH (ignore the error message)
 sed -i "" -e $'$ a\\\n''export PYTHONPATH=/home/ubuntu/dl:$PYTHONPATH' ~/.bashrc

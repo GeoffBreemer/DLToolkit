@@ -16,13 +16,21 @@ IMG_WIDTH = 240             # original image width (prior to any pre-processing)
 IMG_CHANNELS = 1            # number of channels for the images and ground truths (i.e. gray scale)
 NUM_CLASSES = 2             # number of classes to segment
 
-# Local:
+# Local testing:
 SLICE_START = 59 - 8
 SLICE_END = 59 + 8
 
-# AWS:
-# SLICE_START = 59 - 8
-# SLICE_END = 59 + 8
+# All slices:
+# SLICE_START = 0
+# SLICE_END = 247
+
+# Useful slices only:
+# SLICE_START = 0
+# SLICE_END = 96
+
+# AWS 2layer
+# SLICE_START = 59 - 16
+# SLICE_END = 59 + 16
 
 IMG_CROP_HEIGHT = 40        # number of pixels to crop from BOTH the top and the bottom
 IMG_CROP_WIDTH = 40         # number of pixels to crop from BOTH the left and the right

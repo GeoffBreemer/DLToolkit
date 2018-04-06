@@ -146,6 +146,8 @@ Includes a separate second EBS Volume containing all `DLToolkit` data and source
 
 13. Exit the instance and restart it: `. gb_stop.sh` followed by `. gb_start.sh`
 
+**Note** The first time a notebook is started it will take a while to start because TensorFlow and MatplotLib need to do some internal housekeeping.
+
 # Interact with the Deep Learning instance
 
 Typically three terminal windows will be open:

@@ -34,7 +34,7 @@ SLICE_END = 69
 # SLICE_START = 0
 # SLICE_END = 247
 
-# Useful sices only:
+# Useful slices only:
 # SLICE_START = 0
 # SLICE_END = 96
 
