@@ -1,4 +1,8 @@
-"""Image generator using a HDF5 file as the source
+"""Image generator using a HDF5 data set as the source. Comes in two versions:
+
+- HDF5Generator for classification, regressions data sets that have an image or other features as input and a label or
+  value as output.
+- HDF5Generator_Segment for segmentation data sets that have an image as input as well as output.
 
 Code is based on the excellent book "Deep Learning for Computer Vision" by PyImageSearch available on:
 https://www.pyimagesearch.com/deep-learning-computer-vision-python-book/
@@ -111,9 +115,9 @@ class HDF5Generator_Segment:
                     masks = self._converter(masks, self._num_classes)
 
                 if dim_reorder is not None:
-                    # Reorder the dimensions to what the 3D Unet expects
-                    imgs = np.transpose(imgs, axes=dim_reorder) #(0, 2, 3, 1, 4))
-                    masks = np.transpose(masks, axes=dim_reorder) #(0, 2, 3, 1, 4))
+                    # Reorder the dimensions if required
+                    imgs = np.transpose(imgs, axes=dim_reorder)
+                    masks = np.transpose(masks, axes=dim_reorder)
 
                 # Return
                 yield (imgs, masks)

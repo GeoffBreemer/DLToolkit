@@ -6,7 +6,7 @@ import os
 
 
 class MemoryDataLoader:
-    """Loads images using full image paths
+    """Loads images using full image paths into memoery.
 
     Attributes:
         preprocessors: array of image preprocessors to apply to images upon loading

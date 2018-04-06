@@ -1,4 +1,4 @@
-"""Wrapper for creating HDF5 files
+"""Wrapper for creating HDF5 data sets.
 
 Code is based on the excellent book "Deep Learning for Computer Vision" by PyImageSearch available on:
 https://www.pyimagesearch.com/deep-learning-computer-vision-python-book/

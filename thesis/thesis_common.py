@@ -349,9 +349,7 @@ def convert_img_to_pred_flatten(ground_truths, settings, verbose=False):
     img_height = ground_truths.shape[1]
     img_width = ground_truths.shape[2]
 
-    print("gt from: {}".format(ground_truths.shape))
     ground_truths = np.reshape(ground_truths, (ground_truths.shape[0], img_height * img_width))
-    print("  gt to: {} ".format(ground_truths.shape))
 
     new_masks = np.empty((ground_truths.shape[0], img_height * img_width, settings.NUM_CLASSES), dtype=np.uint8)
 
@@ -383,10 +381,8 @@ def convert_pred_to_img_flatten(pred, settings, threshold=0.5, verbose=False):
     for i in range(pred.shape[0]):
         for pix in range(pred.shape[1]):
             if pred[i, pix, settings.ONEHOT_BLOODVESSEL] > threshold:
-                # print("from {} to {}".format(pred[i, pix, 1], 1))
                 pred_images[i, pix] = settings.MASK_BLOODVESSEL
             else:
-                # print("from {} to {}".format(pred[i, pix, 1], 0))
                 pred_images[i, pix] = settings.MASK_BACKGROUND
 
     pred_images = np.reshape(pred_images, (pred.shape[0], settings.IMG_HEIGHT, settings.IMG_WIDTH, 1))

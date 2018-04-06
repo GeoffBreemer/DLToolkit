@@ -37,12 +37,12 @@ Generic:
 2D U-Net:
 - [ ] hyper parameter selection
 - [ ] use validation set or CV
+- [ ] kernel init for 4 layer version
 
 3D U-Net:
 - [ ] reduce memory usage
 - [ ] hyper parameter selection
 - [ ] use validation set or CV
-
 
 ## Getting Started
 - Download/clone the repository to a local machine
