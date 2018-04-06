@@ -138,9 +138,6 @@ def plot_roc_curve(ground_truth_imgs, predicted_scores_pos, show=True, save_path
     y_true = (y_true / 255).astype(np.uint8)
     y_scores = np.reshape(predicted_scores_pos, (-1, 1))
 
-    print(y_true.shape)
-    print(y_scores.shape)
-
     fpr, tpr, thresholds = roc_curve(y_true, y_scores, pos_label=1)
 
     AUC_ROC = roc_auc_score(y_true, y_scores, average='weighted')
@@ -190,9 +187,6 @@ def plot_precision_recall_curve(ground_truth_imgs, predictions, num_classes, sho
     y_true = np.reshape(ground_truth_imgs, (-1, 1))
     y_true = (y_true / 255).astype(np.uint8)
     y_scores = np.reshape(predictions, (-1, num_classes))
-
-    print(y_true.shape)
-    print(y_scores.shape)
 
     precision, recall, thresholds = precision_recall_curve(y_true, y_scores[:, 1], pos_label=1)
 
