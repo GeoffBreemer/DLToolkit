@@ -99,3 +99,5 @@ ENV/
 
 # mypy
 .mypy_cache/
+examples_complex/notebook.ipynb
+examples_complex/script.py
