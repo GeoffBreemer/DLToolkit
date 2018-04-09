@@ -5,6 +5,7 @@ Work in progress.
 
 Generic:
 
+- [ ] Use evaluate for final metrics
 - [ ] check float16 usage, possibly change back to float32
 - [ ] implement baseline model
 - [x] generators

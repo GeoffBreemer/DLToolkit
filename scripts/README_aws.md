@@ -70,7 +70,7 @@
 	- disk info: `df -h`
 
 # AWS setup (one-off)
-1. Login to AWS using IAM via: `https://874168575858.signin.aws.amazon.com/console`
+1. Login to AWS using IAM via: `https://<account number>.signin.aws.amazon.com/console`
 
 2. Create a key pair called `deep-learning` and store it on the local machine in: `~/.ssh/deep-learning.pem`
 
