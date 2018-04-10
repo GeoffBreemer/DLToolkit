@@ -49,8 +49,10 @@ def weighted_pixelwise_crossentropy_loss(class_weights):
 
 
 def evaluate_model(model, images, ground_truths, opt, loss_fn, metric, converter, settings):
-    """Run evaluate() on the model to calculate loss and metrics. This requires a compiled
-    model.
+    """Run evaluate() on the model to calculate overall loss and metrics for the images
+    and associated ground truths. This requires a compiled model, hence the need for the optimiser,
+    loss function and metric. The converter function has to be one of the conv_img_to_pred functions
+    so that the ground truths have the same shape as the predictions.
     """
     class_weights = [settings.CLASS_WEIGHT_BACKGROUND, settings.CLASS_WEIGHT_BLOODVESSEL]
     metrics = [metric]

@@ -28,28 +28,28 @@ class UNet_3D_NN(BaseNN):
         inputs = Input(input_shape)
 
         # Contracting path, from the paper:
-        conv_contr1 = Conv3D(filters=32, kernel_size=(3, 3, 3), activation='relu', padding='same', name="contr1_1")(inputs)
+        conv_contr1 = Conv3D(filters=32, kernel_size=(3, 3, 3), activation="relu", padding="same", name="contr1_1")(inputs)
         if use_bn: conv_contr1 = BatchNormalization()(conv_contr1)
-        conv_contr1 = Conv3D(filters=64, kernel_size=(3, 3, 3), activation='relu', padding='same', name="contr1_2")(conv_contr1)
+        conv_contr1 = Conv3D(filters=64, kernel_size=(3, 3, 3), activation="relu", padding="same", name="contr1_2")(conv_contr1)
         if use_bn: conv_contr1 = BatchNormalization()(conv_contr1)
         pool_contr1 = MaxPooling3D(pool_size=(2, 2, 2), strides=(2, 2, 2), name="contr1_mp")(conv_contr1)
 
-        conv_contr2 = Conv3D(filters=64, kernel_size=(3, 3, 3), activation='relu', padding='same', name="contr2_1")(pool_contr1)
+        conv_contr2 = Conv3D(filters=64, kernel_size=(3, 3, 3), activation="relu", padding="same", name="contr2_1")(pool_contr1)
         if use_bn: conv_contr2 = BatchNormalization()(conv_contr2)
-        conv_contr2 = Conv3D(filters=128, kernel_size=(3, 3, 3), activation='relu', padding='same', name="contr2_2")(conv_contr2)
+        conv_contr2 = Conv3D(filters=128, kernel_size=(3, 3, 3), activation="relu", padding="same", name="contr2_2")(conv_contr2)
         if use_bn: conv_contr2 = BatchNormalization()(conv_contr2)
         pool_contr2 = MaxPooling3D(pool_size=(2, 2, 2), strides=(2, 2, 2), name="contr2_mp")(conv_contr2)
 
-        conv_contr3 = Conv3D(filters=128, kernel_size=(3, 3, 3), activation='relu', padding='same', name="contr3_1")(pool_contr2)
+        conv_contr3 = Conv3D(filters=128, kernel_size=(3, 3, 3), activation="relu", padding="same", name="contr3_1")(pool_contr2)
         if use_bn: conv_contr3 = BatchNormalization()(conv_contr3)
-        conv_contr3 = Conv3D(filters=256, kernel_size=(3, 3, 3), activation='relu', padding='same', name="contr3_2")(conv_contr3)
+        conv_contr3 = Conv3D(filters=256, kernel_size=(3, 3, 3), activation="relu", padding="same", name="contr3_2")(conv_contr3)
         if use_bn: conv_contr3 = BatchNormalization()(conv_contr3)
         pool_contr3 = MaxPooling3D(pool_size=(2, 2, 2), strides=(2, 2, 2),  name="contr3_mp")(conv_contr3)
 
         # "Bottom" layer
-        conv_bottom = Conv3D(filters=256, kernel_size=(3, 3, 3), activation='relu', padding='same', name="bottom1")(pool_contr3)
+        conv_bottom = Conv3D(filters=256, kernel_size=(3, 3, 3), activation="relu", padding="same", name="bottom1")(pool_contr3)
         if use_bn: conv_bottom = BatchNormalization()(conv_bottom)
-        conv_bottom = Conv3D(filters=512, kernel_size=(3, 3, 3), activation='relu', padding='same', name="bottom2")(conv_bottom)
+        conv_bottom = Conv3D(filters=512, kernel_size=(3, 3, 3), activation="relu", padding="same", name="bottom2")(conv_bottom)
         if use_bn: conv_bottom = BatchNormalization()(conv_bottom)
 
         # Crop outputs of each contracting path "layer" for use in their corresponding expansive path "layer"
@@ -69,28 +69,28 @@ class UNet_3D_NN(BaseNN):
         # Expansive path:
         scale_up3 = UpSampling3D(size=(2, 2, 2))(conv_bottom)
         merge_up3 =  concatenate([scale_up3, crop_up3], axis=4)
-        conv_up3 = Conv3D(filters=256, kernel_size=(3, 3, 3), activation='relu', padding='same')(merge_up3)
+        conv_up3 = Conv3D(filters=256, kernel_size=(3, 3, 3), activation="relu", padding="same")(merge_up3)
         if use_bn: conv_up3 = BatchNormalization()(conv_up3)
-        conv_up3 = Conv3D(filters=256, kernel_size=(3, 3, 3), activation='relu', padding='same')(conv_up3)
+        conv_up3 = Conv3D(filters=256, kernel_size=(3, 3, 3), activation="relu", padding="same")(conv_up3)
         if use_bn: conv_up3 = BatchNormalization()(conv_up3)
 
         scale_up2 = UpSampling3D(size=(2, 2, 2))(conv_up3)
         merge_up2 =  concatenate([scale_up2, crop_up2], axis=4)
-        conv_up2 = Conv3D(filters=128, kernel_size=(3, 3, 3), activation='relu', padding='same')(merge_up2)
+        conv_up2 = Conv3D(filters=128, kernel_size=(3, 3, 3), activation="relu", padding="same")(merge_up2)
         if use_bn: conv_up2 = BatchNormalization()(conv_up2)
-        conv_up2 = Conv3D(filters=128, kernel_size=(3, 3, 3), activation='relu', padding='same')(conv_up2)
+        conv_up2 = Conv3D(filters=128, kernel_size=(3, 3, 3), activation="relu", padding="same")(conv_up2)
         if use_bn: conv_up2 = BatchNormalization()(conv_up2)
 
         scale_up1 = UpSampling3D(size=(2, 2, 2))(conv_up2)
         merge_up1 =  concatenate([scale_up1, crop_up1], axis=4)
-        conv_up1 = Conv3D(filters=64, kernel_size=(3, 3, 3), activation='relu', padding='same')(merge_up1)
+        conv_up1 = Conv3D(filters=64, kernel_size=(3, 3, 3), activation="relu", padding="same")(merge_up1)
         if use_bn: conv_up1 = BatchNormalization()(conv_up1)
-        conv_up1 = Conv3D(filters=64, kernel_size=(3, 3, 3), activation='relu', padding='same')(conv_up1)
+        conv_up1 = Conv3D(filters=64, kernel_size=(3, 3, 3), activation="relu", padding="same")(conv_up1)
         if use_bn: conv_up1 = BatchNormalization()(conv_up1)
 
         # Final 1x1 conv layer
         conv_final = Conv3D(filters=self._num_classes, kernel_size=(1, 1, 1))(conv_up1)
-        conv_final = Activation('softmax')(conv_final)
+        conv_final = Activation("softmax")(conv_final)
 
         self._model = Model(inputs=inputs, outputs=conv_final)
 
@@ -108,28 +108,28 @@ class UNet_3D_NN(BaseNN):
 
         # Contracting path, from the paper:
         # Layer 1
-        conv_contr1 = Conv3D(filters=32, kernel_size=(3, 3, 3), activation='relu', padding='same', name="contr1_1")(inputs)
+        conv_contr1 = Conv3D(filters=32, kernel_size=(3, 3, 3), activation="relu", padding="same", name="contr1_1")(inputs)
         if use_bn: conv_contr1 = BatchNormalization()(conv_contr1)
 
-        conv_contr1 = Conv3D(filters=64, kernel_size=(3, 3, 3), activation='relu', padding='same', name="contr1_2")(conv_contr1)
+        conv_contr1 = Conv3D(filters=64, kernel_size=(3, 3, 3), activation="relu", padding="same", name="contr1_2")(conv_contr1)
         if use_bn: conv_contr1 = BatchNormalization()(conv_contr1)
 
         pool_contr1 = MaxPooling3D(pool_size=(2, 2, 2), strides=(2, 2, 2), name="contr1_mp")(conv_contr1)
 
         # Layer 2
-        conv_contr2 = Conv3D(filters=64, kernel_size=(3, 3, 3), activation='relu', padding='same', name="contr2_1")(pool_contr1)
+        conv_contr2 = Conv3D(filters=64, kernel_size=(3, 3, 3), activation="relu", padding="same", name="contr2_1")(pool_contr1)
         if use_bn: conv_contr2 = BatchNormalization()(conv_contr2)
 
-        conv_contr2 = Conv3D(filters=128, kernel_size=(3, 3, 3), activation='relu', padding='same', name="contr2_2")(conv_contr2)
+        conv_contr2 = Conv3D(filters=128, kernel_size=(3, 3, 3), activation="relu", padding="same", name="contr2_2")(conv_contr2)
         if use_bn: conv_contr2 = BatchNormalization()(conv_contr2)
 
         pool_contr2 = MaxPooling3D(pool_size=(2, 2, 2), strides=(2, 2, 2), name="contr2_mp")(conv_contr2)
 
         # "Bottom" layer 3
-        conv_bottom = Conv3D(filters=128, kernel_size=(3, 3, 3), activation='relu', padding='same', name="bottom1")(pool_contr2)
+        conv_bottom = Conv3D(filters=128, kernel_size=(3, 3, 3), activation="relu", padding="same", name="bottom1")(pool_contr2)
         if use_bn: conv_bottom = BatchNormalization()(conv_bottom)
 
-        conv_bottom = Conv3D(filters=256, kernel_size=(3, 3, 3), activation='relu', padding='same', name="bottom2")(conv_bottom)
+        conv_bottom = Conv3D(filters=256, kernel_size=(3, 3, 3), activation="relu", padding="same", name="bottom2")(conv_bottom)
         if use_bn: conv_bottom = BatchNormalization()(conv_bottom)
 
         crop_up1 = conv_contr1
@@ -138,21 +138,21 @@ class UNet_3D_NN(BaseNN):
         # Expansive path:
         scale_up2 = UpSampling3D(size=(2, 2, 2))(conv_bottom)
         merge_up2 =  concatenate([scale_up2, crop_up2], axis=4)
-        conv_up2 = Conv3D(filters=128, kernel_size=(3, 3, 3), activation='relu', padding='same')(merge_up2)
+        conv_up2 = Conv3D(filters=128, kernel_size=(3, 3, 3), activation="relu", padding="same")(merge_up2)
         if use_bn: conv_up2 = BatchNormalization()(conv_up2)
-        conv_up2 = Conv3D(filters=128, kernel_size=(3, 3, 3), activation='relu', padding='same')(conv_up2)
+        conv_up2 = Conv3D(filters=128, kernel_size=(3, 3, 3), activation="relu", padding="same")(conv_up2)
         if use_bn: conv_up2 = BatchNormalization()(conv_up2)
 
         scale_up1 = UpSampling3D(size=(2, 2, 2))(conv_up2)
         merge_up1 =  concatenate([scale_up1, crop_up1], axis=4)
-        conv_up1 = Conv3D(filters=64, kernel_size=(3, 3, 3), activation='relu', padding='same')(merge_up1)
+        conv_up1 = Conv3D(filters=64, kernel_size=(3, 3, 3), activation="relu", padding="same")(merge_up1)
         if use_bn: conv_up1 = BatchNormalization()(conv_up1)
-        conv_up1 = Conv3D(filters=64, kernel_size=(3, 3, 3), activation='relu', padding='same')(conv_up1)
+        conv_up1 = Conv3D(filters=64, kernel_size=(3, 3, 3), activation="relu", padding="same")(conv_up1)
         if use_bn: conv_up1 = BatchNormalization()(conv_up1)
 
         # Final 1x1 conv layer
         conv_final = Conv3D(filters=self._num_classes, kernel_size=(1, 1, 1))(conv_up1)
-        conv_final = Activation('softmax')(conv_final)
+        conv_final = Activation("softmax")(conv_final)
 
         self._model = Model(inputs=inputs, outputs=conv_final)
 
@@ -170,19 +170,19 @@ class UNet_3D_NN(BaseNN):
 
         # Contracting path, from the paper:
         # Layer 1
-        conv_contr1 = Conv3D(filters=32, kernel_size=(3, 3, 3), activation='relu', padding='same', name="contr1_1")(inputs)
+        conv_contr1 = Conv3D(filters=32, kernel_size=(3, 3, 3), activation="relu", padding="same", name="contr1_1")(inputs)
         if use_bn: conv_contr1 = BatchNormalization()(conv_contr1)
 
-        conv_contr1 = Conv3D(filters=64, kernel_size=(3, 3, 3), activation='relu', padding='same', name="contr1_2")(conv_contr1)
+        conv_contr1 = Conv3D(filters=64, kernel_size=(3, 3, 3), activation="relu", padding="same", name="contr1_2")(conv_contr1)
         if use_bn: conv_contr1 = BatchNormalization()(conv_contr1)
 
         pool_contr1 = MaxPooling3D(pool_size=(2, 2, 2), strides=(2, 2, 2), name="contr1_mp")(conv_contr1)
 
         # "Bottom" layer 3
-        conv_bottom = Conv3D(filters=64, kernel_size=(3, 3, 3), activation='relu', padding='same', name="bottom1")(pool_contr1)
+        conv_bottom = Conv3D(filters=64, kernel_size=(3, 3, 3), activation="relu", padding="same", name="bottom1")(pool_contr1)
         if use_bn: conv_bottom = BatchNormalization()(conv_bottom)
 
-        conv_bottom = Conv3D(filters=128, kernel_size=(3, 3, 3), activation='relu', padding='same', name="bottom2")(conv_bottom)
+        conv_bottom = Conv3D(filters=128, kernel_size=(3, 3, 3), activation="relu", padding="same", name="bottom2")(conv_bottom)
         if use_bn: conv_bottom = BatchNormalization()(conv_bottom)
 
         crop_up1 = conv_contr1
@@ -190,15 +190,15 @@ class UNet_3D_NN(BaseNN):
         # Expansive path:
         scale_up1 = UpSampling3D(size=(2, 2, 2))(conv_bottom)
         merge_up1 =  concatenate([scale_up1, crop_up1], axis=4)
-        conv_up1 = Conv3D(filters=64, kernel_size=(3, 3, 3), activation='relu', padding='same')(merge_up1)
+        conv_up1 = Conv3D(filters=64, kernel_size=(3, 3, 3), activation="relu", padding="same")(merge_up1)
         if use_bn: conv_up1 = BatchNormalization()(conv_up1)
-        conv_up1 = Conv3D(filters=64, kernel_size=(3, 3, 3), activation='relu', padding='same')(conv_up1)
+        conv_up1 = Conv3D(filters=64, kernel_size=(3, 3, 3), activation="relu", padding="same")(conv_up1)
         if use_bn: conv_up1 = BatchNormalization()(conv_up1)
 
         # Final 1x1 conv layer
         conv_final = Conv3D(filters=self._num_classes, kernel_size=(1, 1, 1))(conv_up1)
 
-        conv_final = Activation('softmax')(conv_final)
+        conv_final = Activation("softmax")(conv_final)
 
         self._model = Model(inputs=inputs, outputs=conv_final)
 

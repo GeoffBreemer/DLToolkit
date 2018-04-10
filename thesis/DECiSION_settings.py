@@ -28,8 +28,8 @@ ONEHOT_BACKGROUND = 0
 ONEHOT_BLOODVESSEL = 1
 
 # Local testing:
-SLICE_START = 59
-SLICE_END = 69
+SLICE_START = 59-2
+SLICE_END = 59+2
 
 # All slices:
 # SLICE_START = 0
@@ -43,8 +43,8 @@ SLICE_END = 69
 TRN_BATCH_SIZE = 1
 TRN_LEARNING_RATE = 0.001
 TRN_NUM_EPOCH = 100
-TRN_TRAIN_VAL_SPLIT = 0.1       # Percentage of training data to use for the validation set
-# TRN_TRAIN_VAL_SPLIT = 0       # Percentage of training data to use for the validation set
+# TRN_TRAIN_VAL_SPLIT = 0.1       # Percentage of training data to use for the validation set
+TRN_TRAIN_VAL_SPLIT = 0       # Percentage of training data to use for the validation set
 TRN_DROPOUT_RATE = 0.5          # Dropout rate used for all DropOut layers
 TRN_MOMENTUM = 0.99
 TRN_PRED_THRESHOLD = 0.5        # Pixel intensities that exceed the threshold are considered a positive detection
