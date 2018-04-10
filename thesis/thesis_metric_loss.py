@@ -7,7 +7,6 @@ https://github.com/keras-team/keras/issues/5335
 Focal loss:
 https://arxiv.org/abs/1708.02002
 """
-
 import keras.backend as K
 import tensorflow as tf
 
@@ -47,3 +46,20 @@ def weighted_pixelwise_crossentropy_loss(class_weights):
         return -tf.reduce_sum(tf.multiply(y_true * tf.log(y_pred), class_weights))
 
     return loss
+
+
+def evaluate_model(model, images, ground_truths, opt, loss_fn, metric, converter, settings):
+    """Run evaluate() on the model to calculate loss and metrics. This requires a compiled
+    model.
+    """
+    class_weights = [settings.CLASS_WEIGHT_BACKGROUND, settings.CLASS_WEIGHT_BLOODVESSEL]
+    metrics = [metric]
+    loss = loss_fn(class_weights)
+
+    # Compile
+    model.compile(optimizer=opt, loss=loss, metrics=metrics)
+
+    eval_list = model.evaluate(images, converter(ground_truths, num_classes=settings.NUM_CLASSES),
+                                 batch_size=settings.TRN_BATCH_SIZE, verbose=2)
+
+    return eval_list
