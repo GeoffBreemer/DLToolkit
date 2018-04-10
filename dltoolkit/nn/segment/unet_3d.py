@@ -1,8 +1,7 @@
 """Implementation of a 3D U-Net using Keras"""
 from keras.layers import concatenate, Activation, Input, Conv3D, MaxPooling3D, UpSampling3D,\
-    Cropping3D, BatchNormalization
+    BatchNormalization
 from keras.models import Model
-from keras import backend as K
 from dltoolkit.nn.base_nn import BaseNN
 
 

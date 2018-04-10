@@ -1,6 +1,6 @@
 # Variables used to construct paths and filenames and convert data to HDF5 format
-TRAINING_PATH = "../data/MSC8002/training3d"            # training images
-TEST_PATH = "../data/MSC8002/test3d"                    # test images
+TRAINING_PATH = "../data/MSC8002/training"              # training images
+TEST_PATH = "../data/MSC8002/test"                      # test images
 MODEL_PATH = "../savedmodels/"                          # saved Keras models
 OUTPUT_PATH = "../output/"                              # plots and other output
 SEGMAP_PATH = OUTPUT_PATH + "segmentation_maps/"
@@ -12,22 +12,24 @@ HDF5_KEY = "image"
 IMG_EXTENSION = ".jpg"
 
 # Image dimensions
-IMG_HEIGHT = 256            # original image height (prior to any pre-processing)
-IMG_WIDTH = 256             # original image width (prior to any pre-processing)
+IMG_HEIGHT = 256            # image height (after cropping)
+IMG_WIDTH = 256             # image width (after cropping)
 IMG_CHANNELS = 1            # number of channels for the images and ground truths (i.e. gray scale)
 NUM_CLASSES = 2             # number of classes to segment
 IMG_CROP_HEIGHT = 32        # number of pixels to crop from BOTH the top and the bottom
 IMG_CROP_WIDTH = 32         # number of pixels to crop from BOTH the left and the right
 
-MASK_BINARY_THRESHOLD = 20  # Pixel intensities above this value are considered blood vessels
+MASK_BINARY_THRESHOLD = 20      # Pixel intensities above this value are considered blood vessels
 CLASS_WEIGHT_BACKGROUND = 1.
-CLASS_WEIGHT_BLOODVESSEL = 10.
-MASK_BACKGROUND = 0         # pixel intensity for background pixels (i.e. black)
-MASK_BLOODVESSEL = 255      # pixel intensity for vessel pixels (i.e. white)
+CLASS_WEIGHT_BLOODVESSEL = 8.
+MASK_BACKGROUND = 0             # pixel intensity for background pixels (i.e. black)
+MASK_BLOODVESSEL = 255          # pixel intensity for vessel pixels (i.e. white)
+ONEHOT_BACKGROUND = 0
+ONEHOT_BLOODVESSEL = 1
 
 # Local testing:
-# SLICE_START = 59 - 8
-# SLICE_END = 59 + 8
+SLICE_START = 59-2
+SLICE_END = 59+2
 
 # All slices:
 # SLICE_START = 0
@@ -37,19 +39,17 @@ MASK_BLOODVESSEL = 255      # pixel intensity for vessel pixels (i.e. white)
 # SLICE_START = 0
 # SLICE_END = 96
 
-# AWS 2layer
-SLICE_START = 59 - 16
-SLICE_END = 59 + 16
-
 # Training hyper parameters
 TRN_BATCH_SIZE = 1
 TRN_LEARNING_RATE = 0.001
-TRN_NUM_EPOCH = 200
-TRN_TRAIN_VAL_SPLIT = 0#1/3       # Percentage of training data to use for the validation set
+TRN_NUM_EPOCH = 100
+TRN_TRAIN_VAL_SPLIT = 0.1       # Percentage of training data to use for the validation set
+# TRN_TRAIN_VAL_SPLIT = 0       # Percentage of training data to use for the validation set
 TRN_DROPOUT_RATE = 0.5          # Dropout rate used for all DropOut layers
 TRN_MOMENTUM = 0.99
 TRN_PRED_THRESHOLD = 0.5        # Pixel intensities that exceed the threshold are considered a positive detection
-TRN_EARLY_PATIENCE = 3 #10         # Early stopping patience
+TRN_EARLY_PATIENCE = 5          # 10         # Early stopping patience
+TRN_NUM_KFOLD_SPLITS = 5
 
 # Miscellaneous
 VERBOSE = True

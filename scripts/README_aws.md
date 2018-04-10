@@ -1,5 +1,7 @@
 # Common commands
 
+**Note**: scripts are used during proof of concept development. They do not include error checking and are not production ready.
+
 ## Local machine
 1. Set environment variables with EC2 instance information:
 

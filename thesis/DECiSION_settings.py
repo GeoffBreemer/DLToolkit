@@ -3,6 +3,7 @@ TRAINING_PATH = "../data/MSC8002/training"              # training images
 TEST_PATH = "../data/MSC8002/test"                      # test images
 MODEL_PATH = "../savedmodels/"                          # saved Keras models
 OUTPUT_PATH = "../output/"                              # plots and other output
+SEGMAP_PATH = OUTPUT_PATH + "segmentation_maps/"
 
 FLDR_GROUND_TRUTH = "groundtruths"                      # folder with the ground truths
 FLDR_IMAGES = "images"                                  # folder with the images
@@ -11,12 +12,12 @@ HDF5_KEY = "image"
 IMG_EXTENSION = ".jpg"
 
 # Image dimensions
-IMG_HEIGHT = 240            # image height (after cropping)
-IMG_WIDTH = 240             # image width (after cropping)
+IMG_HEIGHT = 256            # image height (after cropping)
+IMG_WIDTH = 256             # image width (after cropping)
 IMG_CHANNELS = 1            # number of channels for the images and ground truths (i.e. gray scale)
 NUM_CLASSES = 2             # number of classes to segment
-IMG_CROP_HEIGHT = 40        # number of pixels to crop from BOTH the top and the bottom
-IMG_CROP_WIDTH = 40         # number of pixels to crop from BOTH the left and the right
+IMG_CROP_HEIGHT = 32        # number of pixels to crop from BOTH the top and the bottom
+IMG_CROP_WIDTH = 32         # number of pixels to crop from BOTH the left and the right
 
 MASK_BINARY_THRESHOLD = 20      # Pixel intensities above this value are considered blood vessels
 CLASS_WEIGHT_BACKGROUND = 1.
