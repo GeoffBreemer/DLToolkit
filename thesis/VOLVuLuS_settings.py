@@ -12,18 +12,18 @@ HDF5_KEY = "image"
 IMG_EXTENSION = ".jpg"
 
 # Image dimensions
-IMG_HEIGHT = 256            # original image height (prior to any pre-processing)
-IMG_WIDTH = 256             # original image width (prior to any pre-processing)
+IMG_HEIGHT = 256            # image height (after cropping)
+IMG_WIDTH = 256             # image width (after cropping)
 IMG_CHANNELS = 1            # number of channels for the images and ground truths (i.e. gray scale)
 NUM_CLASSES = 2             # number of classes to segment
 IMG_CROP_HEIGHT = 32        # number of pixels to crop from BOTH the top and the bottom
 IMG_CROP_WIDTH = 32         # number of pixels to crop from BOTH the left and the right
 
-MASK_BINARY_THRESHOLD = 20  # Pixel intensities above this value are considered blood vessels
+MASK_BINARY_THRESHOLD = 20      # Pixel intensities above this value are considered blood vessels
 CLASS_WEIGHT_BACKGROUND = 1.
 CLASS_WEIGHT_BLOODVESSEL = 10.
-MASK_BACKGROUND = 0         # pixel intensity for background pixels (i.e. black)
-MASK_BLOODVESSEL = 255      # pixel intensity for vessel pixels (i.e. white)
+MASK_BACKGROUND = 0             # pixel intensity for background pixels (i.e. black)
+MASK_BLOODVESSEL = 255          # pixel intensity for vessel pixels (i.e. white)
 
 # Local testing:
 # SLICE_START = 59 - 8
@@ -37,7 +37,7 @@ MASK_BLOODVESSEL = 255      # pixel intensity for vessel pixels (i.e. white)
 # SLICE_START = 0
 # SLICE_END = 96
 
-# AWS 2layer
+# AWS 2layer maximum:
 SLICE_START = 59 - 16
 SLICE_END = 59 + 16
 
@@ -45,11 +45,11 @@ SLICE_END = 59 + 16
 TRN_BATCH_SIZE = 1
 TRN_LEARNING_RATE = 0.001
 TRN_NUM_EPOCH = 200
-TRN_TRAIN_VAL_SPLIT = 0#1/3       # Percentage of training data to use for the validation set
+TRN_TRAIN_VAL_SPLIT = 0#1/3     # Percentage of training data to use for the validation set
 TRN_DROPOUT_RATE = 0.5          # Dropout rate used for all DropOut layers
 TRN_MOMENTUM = 0.99
 TRN_PRED_THRESHOLD = 0.5        # Pixel intensities that exceed the threshold are considered a positive detection
-TRN_EARLY_PATIENCE = 3 #10         # Early stopping patience
+TRN_EARLY_PATIENCE = 3 #10       # Early stopping patience
 
 # Miscellaneous
 VERBOSE = True
