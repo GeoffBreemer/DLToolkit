@@ -26,8 +26,8 @@ MASK_BACKGROUND = 0             # pixel intensity for background pixels (i.e. bl
 MASK_BLOODVESSEL = 255          # pixel intensity for vessel pixels (i.e. white)
 
 # Local testing:
-# SLICE_START = 59 - 8
-# SLICE_END = 59 + 8
+SLICE_START = 59 - 8
+SLICE_END = 59 + 8
 
 # All slices:
 # SLICE_START = 0
@@ -38,8 +38,8 @@ MASK_BLOODVESSEL = 255          # pixel intensity for vessel pixels (i.e. white)
 # SLICE_END = 96
 
 # AWS 2layer maximum:
-SLICE_START = 59 - 16
-SLICE_END = 59 + 16
+# SLICE_START = 59 - 16
+# SLICE_END = 59 + 16
 
 # Training hyper parameters
 TRN_BATCH_SIZE = 1
