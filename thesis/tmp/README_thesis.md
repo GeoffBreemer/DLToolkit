@@ -5,12 +5,15 @@ Work in progress.
 
 Generic:
 
-- [ ] Use evaluate for final metrics
+- [ ] code cleanup unet, 3dunet, fcn: replace model creation with shorter for loops
+- [ ] that kicking (increasing) the learning rate: https://blog.deepsense.ai/deep-learning-right-whale-recognition-kaggle/
+- [ ] check for data augmentation: https://www.kaggle.com/lextoumbourou/humpback-whale-id-data-and-aug-exploration
+- [x] Use evaluate for final metrics
 - [ ] check float16 usage, possibly change back to float32
-- [ ] implement baseline model
+- [x] implement baseline model
 - [x] generators
 - [x] image pre-processing
-- [ ] data augmentation offline generation script
+- [x] data augmentation offline generation script
 - [x] different opimizers ([algorithms](https://towardsdatascience.com/types-of-optimization-algorithms-used-in-neural-networks-and-ways-to-optimize-gradient-95ae5d39529f)):
     - [x] Adam: good results
     - [x] AdaDelta: appears to take longer to converge

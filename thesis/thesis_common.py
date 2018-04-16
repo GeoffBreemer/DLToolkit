@@ -97,81 +97,6 @@ def create_hdf5_db_3d(patients_list, dn_name, img_path, img_shape, img_exts, key
     return output_path
 
 
-def create_hdf5_db_3D_OLD(img_path, img_shape, img_exts, key, ext, settings, is_mask=False):
-    """Convert images present in `img_path` to HDF5 format. The HDF5 file is saved one sub folder up from where the
-    images are located. Masks are binary tresholded to be 0 for background pixels and 255 for blood vessels. Images
-    (slices) are expected to be stored in subfolders (volumes), one for each patient.
-    :param img_path: path to the folder containing images
-    :param img_shape: shape of each image (width, height, # of channels)
-    :param img_exts: image extension, e.g. ".jpg"
-    :param key: HDF5 data set key
-    :param settings: settings file
-    :param is_mask: True when converting ground truths, False when converting images
-    :return: full path to the generated HDF5 file
-    """
-    num_slices = settings.SLICE_END - settings.SLICE_START
-
-    # Path to the HDF5 file
-    output_path = os.path.join(os.path.dirname(img_path), os.path.basename(img_path)) + ext
-
-    # Create a list of paths to the individual patient folders
-    patient_folders = sorted([os.path.join(img_path, e.name) for e in os.scandir(img_path) if e.is_dir()])
-
-    # Prepare the HDF5 writer
-    hdf5_writer = HDF5Writer((len(patient_folders), num_slices) + img_shape,
-                             output_path,
-                             feat_key=key,
-                             label_key=None,
-                             del_existing=True,
-                             buf_size=len(patient_folders),
-                             dtype_feat=np.float16 if not is_mask else np.uint8)
-
-    # Prepare for CLAHE histogram equalization
-    clahe = cv2.createCLAHE(clipLimit=2, tileGridSize=(16, 16))
-
-    # Loop through all images
-    widgets = ["Creating HDF5 database ", progressbar.Percentage(), " ", progressbar.Bar(), " ", progressbar.ETA()]
-    pbar = progressbar.ProgressBar(maxval=len(patient_folders), widgets=widgets).start()
-
-    # Loop through each patient subfolder
-    for patient_ix, p_folder in enumerate(patient_folders):
-        imgs_list = sorted(list(list_images(basePath=p_folder, validExts=img_exts)))[settings.SLICE_START:settings.SLICE_END]
-        imgs = np.zeros((num_slices, img_shape[0], img_shape[1], img_shape[2]), dtype=np.float16)
-
-        # Read each slice in the current patient's folder
-        for slice_ix, slice_img in enumerate(imgs_list):
-            image = cv2.imread(slice_img, cv2.IMREAD_GRAYSCALE)
-
-            # Crop to the region of interest
-            image = image[settings.IMG_CROP_HEIGHT:image.shape[0] - settings.IMG_CROP_HEIGHT,
-                    settings.IMG_CROP_WIDTH:image.shape[1] - settings.IMG_CROP_WIDTH]
-
-            # Apply any preprocessing
-            if is_mask:
-                # Apply binary thresholding to ground truth masks
-                _, image = cv2.threshold(image, settings.MASK_BINARY_THRESHOLD, settings.MASK_BLOODVESSEL,
-                                         cv2.THRESH_BINARY)
-            else:
-                # Apply CLAHE histogram equalization
-                image = clahe.apply(image)
-
-                # Standardise
-                image = standardise_single(image)
-
-            # Reshape from (height, width) to (height, width, 1)
-            image = image.reshape((img_shape[0], img_shape[1], img_shape[2]))
-            imgs[slice_ix] = image
-
-        # Write all slices for the current patient
-        hdf5_writer.add([imgs], None)
-        pbar.update(patient_ix)
-
-    pbar.finish()
-    hdf5_writer.close()
-
-    return output_path
-
-
 def convert_img_to_pred_3d(ground_truths, num_classes, verbose=False):
     """Convert an array of grayscale images with shape (-1, height, width, slices, 1) to an array of the same length
     # with shape (-1, height, width, slices, num_classes). That is the shape the 3D Unet produces. Does not generalise
@@ -335,57 +260,6 @@ def convert_pred_to_img(pred, threshold=0.5, verbose=False):
 
     # Add a dimension for the color channel
     pred_images = np.reshape(pred_images, tuple(pred_images.shape[0:3]) + (1,))
-
-    if verbose:
-        print("Elapsed time: {:.2f}s".format(time.time() - start_time))
-
-    return pred_images
-
-
-def convert_img_to_pred_flatten(ground_truths, settings, verbose=False):
-    """Similar to convert_img_to_pred, but converts from (-1, height, width, 1) to (-1, height * width, num_classes)"""
-    start_time = time.time()
-
-    img_height = ground_truths.shape[1]
-    img_width = ground_truths.shape[2]
-
-    ground_truths = np.reshape(ground_truths, (ground_truths.shape[0], img_height * img_width))
-
-    new_masks = np.empty((ground_truths.shape[0], img_height * img_width, settings.NUM_CLASSES), dtype=np.uint8)
-
-    for image in range(ground_truths.shape[0]):
-        if verbose and image % 1000 == 0:
-            print("{}/{}".format(image, ground_truths.shape[0]))
-
-        for pix in range(img_height*img_width):
-            if ground_truths[image, pix] == settings.MASK_BACKGROUND:      # TODO: update for num_model_channels > 2
-                new_masks[image, pix, settings.ONEHOT_BACKGROUND] = 1
-                new_masks[image, pix, settings.ONEHOT_BLOODVESSEL] = 0
-            else:
-                new_masks[image, pix, settings.ONEHOT_BACKGROUND] = 0
-                new_masks[image, pix, settings.ONEHOT_BLOODVESSEL] = 1
-
-    if verbose:
-        print("Elapsed time: {:.2f}s".format(time.time() - start_time))
-
-    return new_masks
-
-
-def convert_pred_to_img_flatten(pred, settings, threshold=0.5, verbose=False):
-    """Convert U-Net predictions from (-1, height * width, num_classes) to (-1, height, width, 1)"""
-    start_time = time.time()
-
-    pred_images = np.empty((pred.shape[0], pred.shape[1]), dtype=np.uint8)
-    # pred = np.reshape(pred, newshape=(pred.shape[0], pred.shape[1] * pred.shape[2]))
-
-    for i in range(pred.shape[0]):
-        for pix in range(pred.shape[1]):
-            if pred[i, pix, settings.ONEHOT_BLOODVESSEL] > threshold:
-                pred_images[i, pix] = settings.MASK_BLOODVESSEL
-            else:
-                pred_images[i, pix] = settings.MASK_BACKGROUND
-
-    pred_images = np.reshape(pred_images, (pred.shape[0], settings.IMG_HEIGHT, settings.IMG_WIDTH, 1))
 
     if verbose:
         print("Elapsed time: {:.2f}s".format(time.time() - start_time))

@@ -19,9 +19,6 @@ NUM_CLASSES = 2             # number of classes to segment
 IMG_CROP_HEIGHT = 32        # number of pixels to crop from BOTH the top and the bottom
 IMG_CROP_WIDTH = 32         # number of pixels to crop from BOTH the left and the right
 
-MASK_BINARY_THRESHOLD = 20      # Pixel intensities above this value are considered blood vessels
-CLASS_WEIGHT_BACKGROUND = 1.
-CLASS_WEIGHT_BLOODVESSEL = 10.
 MASK_BACKGROUND = 0             # pixel intensity for background pixels (i.e. black)
 MASK_BLOODVESSEL = 255          # pixel intensity for vessel pixels (i.e. white)
 
@@ -42,14 +39,19 @@ SLICE_END = 59 + 8
 # SLICE_END = 59 + 16
 
 # Training hyper parameters
-TRN_BATCH_SIZE = 1
-TRN_LEARNING_RATE = 0.001
-TRN_NUM_EPOCH = 200
-TRN_TRAIN_VAL_SPLIT = 0#1/3     # Percentage of training data to use for the validation set
-TRN_DROPOUT_RATE = 0.5          # Dropout rate used for all DropOut layers
-TRN_MOMENTUM = 0.99
-TRN_PRED_THRESHOLD = 0.5        # Pixel intensities that exceed the threshold are considered a positive detection
-TRN_EARLY_PATIENCE = 3 #10       # Early stopping patience
+MASK_BINARY_THRESHOLD = 20      # pixel intensities above this value are considered blood vessels
+CLASS_WEIGHT_BACKGROUND = 1.    # weight for the background class
+CLASS_WEIGHT_BLOODVESSEL = 10.  # weight for the blood vessel class
+
+TRN_BATCH_SIZE = 1              # batch size
+TRN_LEARNING_RATE = 0.001       # Momentum value (gradient descent only)
+TRN_NUM_EPOCH = 200             # maximum number of epochs to train
+TRN_TRAIN_VAL_SPLIT = 0.0       # percentage of training data to use for the validation set
+TRN_DROPOUT_RATE = 0.5          # Dropout rate used for all Dropout layers
+TRN_MOMENTUM = 0.99             # Momentum value (gradient descent only)
+TRN_PRED_THRESHOLD = 0.5        # Pixel probabilities that exceed the threshold are considered a positive detection
+TRN_EARLY_PATIENCE = 10         # Early Stopping patience
+TRN_AMS_GRAD = True             # whether to enable AMSGrad (Adam optimiser only)
 
 # Miscellaneous
 VERBOSE = True

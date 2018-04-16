@@ -19,13 +19,8 @@ NUM_CLASSES = 2             # number of classes to segment
 IMG_CROP_HEIGHT = 32        # number of pixels to crop from BOTH the top and the bottom
 IMG_CROP_WIDTH = 32         # number of pixels to crop from BOTH the left and the right
 
-MASK_BINARY_THRESHOLD = 20      # Pixel intensities above this value are considered blood vessels
-CLASS_WEIGHT_BACKGROUND = 1.
-CLASS_WEIGHT_BLOODVESSEL = 8.
 MASK_BACKGROUND = 0             # pixel intensity for background pixels (i.e. black)
 MASK_BLOODVESSEL = 255          # pixel intensity for vessel pixels (i.e. white)
-ONEHOT_BACKGROUND = 0
-ONEHOT_BLOODVESSEL = 1
 
 # Local testing:
 SLICE_START = 59-2
@@ -40,16 +35,21 @@ SLICE_END = 59+2
 # SLICE_END = 96
 
 # Training hyper parameters
-TRN_BATCH_SIZE = 1
-TRN_LEARNING_RATE = 0.001
-TRN_NUM_EPOCH = 100
-# TRN_TRAIN_VAL_SPLIT = 0.1       # Percentage of training data to use for the validation set
-TRN_TRAIN_VAL_SPLIT = 0.0         # Percentage of training data to use for the validation set
-TRN_DROPOUT_RATE = 0.5          # Dropout rate used for all DropOut layers
-TRN_MOMENTUM = 0.99
-TRN_PRED_THRESHOLD = 0.5        # Pixel intensities that exceed the threshold are considered a positive detection
-TRN_EARLY_PATIENCE = 10         # Early stopping patience
-TRN_NUM_KFOLD_SPLITS = 5
+MASK_BINARY_THRESHOLD = 20      # pixel intensities above this value are considered blood vessels
+CLASS_WEIGHT_BACKGROUND = 1.    # weight for the background class
+CLASS_WEIGHT_BLOODVESSEL = 8.   # weight for the blood vessel class
+
+TRN_BATCH_SIZE = 1              # batch size
+TRN_LEARNING_RATE = 0.001       # Momentum value (gradient descent only)
+TRN_NUM_EPOCH = 100             # maximum number of epochs to train
+# TRN_TRAIN_VAL_SPLIT = 0.1       # percentage of training data to use for the validation set
+TRN_TRAIN_VAL_SPLIT = 0.0       # percentage of training data to use for the validation set
+TRN_DROPOUT_RATE = 0.5          # Dropout rate used for all Dropout layers
+TRN_MOMENTUM = 0.99             # Momentum value (gradient descent only)
+TRN_PRED_THRESHOLD = 0.5        # Pixel probabilities that exceed the threshold are considered a positive detection
+TRN_EARLY_PATIENCE = 10         # Early Stopping patience
+TRN_NUM_KFOLD_SPLITS = 5        # number of folds when using cross-validation
+TRN_AMS_GRAD = True             # whether to enable AMSGrad (Adam optimiser only)
 
 # Miscellaneous
 VERBOSE = True
