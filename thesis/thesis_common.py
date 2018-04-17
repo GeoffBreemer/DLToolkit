@@ -192,10 +192,6 @@ def create_hdf5_db(imgs_list, dn_name, img_path, img_shape, key, ext, settings, 
     for i, img in enumerate(imgs_list):
         image = cv2.imread(img, cv2.IMREAD_GRAYSCALE)
 
-        print("file name: {}".format(os.path.basename(img)))
-
-        cv2.imwrite("../output/thesis_images/ORG_" + os.path.basename(img), image)
-
         # Crop to the region of interest
         image = image[settings.IMG_CROP_HEIGHT:image.shape[0] - settings.IMG_CROP_HEIGHT,
                 settings.IMG_CROP_WIDTH:image.shape[1] - settings.IMG_CROP_WIDTH]
@@ -214,11 +210,6 @@ def create_hdf5_db(imgs_list, dn_name, img_path, img_shape, key, ext, settings, 
 
         # Reshape from (height, width) to (height, width, 1)
         image = image.reshape((img_shape[0], img_shape[1], img_shape[2]))
-
-        if is_mask:
-            cv2.imwrite("../output/thesis_images/PREPROCESS_" + os.path.basename(img), image)
-        else:
-            cv2.imwrite("../output/thesis_images/PREPROCESS_" + os.path.basename(img), image*255)
 
         hdf5_writer.add([image], None)
         pbar.update(i)

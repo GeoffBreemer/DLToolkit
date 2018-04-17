@@ -23,16 +23,16 @@ MASK_BACKGROUND = 0             # pixel intensity for background pixels (i.e. bl
 MASK_BLOODVESSEL = 255          # pixel intensity for vessel pixels (i.e. white)
 
 # Local testing:
-SLICE_START = 59-2
-SLICE_END = 59+2
+# SLICE_START = 59-2
+# SLICE_END = 59+2
 
 # All slices:
 # SLICE_START = 0
 # SLICE_END = 247
 
 # Useful slices only:
-# SLICE_START = 0
-# SLICE_END = 96
+SLICE_START = 0
+SLICE_END = 96
 
 # Training hyper parameters
 MASK_BINARY_THRESHOLD = 20      # pixel intensities above this value are considered blood vessels
@@ -47,7 +47,7 @@ TRN_TRAIN_VAL_SPLIT = 0.0       # percentage of training data to use for the val
 TRN_DROPOUT_RATE = 0.5          # Dropout rate used for all Dropout layers
 TRN_MOMENTUM = 0.99             # Momentum value (gradient descent only)
 TRN_PRED_THRESHOLD = 0.5        # Pixel probabilities that exceed the threshold are considered a positive detection
-TRN_EARLY_PATIENCE = 10         # Early Stopping patience
+TRN_EARLY_PATIENCE = 12         # Early Stopping patience
 TRN_NUM_KFOLD_SPLITS = 5        # number of folds when using cross-validation
 TRN_AMS_GRAD = True             # whether to enable AMSGrad (Adam optimiser only)
 

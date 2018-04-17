@@ -23,11 +23,11 @@ MASK_BACKGROUND = 0             # pixel intensity for background pixels (i.e. bl
 MASK_BLOODVESSEL = 255          # pixel intensity for vessel pixels (i.e. white)
 
 # Local pipeline testing:
-SLICE_START = 59-2
-SLICE_END = 59+2
+# SLICE_START = 59-2
+# SLICE_END = 59+2
 
-# SLICE_START = 24
-# SLICE_END = 29
+SLICE_START = 24
+SLICE_END = 29
 
 # All slices:
 # SLICE_START = 0
