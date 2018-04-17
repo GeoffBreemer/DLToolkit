@@ -22,9 +22,12 @@ IMG_CROP_WIDTH = 32         # number of pixels to crop from BOTH the left and th
 MASK_BACKGROUND = 0             # pixel intensity for background pixels (i.e. black)
 MASK_BLOODVESSEL = 255          # pixel intensity for vessel pixels (i.e. white)
 
-# Local testing:
+# Local pipeline testing:
 SLICE_START = 59-2
 SLICE_END = 59+2
+
+# SLICE_START = 24
+# SLICE_END = 29
 
 # All slices:
 # SLICE_START = 0

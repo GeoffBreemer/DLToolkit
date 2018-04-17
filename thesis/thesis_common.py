@@ -49,7 +49,8 @@ def create_hdf5_db_3d(patients_list, dn_name, img_path, img_shape, img_exts, key
                              label_key=None,
                              del_existing=True,
                              buf_size=len(patients_list),
-                             dtype_feat=np.float16 if not is_mask else np.uint8)
+                             # dtype_feat=np.float16 if not is_mask else np.uint8)
+                             dtype_feat = np.float32 if not is_mask else np.uint8)
 
     # Prepare for CLAHE histogram equalization
     clahe = cv2.createCLAHE(clipLimit=2, tileGridSize=(16, 16))
@@ -61,7 +62,8 @@ def create_hdf5_db_3d(patients_list, dn_name, img_path, img_shape, img_exts, key
     # Loop through each patient subfolder
     for patient_ix, p_folder in enumerate(patients_list):
         imgs_list = sorted(list(list_images(basePath=p_folder, validExts=img_exts)))[settings.SLICE_START:settings.SLICE_END]
-        imgs = np.zeros((num_slices, img_shape[0], img_shape[1], img_shape[2]), dtype=np.float16)
+        # imgs = np.zeros((num_slices, img_shape[0], img_shape[1], img_shape[2]), dtype=np.float16)
+        imgs = np.zeros((num_slices, img_shape[0], img_shape[1], img_shape[2]), dtype=np.float32)
 
         # Read each slice in the current patient's folder
         for slice_ix, slice_img in enumerate(imgs_list):
@@ -177,7 +179,8 @@ def create_hdf5_db(imgs_list, dn_name, img_path, img_shape, key, ext, settings, 
                              label_key=None,
                              del_existing=True,
                              buf_size=len(imgs_list),
-                             dtype_feat=np.float16 if not is_mask else np.uint8
+                             # dtype_feat=np.float16 if not is_mask else np.uint8
+                             dtype_feat=np.float32 if not is_mask else np.uint8
                              )
 
     # Prepare for CLAHE histogram equalization
@@ -188,6 +191,10 @@ def create_hdf5_db(imgs_list, dn_name, img_path, img_shape, key, ext, settings, 
     pbar = progressbar.ProgressBar(maxval=len(imgs_list), widgets=widgets).start()
     for i, img in enumerate(imgs_list):
         image = cv2.imread(img, cv2.IMREAD_GRAYSCALE)
+
+        print("file name: {}".format(os.path.basename(img)))
+
+        cv2.imwrite("../output/thesis_images/ORG_" + os.path.basename(img), image)
 
         # Crop to the region of interest
         image = image[settings.IMG_CROP_HEIGHT:image.shape[0] - settings.IMG_CROP_HEIGHT,
@@ -207,6 +214,11 @@ def create_hdf5_db(imgs_list, dn_name, img_path, img_shape, key, ext, settings, 
 
         # Reshape from (height, width) to (height, width, 1)
         image = image.reshape((img_shape[0], img_shape[1], img_shape[2]))
+
+        if is_mask:
+            cv2.imwrite("../output/thesis_images/PREPROCESS_" + os.path.basename(img), image)
+        else:
+            cv2.imwrite("../output/thesis_images/PREPROCESS_" + os.path.basename(img), image*255)
 
         hdf5_writer.add([image], None)
         pbar.update(i)

@@ -20,18 +20,19 @@ def mean_subtraction(img):
 
 
 def standardise_single(image):
-    """Standardise a single images, values are float16 between 0.0 and 1.0"""
+    """Standardise a single images, values are float32 between 0.0 and 1.0"""
     imgs_std = np.std(image)
     imgs_mean = np.mean(image)
     imgs_standardised = (image - imgs_mean) / imgs_std
 
     imgs_standardised = ((imgs_standardised - np.min(imgs_standardised)) / (np.max(imgs_standardised)-np.min(imgs_standardised)))
 
-    return imgs_standardised.astype(np.float16)
+    # return imgs_standardised.astype(np.float16)
+    return imgs_standardised.astype(np.float32)
 
 
 def standardise(imgs):
-    """Standardise an array of images, values are float16 between 0.0 and 1.0"""
+    """Standardise an array of images, values are float32 between 0.0 and 1.0"""
     imgs_std = np.std(imgs)
     imgs_mean = np.mean(imgs)
     imgs_standardised = (imgs-imgs_mean)/imgs_std
@@ -39,7 +40,8 @@ def standardise(imgs):
     for i in range(imgs.shape[0]):
         imgs_standardised[i] = standardise_single(imgs_standardised[i])
 
-    return imgs_standardised.astype(np.float16)
+    # return imgs_standardised.astype(np.float16)
+    return imgs_standardised.astype(np.float32)
 
 
 def normalise_single(img):
@@ -50,10 +52,11 @@ def normalise_single(img):
 
 
 def normalise(imgs):
-    """Normalise an array of RGB images, values are float16 between 0.0 and 255.0"""
+    """Normalise an array of RGB images, values are float32 between 0.0 and 255.0"""
     imgs_normalized = np.empty(imgs.shape)
 
     for i in range(imgs.shape[0]):
         imgs_normalized[i] = ((imgs[i] - np.min(imgs[i])) / (np.max(imgs[i])-np.min(imgs[i])))
 
-    return imgs_normalized.astype(np.float16)
+    # return imgs_normalized.astype(np.float16)
+    return imgs_normalized.astype(np.float32)
