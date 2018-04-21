@@ -35,7 +35,7 @@ def plot_training_history(hist, show=True, save_path=None, time_stamp=False, met
 
     if metric == "acc":
         ylabel = "Accuracy"
-    elif metric == "dice_coef":
+    elif metric.startswith("dice_coef"):
         ylabel = "Dice coefficient"
 
     # Create a dual axis graph
@@ -92,7 +92,7 @@ def plot_training_history(hist, show=True, save_path=None, time_stamp=False, met
         plt.show()
 
     if save_path is not None:
-        save_path = save_path + "_training"
+        save_path = save_path + "_training_curve"
         if time_stamp:
             current_dt = datetime.datetime.now()
             save_path = save_path + "_{}_{}".format(current_dt.strftime("%Y%m%d"),
@@ -150,7 +150,7 @@ def plot_roc_curve(ground_truth_imgs, predicted_scores_pos, show=True, save_path
     plt.style.use("thesis_style.use")
 
     fig, ax = plt.subplots(figsize=(16, 10))
-    ax.plot(fpr, tpr, '-', label="Area Under the Curve (AUC) = {:0.4f}".format(AUC_ROC))
+    ax.plot(fpr, tpr, '-', linewidth=4.0, label="Area Under the Curve (AUC) = {:0.4f}".format(AUC_ROC))
 
     plt.title("Receiver Operator Curve (ROC)")
     plt.xlabel("False Positive Rate (FPR)")
@@ -203,7 +203,7 @@ def plot_precision_recall_curve(ground_truth_imgs, predictions, num_classes, sho
     plt.style.use("thesis_style.use")
 
     fig, ax = plt.subplots(figsize=(16, 10))
-    ax.plot(recall, precision, '-', label="Area Under the Curve (AUC) = {:0.4f}".format(AUC_prec_rec))
+    ax.plot(recall, precision, '-', linewidth=4.0, label="Area Under the Curve (AUC) = {:0.4f}".format(AUC_prec_rec))
 
     plt.title('Precision - Recall curve')
     plt.xlabel("Recall")

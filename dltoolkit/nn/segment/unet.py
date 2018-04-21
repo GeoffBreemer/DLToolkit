@@ -81,6 +81,100 @@ class UNet_NN(BaseNN):
 
         return self._model
 
+    def build_model_BRAIN_1layer(self, use_bn=False, use_dropout=False):
+        """
+        Build a 1 layer version of the U-Net architecture as defined by Ronneberger et al
+        """
+        self._title = "UNet_brain_1layer"
+        self._title+= "_BN" if use_bn else ""
+        self._title+= "_DO" if use_dropout else ""
+
+        # Set the input shape
+        input_shape = (self._img_height, self._img_width, self._img_channels)
+        inputs = Input(input_shape)
+
+        # Contracting path - Layer 1
+        conv_contr1 = Conv2D(filters=32, kernel_size=(3, 3), activation="relu", padding="same",
+                             kernel_initializer="he_normal")(inputs)
+        conv_contr1 = BatchNormalization()(conv_contr1) if use_bn else conv_contr1
+        conv_contr1 = Dropout(self._dropout_rate)(conv_contr1) if use_dropout else conv_contr1
+        conv_contr1 = Conv2D(filters=32, kernel_size=(3, 3), activation="relu", padding="same",
+                             kernel_initializer = RandomNormal(stddev=math.sqrt(2 / (3**2 * 32))))(conv_contr1)
+        conv_contr1 = BatchNormalization()(conv_contr1) if use_bn else conv_contr1
+        pool_contr1 = MaxPooling2D(pool_size=(2, 2))(conv_contr1)
+
+        # Crop outputs of each contracting path "layer" for use in their corresponding expansive path "layer"
+        crop_up1 = conv_contr1  # no cropping required
+
+        # Layer 1
+        conv_scale_up1 = Conv2DTranspose(filters=32, kernel_size=(2, 2), strides=2, activation="relu", padding="same",
+                                         kernel_initializer = RandomNormal(stddev=math.sqrt(2 / (3 ** 2 * 64))))(pool_contr1)
+        merge_up1 = concatenate([conv_scale_up1, crop_up1], axis=3)
+        conv_up1 = Conv2D(filters=32, kernel_size=(3, 3), activation="relu", padding="same",
+                          kernel_initializer = RandomNormal(stddev=math.sqrt(2 / (3**2 * 64))))(merge_up1)
+        conv_up1 = Conv2D(filters=32, kernel_size=(3, 3), activation="relu", padding="same",
+                          kernel_initializer = RandomNormal(stddev=math.sqrt(2 / (3**2 * 32))))(conv_up1)
+
+        # Final 1x1 conv layer
+        conv_final = Conv2D(self._num_classes, (1, 1), activation="relu", padding="same",
+                            kernel_initializer="he_normal")(conv_up1)
+        conv_final = Activation("softmax")(conv_final)
+
+        self._model = Model(inputs=[inputs], outputs=[conv_final])
+
+        return self._model
+
+    def build_model_BRAIN_2layer(self, use_bn=False, use_dropout=False):
+        """
+        Build a 2 layer version of the U-Net architecture as defined by Ronneberger et al
+        """
+        self._title = "UNet_brain_2layer"
+        self._title+= "_BN" if use_bn else ""
+        self._title+= "_DO" if use_dropout else ""
+
+        # Set the input shape
+        input_shape = (self._img_height, self._img_width, self._img_channels)
+        inputs = Input(input_shape)
+
+        # Contracting path - Layer 1
+        conv_contr1 = Conv2D(filters=32, kernel_size=(3, 3), activation="relu", padding="same",
+                             kernel_initializer="he_normal")(inputs)
+        conv_contr1 = BatchNormalization()(conv_contr1) if use_bn else conv_contr1
+        conv_contr1 = Dropout(self._dropout_rate)(conv_contr1) if use_dropout else conv_contr1
+        conv_contr1 = Conv2D(filters=32, kernel_size=(3, 3), activation="relu", padding="same",
+                             kernel_initializer = RandomNormal(stddev=math.sqrt(2 / (3**2 * 32))))(conv_contr1)
+        conv_contr1 = BatchNormalization()(conv_contr1) if use_bn else conv_contr1
+        pool_contr1 = MaxPooling2D(pool_size=(2, 2))(conv_contr1)
+
+        # "Bottom" Layer 2
+        conv_bottom = Conv2D(filters=64, kernel_size=(3, 3), activation="relu", padding="same",
+                             kernel_initializer = RandomNormal(stddev=math.sqrt(2 / (3**2 * 32))))(pool_contr1)
+        conv_bottom = BatchNormalization()(conv_bottom) if use_bn else conv_bottom
+        conv_bottom = Conv2D(filters=64, kernel_size=(3, 3), activation="relu", padding="same",
+                             kernel_initializer = RandomNormal(stddev=math.sqrt(2 / (3**2 * 64))))(conv_bottom)
+        conv_bottom = BatchNormalization()(conv_bottom) if use_bn else conv_bottom
+
+        # Crop outputs of each contracting path "layer" for use in their corresponding expansive path "layer"
+        crop_up1 = conv_contr1  # no cropping required
+
+        # Layer 1
+        conv_scale_up1 = Conv2DTranspose(filters=32, kernel_size=(2, 2), strides=2, activation="relu", padding="same",
+                                         kernel_initializer = RandomNormal(stddev=math.sqrt(2 / (3 ** 2 * 64))))(conv_bottom)
+        merge_up1 = concatenate([conv_scale_up1, crop_up1], axis=3)
+        conv_up1 = Conv2D(filters=32, kernel_size=(3, 3), activation="relu", padding="same",
+                          kernel_initializer = RandomNormal(stddev=math.sqrt(2 / (3**2 * 64))))(merge_up1)
+        conv_up1 = Conv2D(filters=32, kernel_size=(3, 3), activation="relu", padding="same",
+                          kernel_initializer = RandomNormal(stddev=math.sqrt(2 / (3**2 * 32))))(conv_up1)
+
+        # Final 1x1 conv layer
+        conv_final = Conv2D(self._num_classes, (1, 1), activation="relu", padding="same",
+                            kernel_initializer="he_normal")(conv_up1)
+        conv_final = Activation("softmax")(conv_final)
+
+        self._model = Model(inputs=[inputs], outputs=[conv_final])
+
+        return self._model
+
     def build_model_BRAIN_3layer(self, use_bn=False, use_dropout=False):
         """
         Build a 3 layer version of the U-Net architecture as defined by Ronneberger et al
@@ -127,25 +221,25 @@ class UNet_NN(BaseNN):
 
         # Expansive path - Layer 2
         conv_scale_up2 = Conv2DTranspose(filters=64, kernel_size=(2, 2), strides=2, activation="relu", padding="same",
-                             kernel_initializer = RandomNormal(stddev=math.sqrt(2 / (3**2 * 128))))(conv_bottom)
+                                         kernel_initializer = RandomNormal(stddev=math.sqrt(2 / (3**2 * 128))))(conv_bottom)
         merge_up2 = concatenate([conv_scale_up2, crop_up2], axis=3)
         conv_up2 = Conv2D(filters=64, kernel_size=(3, 3), activation="relu", padding="same",
-                             kernel_initializer = RandomNormal(stddev=math.sqrt(2 / (3**2 * 128))))(merge_up2)
+                          kernel_initializer = RandomNormal(stddev=math.sqrt(2 / (3**2 * 128))))(merge_up2)
         conv_up2 = Conv2D(filters=64, kernel_size=(3, 3), activation="relu", padding="same",
-                             kernel_initializer = RandomNormal(stddev=math.sqrt(2 / (3**2 * 64))))(conv_up2)
+                          kernel_initializer = RandomNormal(stddev=math.sqrt(2 / (3**2 * 64))))(conv_up2)
 
         # Layer 1
         conv_scale_up1 = Conv2DTranspose(filters=32, kernel_size=(2, 2), strides=2, activation="relu", padding="same",
-                             kernel_initializer = RandomNormal(stddev=math.sqrt(2 / (3 ** 2 * 64))))(conv_up2)
+                                         kernel_initializer = RandomNormal(stddev=math.sqrt(2 / (3 ** 2 * 64))))(conv_up2)
         merge_up1 = concatenate([conv_scale_up1, crop_up1], axis=3)
         conv_up1 = Conv2D(filters=32, kernel_size=(3, 3), activation="relu", padding="same",
-                             kernel_initializer = RandomNormal(stddev=math.sqrt(2 / (3**2 * 64))))(merge_up1)
+                          kernel_initializer = RandomNormal(stddev=math.sqrt(2 / (3**2 * 64))))(merge_up1)
         conv_up1 = Conv2D(filters=32, kernel_size=(3, 3), activation="relu", padding="same",
-                             kernel_initializer = RandomNormal(stddev=math.sqrt(2 / (3**2 * 32))))(conv_up1)
+                          kernel_initializer = RandomNormal(stddev=math.sqrt(2 / (3**2 * 32))))(conv_up1)
 
         # Final 1x1 conv layer
         conv_final = Conv2D(self._num_classes, (1, 1), activation="relu", padding="same",
-                             kernel_initializer="he_normal")(conv_up1)
+                            kernel_initializer="he_normal")(conv_up1)
         conv_final = Activation("softmax")(conv_final)
 
         self._model = Model(inputs=[inputs], outputs=[conv_final])
@@ -184,7 +278,6 @@ class UNet_NN(BaseNN):
         conv_contr2 = BatchNormalization()(conv_contr2) if use_bn else conv_contr2
         pool_contr2 = MaxPooling2D(pool_size=(2, 2))(conv_contr2)
 
-
         # Layer 3
         conv_contr3 = Conv2D(filters=128, kernel_size=(3, 3), activation="relu", padding="same",
                              kernel_initializer=RandomNormal(stddev=math.sqrt(2 / (3 ** 2 * 64))))(pool_contr2)
@@ -196,10 +289,10 @@ class UNet_NN(BaseNN):
         pool_contr3 = MaxPooling2D(pool_size=(2, 2))(conv_contr3)
 
         # "Bottom" Layer 4
-        conv_bottom = Conv2D(filters=128, kernel_size=(3, 3), activation="relu", padding="same",
+        conv_bottom = Conv2D(filters=256, kernel_size=(3, 3), activation="relu", padding="same",
                              kernel_initializer=RandomNormal(stddev=math.sqrt(2 / (3 ** 2 * 128))))(pool_contr3)
         conv_bottom = BatchNormalization()(conv_bottom) if use_bn else conv_bottom
-        conv_bottom = Conv2D(filters=128, kernel_size=(3, 3), activation="relu", padding="same",
+        conv_bottom = Conv2D(filters=256, kernel_size=(3, 3), activation="relu", padding="same",
                              kernel_initializer=RandomNormal(stddev=math.sqrt(2 / (3 ** 2 * 256))))(conv_bottom)
         conv_bottom = BatchNormalization()(conv_bottom) if use_bn else conv_bottom
 
@@ -209,10 +302,9 @@ class UNet_NN(BaseNN):
         crop_up3 = conv_contr3  # no cropping required
 
         # Expansive path - Layer 3
-        conv_scale_up3 = Conv2DTranspose(filters=128, kernel_size=(2, 2), strides=2, activation="relu", padding="same",
-                                         # kernel_initializer="he_normal")(conv_bottom)
-                                         kernel_initializer=RandomNormal(stddev=math.sqrt(2 / (3 ** 2 * 256))))(
-            conv_bottom)
+        conv_scale_up3 = Conv2DTranspose(filters=128, kernel_size=(2, 2), strides=2, activation="relu",
+                                         padding="same",
+                                         kernel_initializer=RandomNormal(stddev=math.sqrt(2 / (3 ** 2 * 256))))(conv_bottom)
         merge_up3 = concatenate([conv_scale_up3, crop_up3], axis=3)
         conv_up3 = Conv2D(filters=128, kernel_size=(3, 3), activation="relu", padding="same",
                           kernel_initializer=RandomNormal(stddev=math.sqrt(2 / (3 ** 2 * 256))))(merge_up3)
@@ -220,9 +312,9 @@ class UNet_NN(BaseNN):
                           kernel_initializer=RandomNormal(stddev=math.sqrt(2 / (3 ** 2 * 128))))(conv_up3)
 
         # Expansive path - Layer 2
-        conv_scale_up2 = Conv2DTranspose(filters=64, kernel_size=(2, 2), strides=2, activation="relu", padding="same",
-                                         kernel_initializer=RandomNormal(stddev=math.sqrt(2 / (3 ** 2 * 128))))(
-            conv_up3)
+        conv_scale_up2 = Conv2DTranspose(filters=64, kernel_size=(2, 2), strides=2, activation="relu",
+                                         padding="same",
+                                         kernel_initializer=RandomNormal(stddev=math.sqrt(2 / (3 ** 2 * 128))))(conv_up3)
         merge_up2 = concatenate([conv_scale_up2, crop_up2], axis=3)
         conv_up2 = Conv2D(filters=64, kernel_size=(3, 3), activation="relu", padding="same",
                           kernel_initializer=RandomNormal(stddev=math.sqrt(2 / (3 ** 2 * 128))))(merge_up2)
@@ -230,7 +322,8 @@ class UNet_NN(BaseNN):
                           kernel_initializer=RandomNormal(stddev=math.sqrt(2 / (3 ** 2 * 64))))(conv_up2)
 
         # Layer 1
-        conv_scale_up1 = Conv2DTranspose(filters=32, kernel_size=(2, 2), strides=2, activation="relu", padding="same",
+        conv_scale_up1 = Conv2DTranspose(filters=32, kernel_size=(2, 2), strides=2, activation="relu",
+                                         padding="same",
                                          kernel_initializer=RandomNormal(stddev=math.sqrt(2 / (3 ** 2 * 64))))(conv_up2)
         merge_up1 = concatenate([conv_scale_up1, crop_up1], axis=3)
         conv_up1 = Conv2D(filters=32, kernel_size=(3, 3), activation="relu", padding="same",
@@ -249,7 +342,7 @@ class UNet_NN(BaseNN):
 
     def build_model(self):
         """
-        Build the original 4 layer U-Net architecture as defined by Ronneberger et al:
+        Build the original 5 layer/4 skip connections U-Net architecture as defined by Ronneberger et al:
         https://lmb.informatik.uni-freiburg.de/people/ronneber/u-net/
 
         Uses an input shape of 572x572. Instantiate the model using:

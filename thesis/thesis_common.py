@@ -411,6 +411,7 @@ def print_training_info(unet, model_path, train_shape, val_shape, settings, clas
     print("          Optimizer: {}".format(type(opt)))
     for (k, v) in enumerate(opt.get_config().items()):
         print("                   : {} = {}".format(k, v))
+    print("       TRN_AMS_GRAD: {}".format(settings.TRN_AMS_GRAD))
     print("               Loss: {}".format(str(loss).split(".")[0]))
     print("         IMG_HEIGHT: {}".format(settings.IMG_HEIGHT))
     print("          IMG_WIDTH: {}".format(settings.IMG_WIDTH))
@@ -429,4 +430,6 @@ def print_training_info(unet, model_path, train_shape, val_shape, settings, clas
     print("       TRN_MOMENTUM: {}".format(settings.TRN_MOMENTUM))
     print(" TRN_PRED_THRESHOLD: {}".format(settings.TRN_PRED_THRESHOLD))
     print(" TRN_EARLY_PATIENCE: {}".format(settings.TRN_EARLY_PATIENCE))
+    print("    TRN_PLAT_FACTOR: {}".format(settings.TRN_PLAT_FACTOR))
+    print("  TRN_PLAT_PATIENCE: {}".format(settings.TRN_PLAT_PATIENCE))
     print("")

@@ -25,6 +25,19 @@ def dice_coef_loss(y_true, y_pred):
     return -dice_coef(y_true, y_pred)
 
 
+def dice_coef_threshold(threshold=0.5):
+    """Dice loss coefficient metric with an optional threshold, defaults to 0.5"""
+    def dice_coef_t(y_true, y_pred):
+        smooth = 1.
+        y_true_f = K.flatten(y_true)
+        y_pred_f = K.flatten(y_pred)
+        y_pred_f = K.cast(K.greater(y_pred_f, threshold), K.floatx())
+        intersection = K.sum(y_true_f * y_pred_f)
+        return (2. * intersection + smooth) / (K.sum(y_true_f) + K.sum(y_pred_f) + smooth)
+
+    return dice_coef_t
+
+
 def focal_loss(target, output, gamma=2):
     """Focal loss"""
     output /= K.sum(output, axis=-1, keepdims=True)

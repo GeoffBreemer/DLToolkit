@@ -36,7 +36,7 @@ def ranked_accuracy(predictions, labels):
 
 def model_architecture_to_file(model, save_path, show_shapes=True):
     """Save a picture of the model architecture to disk"""
-    plot_model(model, to_file=save_path + "_architecture.png", show_shapes=show_shapes)
+    plot_model(model, to_file=save_path + "_model_architecture.png", show_shapes=show_shapes)
 
 
 def model_summary_to_file(model, save_path):

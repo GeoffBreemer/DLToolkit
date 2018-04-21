@@ -126,7 +126,7 @@ Includes a separate second EBS Volume containing all `DLToolkit` data and source
 
 	`. gb_connect.sh`
 
-5. Run the server setup script (takes a minute):
+5. Run the server setup script (will take a couple of minutes as various Python packages are installed/updated):
 
 	- `cd ~`
 	- `chmod u+x gb_setup_server.sh`
@@ -146,7 +146,7 @@ Includes a separate second EBS Volume containing all `DLToolkit` data and source
 
 12. OPTIONAL - Enable access: `sudo chmod go+rw .`
 
-13. Exit the instance and restart it: `. gb_stop.sh` followed by `. gb_start.sh`
+13. Exit the instance and restart it: `. gb_stop.sh` followed by `. gb_start.sh` (stopping may take a few moments)
 
 **Note** The first time a notebook is started it will take a while to start because TensorFlow and MatplotLib need to do some internal housekeeping.
 
@@ -199,7 +199,7 @@ Local machine folder containing all files: `/Users/geoff/Documents/Development/D
 2. Copy **data** files (`*.jpg` only, ignores `*.h5`): `. gb_copy_data.sh`
 
 ## 4. Fit a model
-Fit models by running Jupyter notebooks. Create augmented data if required by running the `thesis_augment_data.ipynb` notebook.
+Fit models by running Jupyter notebooks. Create augmented data if required by running the `thesis_augment_data.ipynb` notebook. The very first time a notebook is executed will take longer because TensorFlow and Matplotlib perform one-off setup actions.
 
 ## 5. Download files FROM the server
 Copy files from the server to the local `exchange` folder: `cd /Users/geoff/Documents/Development/DLToolkit/exchange`

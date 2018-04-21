@@ -5,11 +5,16 @@ Work in progress.
 
 Generic:
 
+- [ ] multi-GU https://www.pyimagesearch.com/2017/10/30/how-to-multi-gpu-training-with-keras-python-and-deep-learning/
+- [ ] determine which DECiSION model to use: 2, 3 or 4lyr -> cross-val? train/val split on thre patients?
+- [x] remove epoch from model name
+- [x] use different thresholds during training https://stackoverflow.com/questions/42606207/keras-custom-decision-threshold-for-precision-and-recall
+- [ ] FCN: pre-train on 2 images, then on larger set?
 - [ ] code cleanup unet, 3dunet, fcn: replace model creation with shorter for loops
-- [ ] that kicking (increasing) the learning rate: https://blog.deepsense.ai/deep-learning-right-whale-recognition-kaggle/
+- [ ] kicking (increasing) the learning rate: https://blog.deepsense.ai/deep-learning-right-whale-recognition-kaggle/
 - [ ] check for data augmentation: https://www.kaggle.com/lextoumbourou/humpback-whale-id-data-and-aug-exploration
 - [x] Use evaluate for final metrics
-- [ ] check float16 usage, possibly change back to float32
+- [x] check float16 usage, possibly change back to float32
 - [x] implement baseline model
 - [x] generators
 - [x] image pre-processing
