@@ -207,6 +207,7 @@ Copy files from the server to the local `exchange` folder: `cd /Users/geoff/Docu
 1. Download **source** files only: `. gb_download_source.sh`
 2. Download **output** only: `. gb_download_output.sh`
 3. Download **savedmodels** only: `. gb_download_savedmodels.sh`
+4. Download **data** only: `gb_download_data.sh`
 
 Existing files with the same name are overwritten. Other files are NOT deleted.
 

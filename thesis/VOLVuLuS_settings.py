@@ -37,9 +37,10 @@ SLICE_END = 96                  # ending slice index (the slice itself is NOT in
 # Training hyper parameters
 MASK_BINARY_THRESHOLD = 20      # pixel intensities above this value are considered blood vessels
 CLASS_WEIGHT_BACKGROUND = 1.    # weight for the background class
-CLASS_WEIGHT_BLOODVESSEL = 10.  # weight for the blood vessel class
 
+CLASS_WEIGHT_BLOODVESSEL = 10.  # weight for the blood vessel class
 TRN_BATCH_SIZE = 1              # batch size
+
 TRN_LEARNING_RATE = 0.001       # Momentum value (gradient descent only)
 TRN_NUM_EPOCH = 500             # maximum number of epochs to train
 TRN_TRAIN_VAL_SPLIT = 0.2       # percentage of training data to use for the validation set
@@ -47,7 +48,7 @@ TRN_DROPOUT_RATE = 0.5          # Dropout rate used for all Dropout layers
 TRN_MOMENTUM = 0.99             # Momentum value (gradient descent only)
 TRN_PRED_THRESHOLD = 0.5        # Pixel probabilities that exceed the threshold are considered a positive detection
 TRN_EARLY_PATIENCE = 10         # Early Stopping patience
-TRN_AMS_GRAD = True             # whether to enable AMSGrad (Adam optimiser only)
+TRN_AMS_GRAD = False            # whether to enable AMSGrad (Adam optimiser only)
 TRN_PLAT_PATIENCE = 5           # Reduce on plateau patience
 TRN_PLAT_FACTOR = 0.2           # Reduce on plateau factor
 
