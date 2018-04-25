@@ -49,10 +49,10 @@ TRN_DROPOUT_RATE = 0.5          # Dropout rate used for all Dropout layers
 TRN_MOMENTUM = 0.99             # Momentum value (gradient descent only)
 TRN_PRED_THRESHOLD = 0.5        # Pixel probabilities that exceed the threshold are considered a positive detection
 TRN_EARLY_PATIENCE = 9          # Early Stopping patience
-TRN_NUM_KFOLD_SPLITS = 3        # number of folds when using cross-validation
 TRN_AMS_GRAD = True             # whether to enable AMSGrad (Adam optimiser only)
 TRN_PLAT_PATIENCE = 3           # Reduce on plateau patience
 TRN_PLAT_FACTOR = 0.2           # Reduce on plateau factor
+TRN_NUM_KFOLD_SPLITS = 3        # number of folds when using cross-validation
 
 # Miscellaneous
 VERBOSE = True

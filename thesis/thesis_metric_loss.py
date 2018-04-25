@@ -25,8 +25,8 @@ def dice_coef_loss(y_true, y_pred):
     return -dice_coef(y_true, y_pred)
 
 
-def dice_coef_threshold(threshold=0.5):
-    """Dice loss coefficient metric with an optional threshold, defaults to 0.5"""
+def dice_coef_threshold(threshold):
+    """Dice loss coefficient metric with an optional threshold"""
     def dice_coef_t(y_true, y_pred):
         smooth = 1.
         y_true_f = K.flatten(y_true)
@@ -65,7 +65,7 @@ def evaluate_model(model, images, ground_truths, opt, loss_fn, metric, converter
     """Run evaluate() on the model to calculate overall loss and metrics for the images
     and associated ground truths. This requires a compiled model, hence the need for the optimiser,
     loss function and metric. The converter function has to be one of the conv_img_to_pred functions
-    so that the ground truths have the same shape as the predictions.
+    so that the ground truths have the same shape as the predictions
     """
     class_weights = [settings.CLASS_WEIGHT_BACKGROUND, settings.CLASS_WEIGHT_BLOODVESSEL]
     metrics = [metric]
@@ -76,5 +76,20 @@ def evaluate_model(model, images, ground_truths, opt, loss_fn, metric, converter
 
     eval_list = model.evaluate(images, converter(ground_truths, num_classes=settings.NUM_CLASSES),
                                  batch_size=settings.TRN_BATCH_SIZE, verbose=2)
+
+    return eval_list
+
+
+def evaluate_model_generator(model, generator, opt, loss_fn, metric, settings):
+    """Same as evaluate_model() but now using generators
+    """
+    class_weights = [settings.CLASS_WEIGHT_BACKGROUND, settings.CLASS_WEIGHT_BLOODVESSEL]
+    metrics = [metric]
+    loss = loss_fn(class_weights)
+
+    # Compile
+    model.compile(optimizer=opt, loss=loss, metrics=metrics)
+
+    eval_list = model.evaluate_generator(generator, steps=settings.TRN_BATCH_SIZE)
 
     return eval_list

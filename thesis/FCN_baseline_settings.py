@@ -42,17 +42,17 @@ TRN_LOSS = "ADAM"               # use Adam (ADAM) or another optimiser (SGD typi
 TRN_BATCH_SIZE = 1              # batch size
 CLASS_WEIGHT_BLOODVESSEL = 10.   # weight for the blood vessel class
 
-TRN_LEARNING_RATE = 0.001       # Momentum value (gradient descent only)
+TRN_LEARNING_RATE = 0.01       # Momentum value (gradient descent only)
 TRN_NUM_EPOCH = 500             # maximum number of epochs to train
-TRN_TRAIN_VAL_SPLIT = 0.2       # percentage of training data to use for the validation set
+TRN_TRAIN_VAL_SPLIT = 1/4       # percentage of training data to use for the validation set
 TRN_DROPOUT_RATE = 0.5          # Dropout rate used for all Dropout layers
 TRN_MOMENTUM = 0.99             # Momentum value (gradient descent only)
 TRN_PRED_THRESHOLD = 0.5        # Pixel probabilities that exceed the threshold are considered a positive detection
 TRN_EARLY_PATIENCE = 9          # Early Stopping patience
-TRN_NUM_KFOLD_SPLITS = 3        # number of folds when using cross-validation
 TRN_AMS_GRAD = True             # whether to enable AMSGrad (Adam optimiser only)
 TRN_PLAT_PATIENCE = 3           # Reduce on plateau patience
 TRN_PLAT_FACTOR = 0.2           # Reduce on plateau factor
+TRN_NUM_KFOLD_SPLITS = 3        # number of folds when using cross-validation
 
 # Miscellaneous
 VERBOSE = True

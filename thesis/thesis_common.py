@@ -2,6 +2,7 @@
 from dltoolkit.iomisc import HDF5Reader, HDF5Writer
 from dltoolkit.utils.image import standardise_single
 from dltoolkit.utils.generic import list_images
+from sklearn.model_selection import train_test_split
 
 import numpy as np
 import cv2
@@ -9,7 +10,116 @@ import time, os, progressbar, argparse
 import matplotlib.pyplot as plt
 
 
-# 3D U-Net conversions
+# 3D U-Net functions
+def load_training_3d(settings):
+    """Load patient volumes and split them into a training and validation set
+    """
+    # Paths to the training3d folder
+    img_path = os.path.join(settings.TRAINING_PATH, settings.FLDR_IMAGES)
+    msk_path = os.path.join(settings.TRAINING_PATH, settings.FLDR_GROUND_TRUTH)
+
+    # Create a list of paths to the individual patient folders inside training3d
+    patient_fld_imgs = sorted([os.path.join(img_path, e.name)
+                               for e in os.scandir(img_path) if e.is_dir()])
+    patient_fld_masks = sorted([os.path.join(msk_path, e.name)
+                                for e in os.scandir(msk_path) if e.is_dir()])
+
+    # Split the list of invidivual patient folders (NOT individual images) into a training
+    # and validation set
+    train_img_l, val_img_l, train_msk_l, val_msk_l = train_test_split(patient_fld_imgs, patient_fld_masks,
+                                                                      test_size=settings.TRN_TRAIN_VAL_SPLIT,
+                                                                      random_state=settings.RANDOM_STATE,
+                                                                      shuffle=True)
+
+    print("Loading training images")
+    train_imgs = load_images_3d(train_img_l, (settings.IMG_HEIGHT, settings.IMG_WIDTH, settings.IMG_CHANNELS),
+                                img_exts=settings.IMG_EXTENSION, settings=settings)
+
+    print("Loading training ground truths")
+    train_grndtr = load_images_3d(train_msk_l, (settings.IMG_HEIGHT, settings.IMG_WIDTH, settings.IMG_CHANNELS),
+                                  img_exts=settings.IMG_EXTENSION, settings=settings, is_mask=True)
+    train_grndtr_ext_conv = convert_img_to_pred_3d(train_grndtr, settings.NUM_CLASSES, settings.VERBOSE)
+
+    num_patients = train_imgs.shape[0]
+
+    if settings.TRN_TRAIN_VAL_SPLIT > 0.0:
+        print("Loading validation images")
+        val_imgs = load_images_3d(val_img_l, (settings.IMG_HEIGHT, settings.IMG_WIDTH, settings.IMG_CHANNELS),
+                                  img_exts=settings.IMG_EXTENSION, settings=settings)
+
+        print("Loading validation ground truths")
+        val_grndtr = load_images_3d(val_msk_l, (settings.IMG_HEIGHT, settings.IMG_WIDTH, settings.IMG_CHANNELS),
+                                    img_exts=settings.IMG_EXTENSION, settings=settings, is_mask=True)
+        val_grndtr_ext_conv = convert_img_to_pred_3d(val_grndtr, settings.NUM_CLASSES, settings.VERBOSE)
+
+        return train_imgs, train_grndtr, train_grndtr_ext_conv, val_imgs, val_grndtr, val_grndtr_ext_conv, num_patients
+    else:
+        print("NOT loading validation images")
+        return train_imgs, train_grndtr, train_grndtr_ext_conv, None, None, None, num_patients
+
+
+def load_images_3d(patients_list, img_shape, img_exts, settings, is_mask=False):
+    """
+    Load a list of images or ground truths into memory and apply image pre-processing
+    :param patients_list: list of paths to patient volumes
+    :param img_shape: shape of an image/ground truth
+    :param img_exts: image extensions to search for
+    :param settings: settings object
+    :param is_mask: True for ground truths, False for image
+    :return: Numpy array with all images/ground truths
+    """
+    # Do not do anything if the list of patient subfolders is empty
+    if len(patients_list) == 0:
+        print("No patient subfolders found, not reading images")
+        return None
+
+    num_slices = settings.SLICE_END - settings.SLICE_START
+    clahe = cv2.createCLAHE(clipLimit=2, tileGridSize=(16, 16))
+
+    # Loop through all images
+    widgets = ["Reading images ", progressbar.Percentage(), " ", progressbar.Bar(), " ", progressbar.ETA()]
+    pbar = progressbar.ProgressBar(maxval=len(patients_list), widgets=widgets).start()
+
+    data = np.zeros((len(patients_list), num_slices, img_shape[0], img_shape[1], img_shape[2]), dtype=np.float32)
+
+    # Loop through each patient subfolder
+    for patient_ix, p_folder in enumerate(patients_list):
+        imgs_list = sorted(list(list_images(basePath=p_folder, validExts=img_exts)))[settings.SLICE_START:settings.SLICE_END]
+
+        # Read each slice in the current patient's folder
+        for slice_ix, slice_img in enumerate(imgs_list):
+            image = cv2.imread(slice_img, cv2.IMREAD_GRAYSCALE)
+
+            # Crop to the region of interest
+            image = image[settings.IMG_CROP_HEIGHT:image.shape[0] - settings.IMG_CROP_HEIGHT,
+                    settings.IMG_CROP_WIDTH:image.shape[1] - settings.IMG_CROP_WIDTH]
+
+            # Apply any preprocessing
+            if is_mask:
+                # Apply binary thresholding to ground truth masks
+                _, image = cv2.threshold(image, settings.MASK_BINARY_THRESHOLD, settings.MASK_BLOODVESSEL,
+                                         cv2.THRESH_BINARY)
+            else:
+                # Apply CLAHE histogram equalization
+                image = clahe.apply(image)
+
+                # Standardise
+                image = standardise_single(image)
+
+            # Reshape from (height, width) to (height, width, 1)
+            image = image.reshape((img_shape[0], img_shape[1], img_shape[2]))
+            data[patient_ix, slice_ix] = image
+
+        pbar.update(patient_ix)
+
+    pbar.finish()
+
+    # Tranpose dimensions into the order required by the 3D U-net: (-1, height, width, slices, intensity)
+    data = np.transpose(data, axes=(0, 2, 3, 1, 4))
+
+    return data
+
+
 def create_hdf5_db_3d(patients_list, dn_name, img_path, img_shape, img_exts, key, ext, settings, is_mask=False):
     """Create a HDF5 file using a list of paths to patient subfolders to be written to the data set. An existing file is
     overwritten.
@@ -148,7 +258,7 @@ def convert_pred_to_img_3d(pred, threshold=0.5, verbose=False):
     return pred_images
 
 
-# U-Net conversions
+# U-Net functions
 def create_hdf5_db(imgs_list, dn_name, img_path, img_shape, key, ext, settings, is_mask=False):
     """Create a HDF5 file using a list of paths to individual images to be written to the data set. An existing file is
     overwritten.
@@ -270,7 +380,7 @@ def convert_pred_to_img(pred, threshold=0.5, verbose=False):
     return pred_images
 
 
-# Image loading functions
+# Generic functions - load HDF5 data into memory (i.e. no generators)
 def read_images(image_path, key, is_3D=False):
     """Load an HDF5 data set containing images into memory"""
     imgs = HDF5Reader().load_hdf5(image_path, key)
@@ -297,7 +407,7 @@ def read_groundtruths(ground_truth_path, key, is_3D=False):
     return imgs
 
 
-# Visualisation functions
+# Generic functions - visualisation
 def group_images(imgs, num_per_row, empty_color=255, show=False, save_path=None):
     """Combines an array of images into a single image using a grid with num_per_row columns, the number of rows is
     calculated using the number of images in the array and the number of requested columns. Grid cells without an
@@ -378,7 +488,7 @@ def show_image(img, title):
     plt.show()
 
 
-# Miscellaneous functions
+# Generic functions - miscellaneous
 def model_name_from_arguments():
     """Parshe command line arguments and return the full path to a saved model"""
     ap = argparse.ArgumentParser()
