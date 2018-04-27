@@ -42,7 +42,7 @@ TRN_LOSS = "ADAM"               # use Adam (ADAM) or another optimiser (SGD typi
 TRN_BATCH_SIZE = 1              # batch size
 CLASS_WEIGHT_BLOODVESSEL = 10.  # weight for the blood vessel class
 
-TRN_LEARNING_RATE = 0.001       # Momentum value (gradient descent only)
+TRN_LEARNING_RATE = 0.001       # Initial learning rate
 TRN_NUM_EPOCH = 500             # maximum number of epochs to train
 TRN_TRAIN_VAL_SPLIT = 0.1       # percentage of training data to use for the validation set
 TRN_DROPOUT_RATE = 0.5          # Dropout rate used for all Dropout layers

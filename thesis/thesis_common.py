@@ -343,7 +343,9 @@ def convert_img_to_pred(ground_truths, num_classes, verbose=False):
     # Convert 0 to 0 and 255 to 1, then perform one-hot encoding and squeeze the single-dimension
     tmp_truths = ground_truths/255
     new_masks = (np.arange(num_classes) == tmp_truths[..., None]).astype(np.uint8)
-    new_masks = np.squeeze(new_masks, axis=3)
+
+    if ground_truths.shape[-1] == 1:
+        new_masks = np.squeeze(new_masks, axis=3)
 
     if verbose:
         print("Elapsed time: {:.2f}s".format(time.time() - start_time))
@@ -351,7 +353,7 @@ def convert_img_to_pred(ground_truths, num_classes, verbose=False):
     return new_masks
 
 
-def convert_pred_to_img(pred, threshold=0.5, verbose=False):
+def convert_pred_to_img(pred, threshold=0.5, num_channels=1, verbose=False):
     """Converts U-Net predictions from (-1, height, width, num_classes) to (-1, height, width, 1) and
     assigns one of the two classes to each pixel. The threshold is used as the minimum probability
     required to be assigned the blood vessel (positive) class. Use a threshold of 0.5 to use the class that has the
@@ -361,7 +363,10 @@ def convert_pred_to_img(pred, threshold=0.5, verbose=False):
 
     # Set pixels with intensities greater than the threshold to the blood vessel class,
     # all other pixels to the background class
-    idx = pred[:, :, :, 1] > threshold
+    if num_channels == 3:
+        idx = pred[:, :, :, :, 1] > threshold
+    else:
+        idx = pred[:, :, :, 1] > threshold
     local_pred = pred.copy()
     local_pred[idx, 1] = 1
     local_pred[idx, 0] = 0
@@ -371,8 +376,11 @@ def convert_pred_to_img(pred, threshold=0.5, verbose=False):
     # Determine the class label for each pixel for all images
     pred_images = (np.argmax(local_pred, axis=-1) * 255).astype(np.uint8)
 
-    # Add a dimension for the color channel
-    pred_images = np.reshape(pred_images, tuple(pred_images.shape[0:3]) + (1,))
+    # Add a dimension for the color channel(s)
+    if num_channels == 3:
+        pred_images = np.reshape(pred_images, tuple(pred_images.shape[0:-1]) + (num_channels,))
+    else:
+        pred_images = np.reshape(pred_images, tuple(pred_images.shape) + (num_channels,))
 
     if verbose:
         print("Elapsed time: {:.2f}s".format(time.time() - start_time))
