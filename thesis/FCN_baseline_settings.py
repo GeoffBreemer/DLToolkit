@@ -23,37 +23,38 @@ MASK_BACKGROUND = 0             # pixel intensity for background pixels (i.e. bl
 MASK_BLOODVESSEL = 255          # pixel intensity for vessel pixels (i.e. white)
 
 # Local testing:
-SLICE_START = 59-1
-SLICE_END = 59+1
+# SLICE_START = 59-1
+# SLICE_END = 59
 
 # All slices:
 # SLICE_START = 0
 # SLICE_END = 247
 
 # Useful slices only:
-# SLICE_START = 0                 # starting slice index
-# SLICE_END = 96                  # ending slice index (the slice itself is NOT included)
+SLICE_START = 0                 # starting slice index
+SLICE_END = 96                  # ending slice index (the slice itself is NOT included)
 
 # Training hyper parameters
 MASK_BINARY_THRESHOLD = 20      # pixel intensities above this value are considered blood vessels
 CLASS_WEIGHT_BACKGROUND = 1.    # weight for the background class
 
-TRN_LOSS = "ADAM"               # use Adam (ADAM) or another optimiser (SGD typically)
+TRN_LOSS = "ADAM"               # use Adam (ADAM) or another optimiser (typically SGD)
 TRN_BATCH_SIZE = 1              # batch size
-CLASS_WEIGHT_BLOODVESSEL = 10.   # weight for the blood vessel class
+CLASS_WEIGHT_BLOODVESSEL = 20.  # weight for the blood vessel class
 
-TRN_LEARNING_RATE = 0.001       # Learning rate
 TRN_LEARNING_RATE_WARMUP = 0.01 # Warm-up learning rate
-TRN_NUM_EPOCH = 500             # maximum number of epochs to train
-TRN_NUM_EPOCH_WARMUP = 10       # maximum number of epochs to train
+TRN_LEARNING_RATE = 0.01        # Learning rate
+TRN_NUM_EPOCH_WARMUP = 15       # maximum number of epochs to train
+TRN_NUM_EPOCH = 200             # maximum number of epochs to train
+
 TRN_TRAIN_VAL_SPLIT = 0.1       # percentage of training data to use for the validation set
 TRN_DROPOUT_RATE = 0.5          # Dropout rate used for all Dropout layers
 TRN_MOMENTUM = 0.99             # Momentum value (gradient descent only)
 TRN_PRED_THRESHOLD = 0.5        # Pixel probabilities that exceed the threshold are considered a positive detection
 TRN_EARLY_PATIENCE = 9          # Early Stopping patience
 TRN_AMS_GRAD = True             # whether to enable AMSGrad (Adam optimiser only)
-TRN_PLAT_PATIENCE = 3           # Reduce on plateau patience
-TRN_PLAT_FACTOR = 0.2           # Reduce on plateau factor
+TRN_PLAT_PATIENCE = 5           # Reduce on plateau patience
+TRN_PLAT_FACTOR = 0.1           # Reduce on plateau factor
 TRN_NUM_KFOLD_SPLITS = 3        # number of folds when using cross-validation
 
 # Miscellaneous

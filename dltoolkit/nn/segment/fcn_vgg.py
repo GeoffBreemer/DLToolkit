@@ -21,10 +21,10 @@ class FCN32_ImageNet_NN(BaseNN):
         self.input_shape = (self._img_height, self._img_width, self._img_channels)
         self._vgg_body = None
 
-    def freeze_vgg_layers(self, freeze):
-        """(Un)freeze all VGG layers"""
-        for layer in self._vgg_body.layers:
-            layer.trainable = freeze
+    def freeze_vgg_layers(self, freeze, from_layer=0):
+        """(Un)freeze VGG layers starting at a specific layer"""
+        for layer in self._vgg_body.layers[from_layer:]:
+            layer.trainable = not freeze
 
     def build_model(self, crop=16, use_bn=False):
         """Build the FCN-32s architecture as defined by Long et al (http://arxiv.org/abs/1411.4038)

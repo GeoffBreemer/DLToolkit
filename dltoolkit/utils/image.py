@@ -62,11 +62,9 @@ def normalise(imgs):
     return imgs_normalized.astype(np.float32)
 
 
-def to_rgb(imgs):
+def gray_to_rgb(imgs):
     """Turn an array of greyscale images into RGB images by copying the greyscale dimension twice
     """
-    print(imgs.shape)
-
     ret = np.empty(imgs.shape[:3] + (3,), dtype=imgs.dtype)
     ret[:, :, :, 0] = imgs[:, :, :, 0]
     ret[:, :, :, 1] = imgs[:, :, :, 0]

@@ -361,7 +361,7 @@ def convert_pred_to_img(pred, threshold=0.5, num_channels=1, verbose=False):
     blood vessel classes."""
     start_time = time.time()
 
-    # Set pixels with intensities greater than the threshold to the blood vessel class,
+    # Set pixels with a blood class probability greater than the threshold to the blood vessel class,
     # all other pixels to the background class
     if num_channels == 3:
         idx = pred[:, :, :, :, 1] > threshold
@@ -528,7 +528,7 @@ def print_training_info(unet, model_path, train_shape, val_shape, settings, clas
     print("\nHyper parameters:")
     print("          Optimizer: {}".format(type(opt)))
     for (k, v) in enumerate(opt.get_config().items()):
-        print("                   : {} = {}".format(k, v))
+        print("                   : {:>10s} = {:.6f}".format(v[0], v[1]))
     print("       TRN_AMS_GRAD: {}".format(settings.TRN_AMS_GRAD))
     print("               Loss: {}".format(str(loss).split(".")[0]))
     print("         IMG_HEIGHT: {}".format(settings.IMG_HEIGHT))
