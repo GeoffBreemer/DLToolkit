@@ -97,7 +97,7 @@ class UNet_3D_NN(BaseNN):
             if use_bn: current_layer = BatchNormalization(axis=FEATURE_AXIS)(current_layer)
 
         act = Conv3D(self._num_classes, (1, 1, 1), activation="softmax", padding="same",
-                                   kernel_initializer="he_normal")(current_layer)
+                     kernel_initializer="he_normal")(current_layer)
 
         self._model = Model(inputs=[inputs], outputs=[act])
 

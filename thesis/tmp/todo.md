@@ -5,11 +5,13 @@ Work in progress.
 
 Generic:
 
+- [ ] use Frangi filter groud truths and 3D slicer ground truths (DECiSION only)
+- [ ] use signal strength threshold 14 instead of 20 (DECiSION only)
 - [ ] multi-GU https://www.pyimagesearch.com/2017/10/30/how-to-multi-gpu-training-with-keras-python-and-deep-learning/
 - [x] determine which DECiSION model to use: 2, 3 or 4lyr -> cross-val? train/val split on three patients?
 - [x] remove epoch from model name
 - [x] use different thresholds during training https://stackoverflow.com/questions/42606207/keras-custom-decision-threshold-for-precision-and-recall
-- [ ] FCN: pre-train on 2 images, then on larger set?
+- [X] FCN: pre-train on 2 images, then on larger set?
 - [x] code cleanup unet, 3dunet, fcn: replace model creation with shorter for loops
 - [ ] kicking (increasing) the learning rate: https://blog.deepsense.ai/deep-learning-right-whale-recognition-kaggle/
 - [ ] check for data augmentation: https://www.kaggle.com/lextoumbourou/humpback-whale-id-data-and-aug-exploration
@@ -41,17 +43,7 @@ Generic:
         - [ ] continue training with parameters obtained at early stopping point but now with all training data, OR:
         - [ ] train for the same number of epochs but now with all training data
 
-- [ ] hyper parameter selection
-
-2D U-Net:
-- [ ] hyper parameter selection
-- [ ] use validation set or CV
-- [ ] kernel init for 4 layer version
-
-3D U-Net:
-- [ ] reduce memory usage
-- [ ] hyper parameter selection
-- [ ] use validation set or CV
+- [X] hyper parameter selection
 
 ## Getting Started
 - Download/clone the repository to a local machine
