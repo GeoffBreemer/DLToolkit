@@ -101,3 +101,7 @@ ENV/
 .mypy_cache/
 examples_complex/notebook.ipynb
 examples_complex/script.py
+savedmodels
+output
+data
+.idea

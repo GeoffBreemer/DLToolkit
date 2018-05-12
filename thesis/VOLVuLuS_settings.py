@@ -53,10 +53,10 @@ TRN_AMS_GRAD = True             # whether to enable AMSGrad (Adam optimiser only
 TRN_PLAT_PATIENCE = 5           # Reduce on plateau patience
 TRN_PLAT_FACTOR = 0.2           # Reduce on plateau factor
 
-MDL_LAYERS = 2
-MDL_BASE_FLTRS = 16
-MDL_DECON = True
-MDL_BN = True
+MDL_LAYERS = 2                  # Number of layers to use (i.e. number of skip connections + 1)
+MDL_BASE_FLTRS = 16             # Number of filters to use in the first conv layer
+MDL_DECON = True                # True for Deconvolution3D, False for UpSampling3D
+MDL_BN = True                   # True to use Batch Normalisation, False otherwise
 
 # Miscellaneous
 VERBOSE = True
