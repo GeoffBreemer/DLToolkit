@@ -6,3 +6,4 @@ from .visual import plot_training_history, model_performance, visualise_results
 from .utils_rnn import *
 from .foundation import *
 from .image import rgb_to_gray, normalise, standardise_single, gray_to_rgb
+from .tfod import TFDataPoint
