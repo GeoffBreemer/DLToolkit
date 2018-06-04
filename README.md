@@ -4,7 +4,7 @@ Collection of deep learning code being developed while working on my thesis. Wor
 ## Getting Started
 - Download/clone the repository to a local machine
 - Add the full path to the repository to the `PYTHONPATH` environment variable (if running code from the terminal)
-- Install prequisite packages (see below)
+- Install prerequisite packages (see below)
 
 ### Prerequisites
 Install the Python packages listed below and any packages they may depend on:
